@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><title>Amplified IoT · Database design</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}body{margin:0;background:#F4F5F7;font-family:'Public Sans',system-ui,sans-serif;font-size:13px;line-height:1.45;color:#181D23;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}a{color:#00468C;text-decoration:none}a:hover{color:#003A75;text-decoration:underline}</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+<header style="height:60px;flex:none;background:#FFFFFF;border-bottom:1px solid #E0E3E7;padding:0 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10">
+<img src="assets/at-mark.png" alt="Amplified Trends" style="height:22px;width:auto;display:block">
+<span style="width:2px;height:26px;background:#D89E0E;display:block"></span>
+<div style="display:flex;flex-direction:column;align-items:center;line-height:1"><span style="font-size:12.5px;font-weight:600;letter-spacing:.08em;color:#606060">AMPLIFIED</span><span style="font-size:9.5px;font-weight:600;letter-spacing:.7em;color:#606060;margin-top:4px;padding-left:.7em">IoT</span></div>
+<span style="width:1px;height:24px;background:#E0E3E7;margin:0 4px"></span>
+<span style="font-size:14px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Database design</span>
+<a href="Data Entry Forms.dc.html" style="font-size:12.5px;font-weight:600;white-space:nowrap">Data entry forms</a>
+<a href="Amplified IoT.dc.html" style="font-size:12.5px;font-weight:600;white-space:nowrap">Open the app</a>
+</header>
+
+<div style="flex:1;width:100%;max-width:1400px;margin:0 auto;padding:22px 24px 48px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap">
+<div style="flex:1;min-width:320px">
+<div style="font-size:22px;font-weight:600;letter-spacing:-.015em">Schema for the metering, network and vending platform</div>
+<div style="font-size:13px;color:#49515C;margin-top:6px;max-width:760px;text-wrap:pretty">One relational database holds clients, properties, meters, gateways and money. Radio traffic from the LoRaWAN network server lands in time-partitioned tables beside it, so a sale, the uplink that confirmed it and the meter it credited can be joined in one query.</div>
+</div>
+<div style="display:flex;gap:1px;background:#E0E3E7;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4"><div style="background:#FFFFFF;padding:10px 16px;min-width:108px"><div style="font-size:11.5px;color:#767E89">{{ s.k }}</div><div style="font-size:15px;font-weight:600;margin-top:2px">{{ s.v }}</div></div></sc-for>
+</div>
+</div>
+
+<div style="display:flex;gap:22px;border-bottom:1px solid #E0E3E7">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><div onClick="{{ t.go }}" style="padding:8px 0 10px;font-size:13px;font-weight:{{ t.weight }};color:{{ t.color }};border-bottom:2px solid {{ t.border }};margin-bottom:-1px;cursor:pointer">{{ t.label }}</div></sc-for>
+</div>
+
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Entity map" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
+<sc-for list="{{ domains }}" as="d" hint-placeholder-count="8">
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+<div><div style="font-size:13.5px;font-weight:600">{{ d.name }}</div><div style="font-size:12px;color:#767E89;margin-top:3px;text-wrap:pretty">{{ d.desc }}</div></div>
+<div style="display:flex;flex-direction:column;border:1px solid #ECEEF1;border-radius:6px;overflow:hidden">
+<sc-for list="{{ d.tables }}" as="t" hint-placeholder-count="5">
+<div onClick="{{ t.go }}" style="display:flex;align-items:baseline;gap:8px;padding:6px 10px;border-bottom:1px solid #F0F2F4;cursor:pointer" style-hover="background:#F3F7FC">
+<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#00468C;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</span>
+<span style="font-size:11px;color:#A1A8B2;white-space:nowrap">{{ t.fks }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr));gap:12px;align-items:start">
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:12px 16px;border-bottom:1px solid #ECEEF1"><div style="font-size:13.5px;font-weight:600">Key relationships</div><div style="font-size:12px;color:#767E89;margin-top:2px">How ownership, occupancy, purchase and radio data connect</div></div>
+<sc-for list="{{ rels }}" as="r" hint-placeholder-count="9">
+<div style="display:grid;grid-template-columns:minmax(0,1.1fr) 44px minmax(0,1.6fr);gap:10px;align-items:baseline;padding:9px 16px;border-bottom:1px solid #F0F2F4">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#181D23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.path }}</div>
+<div style="font-size:11.5px;font-weight:600;color:#00468C;text-align:center">{{ r.card }}</div>
+<div style="font-size:12px;color:#49515C;text-wrap:pretty">{{ r.note }}</div>
+</div>
+</sc-for>
+</section>
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:12px 16px;border-bottom:1px solid #ECEEF1"><div style="font-size:13.5px;font-weight:600">Design rules</div><div style="font-size:12px;color:#767E89;margin-top:2px">Constraints the application and database both enforce</div></div>
+<sc-for list="{{ rules }}" as="r" hint-placeholder-count="7">
+<div style="display:flex;gap:12px;padding:10px 16px;border-bottom:1px solid #F0F2F4">
+<span style="font-size:11.5px;font-weight:600;color:#A1A8B2;width:18px;flex:none">{{ r.n }}</span>
+<div><div style="font-size:12.5px;font-weight:600">{{ r.title }}</div><div style="font-size:12px;color:#49515C;margin-top:2px;text-wrap:pretty">{{ r.body }}</div></div>
+</div>
+</sc-for>
+</section>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTables }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Tables" style="display:grid;grid-template-columns:minmax(180px,240px) minmax(0,1fr);gap:14px;align-items:start">
+<nav style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:6px 0;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow-y:auto">
+<sc-for list="{{ tree }}" as="n" hint-placeholder-count="20">
+<sc-if value="{{ n.isGroup }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 14px 4px;font-size:11px;font-weight:600;color:#8A919B">{{ n.label }}</div></sc-if>
+<sc-if value="{{ n.isItem }}" hint-placeholder-val="{{ true }}"><div onClick="{{ n.go }}" style="padding:4px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;color:{{ n.color }};background:{{ n.bg }}" style-hover="background:#F3F7FC">{{ n.label }}</div></sc-if>
+</sc-for>
+</nav>
+<div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:14px 16px;border-bottom:1px solid #ECEEF1;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+<div style="flex:1;min-width:260px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500">{{ cur.name }}</span><span style="font-size:12px;color:#767E89">{{ cur.domain }}</span></div>
+<div style="font-size:12.5px;color:#49515C;margin-top:5px;max-width:720px;text-wrap:pretty">{{ cur.desc }}</div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ cur.tags }}" as="g" hint-placeholder-count="2"><span style="font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:10px;background:#EBF1F8;color:#00468C">{{ g }}</span></sc-for></div>
+</div>
+<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse">
+<thead><tr>
+<th style="text-align:left;padding:8px 16px;font-size:11.5px;font-weight:600;color:#5F6773;background:#FAFBFC;border-bottom:1px solid #ECEEF1">Column</th>
+<th style="text-align:left;padding:8px 16px;font-size:11.5px;font-weight:600;color:#5F6773;background:#FAFBFC;border-bottom:1px solid #ECEEF1">Type</th>
+<th style="text-align:left;padding:8px 16px;font-size:11.5px;font-weight:600;color:#5F6773;background:#FAFBFC;border-bottom:1px solid #ECEEF1">Key</th>
+<th style="text-align:left;padding:8px 16px;font-size:11.5px;font-weight:600;color:#5F6773;background:#FAFBFC;border-bottom:1px solid #ECEEF1">Null</th>
+<th style="text-align:left;padding:8px 16px;font-size:11.5px;font-weight:600;color:#5F6773;background:#FAFBFC;border-bottom:1px solid #ECEEF1">Notes</th>
+</tr></thead>
+<tbody><sc-for list="{{ cur.cols }}" as="c" hint-placeholder-count="10">
+<tr style-hover="background:#F7F9FB">
+<td style="padding:8px 16px;border-bottom:1px solid #F0F2F4;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:{{ c.weight }};white-space:nowrap">{{ c.name }}</td>
+<td style="padding:8px 16px;border-bottom:1px solid #F0F2F4;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#49515C;white-space:nowrap">{{ c.type }}</td>
+<td style="padding:8px 16px;border-bottom:1px solid #F0F2F4;white-space:nowrap"><sc-for list="{{ c.keys }}" as="k" hint-placeholder-count="1"><span onClick="{{ k.go }}" style="display:inline-block;margin-right:4px;font-size:11px;font-weight:600;padding:1px 6px;border-radius:4px;background:{{ k.bg }};color:{{ k.color }};cursor:{{ k.cursor }}">{{ k.label }}</span></sc-for></td>
+<td style="padding:8px 16px;border-bottom:1px solid #F0F2F4;font-size:12px;color:#767E89">{{ c.nul }}</td>
+<td style="padding:8px 16px;border-bottom:1px solid #F0F2F4;font-size:12px;color:#49515C;min-width:220px;text-wrap:pretty">{{ c.note }}</td>
+</tr>
+</sc-for></tbody>
+</table>
+</div>
+</section>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px">
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:12px 16px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:8px">References</div>
+<sc-for list="{{ cur.out }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.go }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#00468C;padding:3px 0;cursor:pointer">{{ o.label }}</div></sc-for>
+<sc-if value="{{ cur.noOut }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#A1A8B2">None</div></sc-if>
+</section>
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:12px 16px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:8px">Referenced by</div>
+<sc-for list="{{ cur.inc }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.go }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#00468C;padding:3px 0;cursor:pointer">{{ o.label }}</div></sc-for>
+<sc-if value="{{ cur.noInc }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#A1A8B2">None</div></sc-if>
+</section>
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:12px 16px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:8px">Indexes and constraints</div>
+<sc-for list="{{ cur.idx }}" as="x" hint-placeholder-count="2"><div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#49515C;padding:3px 0;white-space:pre-wrap">{{ x }}</div></sc-for>
+<sc-if value="{{ cur.noIdx }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#A1A8B2">Primary key only</div></sc-if>
+</section>
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:12px 16px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:8px">Written by</div>
+<sc-for list="{{ cur.forms }}" as="f" hint-placeholder-count="1"><a href="Data Entry Forms.dc.html" style="display:block;font-size:12.5px;padding:3px 0">{{ f }}</a></sc-for>
+<sc-if value="{{ cur.noForms }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#767E89">System process (network server ingest, jobs)</div></sc-if>
+</section>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSql }}" hint-placeholder-val="{{ false }}">
+<section data-screen-label="SQL" style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #ECEEF1">
+<span style="font-size:13.5px;font-weight:600;flex:1">PostgreSQL DDL</span>
+<span style="font-size:12px;color:#767E89">{{ sqlLines }} lines, generated from the table specs</span>
+<div onClick="{{ copySql }}" style="height:30px;padding:0 12px;display:flex;align-items:center;border:1px solid #D2D6DC;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#F6F7F9">{{ copyLabel }}</div>
+</div>
+<pre style="margin:0;padding:16px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;color:#2B323A;background:#FAFBFC;overflow:auto;max-height:calc(100vh - 290px)">{{ sql }}</pre>
+</section>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startTab&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;map&quot;,&quot;tables&quot;,&quot;sql&quot;],&quot;default&quot;:&quot;map&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const ENUMS = {
+  user_status: ['invited', 'active', 'suspended'],
+  perm_level: ['limited', 'full'],
+  client_type: ['domestic', 'business', 'government'],
+  client_status: ['active', 'arrears', 'suspended', 'closed'],
+  kyc_status: ['pending', 'verified', 'expired', 'rejected'],
+  doc_type: ['omang', 'passport', 'proof_of_residence', 'lease_agreement', 'title_deed', 'landlord_consent', 'service_agreement', 'cipa_certificate', 'directors_id', 'tax_clearance', 'vat_certificate', 'bank_letter', 'vote_authority'],
+  doc_status: ['submitted', 'verified', 'rejected'],
+  property_type: ['house', 'flat', 'commercial_unit', 'facility'],
+  vending_party: ['tenant', 'owner'],
+  tenancy_status: ['active', 'ended'],
+  meter_class: ['domestic', 'bulk'],
+  meter_status: ['in_stock', 'installed', 'removed', 'faulty'],
+  site_type: ['reservoir', 'depot', 'gateway_mast', 'pump_station', 'booster', 'office', 'valve_chamber'],
+  gw_status: ['online', 'degraded', 'offline', 'decommissioned'],
+  reading_type: ['midnight', 'live', 'on_demand'],
+  alarm_type: ['tamper', 'burst', 'leak', 'low_battery', 'reverse_flow', 'magnetic'],
+  downlink_cmd: ['credit_token', 'valve_open', 'valve_close', 'config', 'time_sync'],
+  downlink_status: ['queued', 'sent', 'acked', 'failed'],
+  sale_status: ['completed', 'reversed', 'failed'],
+  ledger_entry: ['vend', 'consumption', 'adjustment', 'debt_recovery'],
+  meter_event: ['install', 'remove', 'replace', 'inspect'],
+  run_status: ['queued', 'running', 'ready', 'failed']
+};
+
+const D = [
+  ['access', 'Access and audit', 'Staff accounts, role permissions per module, zone scoping and a full change log.'],
+  ['geo', 'Geography and sites', 'Regions, suburbs with PostGIS boundaries, and physical sites such as reservoirs and masts.'],
+  ['clients', 'Clients and KYC', 'One client row per person, company or government vote, with type-specific detail and KYC documents.'],
+  ['property', 'Properties and tenancy', 'Who owns each plot or unit, and who occupies it and buys water for it right now.'],
+  ['assets', 'Meters and network', 'Meters, their LoRaWAN identities, gateways, and the uplink, reading, alarm and downlink streams.'],
+  ['vending', 'Tariffs and vending', 'Tariffs, sales, STS tokens and the per-meter credit ledger.'],
+  ['bulk', 'Bulk metering', 'District metered areas and the monthly water balance used for non-revenue water.'],
+  ['ops', 'Reports and portal', 'Report runs and schedules, customer portal logins, fault reports and notifications.']
+];
+
+const T = [
+  ['users', 'access', 'Staff and service accounts that sign in to the admin console.', [
+    'id uuid pk', 'email citext uq nn', 'full_name text nn', 'phone text', 'role_id smallint fk:roles nn', 'status user_status nn|Default invited', 'last_login_at timestamptz', 'created_at timestamptz nn|Default now()'], ['User and role']],
+  ['roles', 'access', 'Named permission sets such as Administrator, Operations, Finance, Vendor agent, Field technician.', [
+    'id smallint pk', 'name text uq nn', 'description text'], ['User and role']],
+  ['modules', 'access', 'Switchable product modules (vending, bypass detection, portal) and their settings.', [
+    'id smallint pk', 'code text uq nn|e.g. prepaid_vending', 'name text nn', 'enabled boolean nn', 'config jsonb|Module-specific settings']],
+  ['permissions', 'access', 'Individual capabilities, each owned by a module.', [
+    'id smallint pk', 'module_id smallint fk:modules nn', 'code text uq nn|e.g. vend.issue, kyc.edit', 'label text nn']],
+  ['role_permissions', 'access', 'Grants a permission to a role at full or limited level.', [
+    'role_id smallint pk fk:roles', 'permission_id smallint pk fk:permissions', 'level perm_level nn'], ['User and role']],
+  ['user_scopes', 'access', 'Restricts a user to specific suburbs. No rows means all zones.', [
+    'user_id uuid pk fk:users', 'suburb_id integer pk fk:suburbs'], ['User and role']],
+  ['audit_log', 'access', 'Append-only record of every insert, update and delete made through the console or API.', [
+    'id bigint pk|Identity', 'user_id uuid fk:users', 'action text nn|insert, update, delete, login', 'entity text nn|Table name', 'entity_id text nn', 'before jsonb', 'after jsonb', 'ip inet', 'at timestamptz nn'], [], ['(entity, entity_id, at DESC)']],
+
+  ['regions', 'geo', 'Top-level service regions such as Gaborone and Francistown.', [
+    'id smallint pk', 'name text uq nn', 'district text']],
+  ['suburbs', 'geo', 'Zones used across dashboards and reports: Block 8, Phakalane, Old Naledi and others.', [
+    'id integer pk', 'region_id smallint fk:regions nn', 'name text nn', 'boundary geometry(MultiPolygon,4326)', 'centroid geometry(Point,4326)'], [], ['UNIQUE (region_id, name)', 'GIST (boundary)']],
+  ['sites', 'geo', 'Physical locations: reservoirs, depots, gateway masts, pump stations.', [
+    'id integer pk', 'code text uq nn|ST-001', 'name text nn', 'suburb_id integer fk:suburbs nn', 'site_type site_type nn', 'location geometry(Point,4326) nn', 'reservoir_capacity_kl numeric(10,1)|Reservoirs only'], ['Gateway registration'], ['GIST (location)']],
+
+  ['clients', 'clients', 'Every account holder. Type decides which detail table holds identity fields.', [
+    'id uuid pk', 'client_no text uq nn|DOM-, BUS- or GOV- prefix', 'client_type client_type nn', 'display_name text nn', 'status client_status nn', 'kyc_status kyc_status nn|Derived from kyc_documents', 'phone text nn|E.164, +267', 'email citext', 'postal_address text', 'created_by uuid fk:users nn', 'created_at timestamptz nn'], ['Client onboarding'], ['(client_type, status)', 'trigram (display_name)']],
+  ['individuals', 'clients', 'Identity for domestic clients.', [
+    'client_id uuid pk fk:clients', 'first_name text nn', 'surname text nn', 'omang_no char(9) uq|Required unless passport_no is set', 'passport_no text uq', 'date_of_birth date', 'occupants smallint'], ['Client onboarding'], ['CHECK (omang_no IS NOT NULL OR passport_no IS NOT NULL)']],
+  ['organisations', 'clients', 'Identity and credit terms for business clients.', [
+    'client_id uuid pk fk:clients', 'legal_name text nn', 'trading_name text', 'cipa_reg_no text uq nn|Companies and Intellectual Property Authority', 'burs_tin text|Taxpayer number', 'vat_no text', 'sector text', 'credit_terms_days smallint nn|0 means prepaid', 'credit_limit numeric(14,2)'], ['Client onboarding']],
+  ['government_votes', 'clients', 'Ministry vote accounts billed on a consolidated invoice.', [
+    'client_id uuid pk fk:clients', 'vote_code text uq nn|V-0421', 'ministry text nn', 'department text', 'budget_year smallint nn', 'budget_amount numeric(14,2)'], ['Client onboarding']],
+  ['client_contacts', 'clients', 'Named people to contact for a client, one marked primary.', [
+    'id uuid pk', 'client_id uuid fk:clients nn', 'name text nn', 'role text', 'phone text', 'email citext', 'is_primary boolean nn'], ['Client onboarding'], ['UNIQUE (client_id) WHERE is_primary']],
+  ['kyc_documents', 'clients', 'Uploaded KYC evidence with review outcome and expiry.', [
+    'id uuid pk', 'client_id uuid fk:clients nn', 'doc_type doc_type nn', 'file_url text nn|Object storage key', 'document_no text', 'expires_on date', 'status doc_status nn', 'verified_by uuid fk:users', 'verified_at timestamptz', 'uploaded_at timestamptz nn'], ['Client onboarding', 'Property and tenancy'], ['(client_id, doc_type)', '(expires_on) WHERE status = verified']],
+
+  ['properties', 'property', 'A plot, flat or commercial unit. The owner never changes when tenants change.', [
+    'id uuid pk', 'owner_client_id uuid fk:clients nn|Landlord or owner-occupier', 'suburb_id integer fk:suburbs nn', 'plot_no text nn', 'unit_no text|Flats and mall units', 'property_type property_type nn', 'address text', 'title_deed_no text', 'location geometry(Point,4326)'], ['Property and tenancy'], ['UNIQUE (suburb_id, plot_no, unit_no)', '(owner_client_id)']],
+  ['tenancies', 'property', 'Occupancy of a property by a tenant, and who may buy water for it.', [
+    'id uuid pk', 'property_id uuid fk:properties nn', 'tenant_client_id uuid fk:clients nn', 'vending_party vending_party nn|tenant or owner', 'start_date date nn', 'end_date date', 'lease_document_id uuid fk:kyc_documents', 'status tenancy_status nn'], ['Property and tenancy'], ['UNIQUE (property_id) WHERE status = active', 'CHECK (end_date IS NULL OR end_date >= start_date)']],
+
+  ['meters', 'assets', 'Physical water meters. Credit balance lives here, so it stays with the meter when tenants move.', [
+    'id uuid pk', 'serial_no text uq nn|WM-104882', 'sts_meter_no char(11) uq nn|STS prepaid number', 'meter_class meter_class nn', 'size text nn|DN15 to DN200', 'model text', 'firmware text', 'property_id uuid fk:properties|Domestic and business meters', 'site_id integer fk:sites|Bulk meters', 'dma_id integer fk:dmas', 'tariff_id integer fk:tariffs nn', 'status meter_status nn', 'location geometry(Point,4326)', 'credit_balance numeric(12,2) nn|Maintained from credit_ledger', 'installed_at timestamptz'], ['Meter commissioning'], ['CHECK (property_id IS NOT NULL OR site_id IS NOT NULL OR status = in_stock)', 'GIST (location)']],
+  ['lorawan_devices', 'assets', 'The radio identity of a meter as registered on the network server.', [
+    'dev_eui char(16) pk', 'meter_id uuid fk:meters uq nn', 'join_eui char(16) nn', 'app_key_ref text nn|Vault path. The key itself is never stored here', 'activation text nn|OTAA', 'device_class char(1) nn|A or C', 'last_seen_at timestamptz', 'last_rssi smallint', 'last_snr numeric(4,1)', 'last_sf smallint', 'battery_pct smallint'], ['Meter commissioning']],
+  ['gateways', 'assets', 'LoRaWAN gateways and where they are mounted.', [
+    'id smallint pk', 'gateway_eui char(16) uq nn', 'name text uq nn|GW-GAB-01', 'site_id integer fk:sites nn', 'model text', 'backhaul text|fibre, lte, microwave', 'coverage_radius_m integer', 'firmware text', 'status gw_status nn', 'location geometry(Point,4326) nn', 'installed_at date'], ['Gateway registration']],
+  ['uplinks', 'assets', 'Raw uplink frames from the network server. TimescaleDB hypertable, 7-day chunks, compressed after 30 days.', [
+    'received_at timestamptz pk', 'dev_eui char(16) pk fk:lorawan_devices', 'f_cnt integer pk', 'gateway_id smallint fk:gateways', 'f_port smallint nn|5, 37, 60, 61, 65, 66, 210, 225', 'payload bytea nn', 'rssi smallint', 'snr numeric(4,1)', 'sf smallint', 'frequency_hz integer'], [], ['hypertable on received_at', '(dev_eui, received_at DESC)']],
+  ['readings', 'assets', 'Decoded register values from midnight and live-data ports.', [
+    'meter_id uuid pk fk:meters', 'read_at timestamptz pk', 'register_l bigint nn|Cumulative litres', 'flow_lph integer', 'reading_type reading_type nn', 'uplink_f_cnt integer'], [], ['hypertable on read_at']],
+  ['alarms', 'assets', 'Tamper, burst, leak and battery alarms raised by meters.', [
+    'id bigint pk', 'meter_id uuid fk:meters nn', 'alarm_type alarm_type nn', 'raised_at timestamptz nn', 'cleared_at timestamptz', 'acknowledged_by uuid fk:users', 'notes text'], [], ['(meter_id, raised_at DESC)', '(alarm_type) WHERE cleared_at IS NULL']],
+  ['downlinks', 'assets', 'Commands queued to meters: credit tokens, valve control, configuration.', [
+    'id bigint pk', 'dev_eui char(16) fk:lorawan_devices nn', 'command downlink_cmd nn', 'payload bytea nn', 'queued_by uuid fk:users', 'queued_at timestamptz nn', 'sent_at timestamptz', 'acked_at timestamptz', 'status downlink_status nn'], [], ['(status, queued_at)']],
+  ['meter_events', 'assets', 'Field history: installs, removals, replacements, inspections.', [
+    'id bigint pk', 'meter_id uuid fk:meters nn', 'event meter_event nn', 'technician_id uuid fk:users nn', 'at timestamptz nn', 'photo_url text', 'notes text'], ['Meter commissioning']],
+
+  ['tariffs', 'vending', 'Tariff headers by client type, with effective dates.', [
+    'id integer pk', 'code text uq nn|DOM-B2', 'name text nn', 'client_type client_type nn', 'vat_rate numeric(4,2) nn|14.00', 'effective_from date nn', 'effective_to date']],
+  ['tariff_bands', 'vending', 'Stepped price per kilolitre within a tariff.', [
+    'id integer pk', 'tariff_id integer fk:tariffs nn', 'from_kl numeric(8,1) nn', 'to_kl numeric(8,1)|Null for the top band', 'price_per_kl numeric(10,4) nn|Pula excl. VAT']],
+  ['payment_channels', 'vending', 'Where money comes from: Orange Money, DPO, counter, portal card, EFT.', [
+    'id smallint pk', 'code text uq nn', 'provider text nn', 'settlement_account text']],
+  ['vendors', 'vending', 'Counter desks and agents that sell tokens.', [
+    'id smallint pk', 'name text nn|CBD counter', 'site_id integer fk:sites', 'operator_id uuid fk:users']],
+  ['sales', 'vending', 'One row per purchase. The purchaser is whoever paid, usually the tenant. The owner is copied from the property at the time of sale.', [
+    'id uuid pk', 'receipt_no text uq nn', 'meter_id uuid fk:meters nn', 'purchaser_client_id uuid fk:clients nn|Tenant buys in own name', 'owner_client_id uuid fk:clients nn|Snapshot of properties.owner_client_id', 'tenancy_id uuid fk:tenancies', 'channel_id smallint fk:payment_channels nn', 'vendor_id smallint fk:vendors', 'provider_ref text|Mobile money or card reference', 'amount_incl numeric(12,2) nn', 'amount_excl numeric(12,2) nn', 'vat numeric(12,2) nn', 'units_l bigint nn', 'tariff_id integer fk:tariffs nn', 'status sale_status nn', 'created_by uuid fk:users', 'created_at timestamptz nn'], ['Token sale'], ['(meter_id, created_at DESC)', '(purchaser_client_id, created_at DESC)', 'UNIQUE (channel_id, provider_ref)']],
+  ['tokens', 'vending', 'The 20-digit STS token issued for a sale and when the meter confirmed it.', [
+    'id uuid pk', 'sale_id uuid fk:sales uq nn', 'sts_token char(20) nn', 'delivered_via text nn|sms, receipt, downlink', 'downlink_id bigint fk:downlinks', 'applied_at timestamptz|From port 210 credit uplink'], ['Token sale']],
+  ['credit_ledger', 'vending', 'Every movement of credit on a meter. meters.credit_balance is the running total.', [
+    'id bigint pk', 'meter_id uuid fk:meters nn', 'entry ledger_entry nn', 'amount numeric(12,2) nn|Negative for consumption', 'units_l bigint', 'balance_after numeric(12,2) nn', 'sale_id uuid fk:sales', 'at timestamptz nn'], ['Token sale'], ['(meter_id, at DESC)']],
+
+  ['dmas', 'bulk', 'District metered areas, each fed through one or more bulk meters.', [
+    'id integer pk', 'name text uq nn|Block 8 DMA', 'suburb_id integer fk:suburbs nn', 'inlet_meter_id uuid fk:meters nn', 'target_nrw_pct numeric(4,1) nn|12.0']],
+  ['water_balance', 'bulk', 'Monthly inflow against billed volume per DMA. Materialised by a nightly job.', [
+    'dma_id integer pk fk:dmas', 'period date pk|First day of month', 'inflow_l bigint nn', 'billed_l bigint nn', 'nrw_pct numeric(5,2) nn']],
+
+  ['report_definitions', 'ops', 'The report library: sales, usage, negative credit, daily, weekly, monthly.', [
+    'id smallint pk', 'code text uq nn', 'name text nn', 'params_schema jsonb nn']],
+  ['report_runs', 'ops', 'Each time a report is generated, by a person or a schedule.', [
+    'id uuid pk', 'definition_id smallint fk:report_definitions nn', 'params jsonb nn', 'requested_by uuid fk:users', 'status run_status nn', 'file_url text', 'created_at timestamptz nn']],
+  ['report_schedules', 'ops', 'Recurring report delivery by email.', [
+    'id integer pk', 'definition_id smallint fk:report_definitions nn', 'cron text nn|0 6 * * *', 'recipients text[] nn', 'enabled boolean nn']],
+  ['portal_accounts', 'ops', 'Customer portal logins. A login sees meters it owns or occupies.', [
+    'id uuid pk', 'client_id uuid fk:clients uq nn', 'login_phone text uq nn', 'password_hash text nn|argon2id', 'last_login_at timestamptz']],
+  ['fault_reports', 'ops', 'Problems logged by customers or staff against a meter.', [
+    'id uuid pk', 'meter_id uuid fk:meters nn', 'client_id uuid fk:clients', 'category text nn|leak, no supply, display, other', 'description text', 'status text nn', 'created_at timestamptz nn']],
+  ['notifications', 'ops', 'SMS and email sent to clients: tokens, leak advisories, low credit.', [
+    'id bigint pk', 'client_id uuid fk:clients nn', 'channel text nn|sms or email', 'template text nn', 'sent_at timestamptz', 'status text nn']]
+];
+
+const RELS = [
+  ['properties.owner_client_id → clients', 'N:1', 'A landlord or company owns many properties. Changing tenants never touches this column.'],
+  ['tenancies.property_id → properties', 'N:1', 'A property has a history of tenancies, with at most one active at a time.'],
+  ['tenancies.tenant_client_id → clients', 'N:1', 'The tenant is a client in their own right, with their own KYC.'],
+  ['meters.property_id → properties', 'N:1', 'A property can carry several meters. Bulk meters hang off a site instead.'],
+  ['lorawan_devices.meter_id → meters', '1:1', 'Each meter has one DevEUI on the network server.'],
+  ['sales.purchaser_client_id → clients', 'N:1', 'Who paid. Usually the active tenant when vending_party is tenant.'],
+  ['sales.owner_client_id → clients', 'N:1', 'Who owned the property when the sale was made, so landlord statements stay correct after a sale of the house.'],
+  ['credit_ledger.meter_id → meters', 'N:1', 'Credit belongs to the meter. A new tenant inherits the balance; arrears are settled at tenancy end.'],
+  ['uplinks.dev_eui → lorawan_devices', 'N:1', 'Radio frames join to meters through the device table, never by serial number.'],
+  ['dmas.inlet_meter_id → meters', 'N:1', 'Bulk inflow for the water balance comes from these meters.']
+];
+
+const RULES = [
+  ['Ownership and occupancy are separate', 'properties holds the owner, tenancies holds the occupant. The console, reports and portal read both, so a landlord sees all their meters and a tenant sees only theirs.'],
+  ['The vending party decides who may buy', 'A sale is allowed only when the purchaser is the active tenant (vending_party tenant) or the owner (vending_party owner, or no active tenancy).'],
+  ['Credit lives on the meter', 'meters.credit_balance is updated in the same transaction as the credit_ledger insert. Nothing else writes to it.'],
+  ['KYC gates vending', 'clients.kyc_status must be verified before a client can be a purchaser. Expired documents move the client back to pending overnight.'],
+  ['Secrets stay out of the database', 'LoRaWAN AppKeys and payment credentials are stored in a vault. Tables keep a reference path only.'],
+  ['Radio data is time-partitioned', 'uplinks and readings are TimescaleDB hypertables. Dashboards read hourly and daily continuous aggregates, not raw frames.'],
+  ['Everything is audited', 'A trigger on every business table writes before and after images to audit_log with the acting user.']
+];
+
+const FORMS = {clients: 'Client onboarding', individuals: 'Client onboarding', organisations: 'Client onboarding', government_votes: 'Client onboarding', client_contacts: 'Client onboarding', kyc_documents: 'Client onboarding'};
+
+const parse = t => ({
+  name: t[0], domain: t[1], desc: t[2], forms: t[4] || [], idx: t[5] || [],
+  cols: t[3].map(c => {
+    const [def, note] = c.split('|'), p = def.split(' ');
+    const flags = p.slice(2), fk = (flags.find(f => f.indexOf('fk:') === 0) || '').slice(3);
+    return {name: p[0], type: p[1], pk: flags.includes('pk'), uq: flags.includes('uq'), nn: flags.includes('nn') || flags.includes('pk'), fk: fk || null, note: note || ''};
+  })
+});
+const TABLES = T.map(parse);
+const BY = {};
+TABLES.forEach(t => { BY[t.name] = t; });
+const pkOf = n => (BY[n] ? BY[n].cols.filter(c => c.pk).map(c => c.name)[0] : 'id');
+
+function ddl() {
+  const out = ['-- Amplified IoT · PostgreSQL 16 with PostGIS and TimescaleDB', 'CREATE EXTENSION IF NOT EXISTS postgis;', 'CREATE EXTENSION IF NOT EXISTS timescaledb;', 'CREATE EXTENSION IF NOT EXISTS citext;', 'CREATE EXTENSION IF NOT EXISTS pg_trgm;', ''];
+  Object.keys(ENUMS).forEach(k => out.push('CREATE TYPE ' + k + ' AS ENUM (' + ENUMS[k].map(v => "'" + v + "'").join(', ') + ');'));
+  out.push('');
+  const order = [], seen = {};
+  const visit = n => { if (seen[n] || !BY[n]) return; seen[n] = 1; BY[n].cols.forEach(c => { if (c.fk && c.fk !== n) visit(c.fk); }); order.push(n); };
+  TABLES.forEach(t => visit(t.name));
+  const late = [];
+  order.forEach(n => {
+    const t = BY[n], pks = t.cols.filter(c => c.pk);
+    const lines = t.cols.map(c => {
+      let s = '  ' + c.name.padEnd(22) + ' ' + c.type;
+      if (c.type === 'bigint' && c.pk && pks.length === 1) s += ' GENERATED ALWAYS AS IDENTITY';
+      if (c.type === 'uuid' && c.pk && pks.length === 1 && !c.fk) s += ' DEFAULT gen_random_uuid()';
+      if (pks.length === 1 && c.pk) s += ' PRIMARY KEY';
+      else if (c.nn) s += ' NOT NULL';
+      if (c.uq && !c.pk) s += ' UNIQUE';
+      if (c.fk) {
+        if (order.indexOf(c.fk) > order.indexOf(n)) late.push('ALTER TABLE ' + n + ' ADD FOREIGN KEY (' + c.name + ') REFERENCES ' + c.fk + ' (' + pkOf(c.fk) + ');');
+        else s += ' REFERENCES ' + c.fk + ' (' + pkOf(c.fk) + ')';
+      }
+      if (/timestamptz/.test(c.type) && /(created_at|uploaded_at|queued_at)$/.test(c.name)) s += ' DEFAULT now()';
+      return s;
+    });
+    if (pks.length > 1) lines.push('  PRIMARY KEY (' + pks.map(c => c.name).join(', ') + ')');
+    out.push('-- ' + t.desc);
+    out.push('CREATE TABLE ' + n + ' (\n' + lines.join(',\n') + '\n);');
+    t.idx.forEach(x => {
+      if (/^hypertable/.test(x)) out.push("SELECT create_hypertable('" + n + "', '" + x.split(' on ')[1] + "', chunk_time_interval => INTERVAL '7 days');");
+      else if (/^GIST/.test(x)) out.push('CREATE INDEX ON ' + n + ' USING GIST ' + x.slice(5) + ';');
+      else if (/^UNIQUE/.test(x)) { const m = x.match(/^UNIQUE (\([^)]*\))( WHERE (.*))?$/); out.push('CREATE UNIQUE INDEX ON ' + n + ' ' + m[1] + (m[3] ? ' WHERE ' + m[3].replace(/= (\w+)$/, "= '$1'").replace(/WHERE is_primary/, 'WHERE is_primary') : '') + ';'); }
+      else if (/^CHECK/.test(x)) out.push('ALTER TABLE ' + n + ' ADD ' + x.replace(/= (\w+)\)$/, "= '$1')") + ';');
+      else if (/^trigram/.test(x)) out.push('CREATE INDEX ON ' + n + ' USING GIN ' + x.slice(8).replace(')', ' gin_trgm_ops)') + ';');
+      else out.push('CREATE INDEX ON ' + n + ' ' + x.replace(/ WHERE (\w+) = (\w+)$/, " WHERE $1 = '$2'") + ';');
+    });
+    out.push('');
+  });
+  if (late.length) { out.push('-- Foreign keys added after both tables exist'); late.forEach(l => out.push(l)); }
+  return out.join('\n');
+}
+
+class Component extends DCLogic {
+  state = {tab: this.props.startTab || 'map', cur: 'sales', copied: false};
+  open = n => () => { this.setState({tab: 'tables', cur: n}); window.scrollTo(0, 0); };
+
+  renderVals() {
+    const st = this.state;
+    const fkCount = TABLES.reduce((a, t) => a + t.cols.filter(c => c.fk).length, 0);
+    const base = {
+      stats: [{k: 'Tables', v: String(TABLES.length)}, {k: 'Foreign keys', v: String(fkCount)}, {k: 'Enum types', v: String(Object.keys(ENUMS).length)}, {k: 'Engine', v: 'PostgreSQL 16'}],
+      tabs: [['map', 'Entity map'], ['tables', 'Tables'], ['sql', 'SQL']].map(t => ({label: t[1], go: () => this.setState({tab: t[0]}), weight: st.tab === t[0] ? 600 : 500, color: st.tab === t[0] ? '#00468C' : '#49515C', border: st.tab === t[0] ? '#00468C' : 'transparent'})),
+      isMap: st.tab === 'map', isTables: st.tab === 'tables', isSql: st.tab === 'sql'
+    };
+    if (st.tab === 'map') return Object.assign(base, {
+      domains: D.map(d => ({name: d[1], desc: d[2], tables: TABLES.filter(t => t.domain === d[0]).map(t => { const n = t.cols.filter(c => c.fk).length; return {name: t.name, fks: n ? n + (n === 1 ? ' link' : ' links') : '', go: this.open(t.name)}; })})),
+      rels: RELS.map(r => ({path: r[0], card: r[1], note: r[2]})),
+      rules: RULES.map((r, i) => ({n: String(i + 1), title: r[0], body: r[1]}))
+    });
+    if (st.tab === 'sql') {
+      const sql = this._sql || (this._sql = ddl());
+      return Object.assign(base, {sql, sqlLines: N(sql.split('\n').length), copyLabel: st.copied ? 'Copied' : 'Copy SQL',
+        copySql: () => { try { navigator.clipboard.writeText(sql); } catch (e) {} this.setState({copied: true}); setTimeout(() => this.setState({copied: false}), 1600); }});
+    }
+    const t = BY[st.cur] || TABLES[0], dn = (D.find(d => d[0] === t.domain) || [])[1];
+    const inc = [];
+    TABLES.forEach(o => o.cols.forEach(c => { if (c.fk === t.name) inc.push({label: o.name + '.' + c.name, go: this.open(o.name)}); }));
+    const tree = [];
+    D.forEach(d => { tree.push({isGroup: true, isItem: false, label: d[1]}); TABLES.filter(x => x.domain === d[0]).forEach(x => tree.push({isGroup: false, isItem: true, label: x.name, go: this.open(x.name), color: x.name === t.name ? '#00468C' : '#2B323A', bg: x.name === t.name ? '#EBF1F8' : 'transparent'})); });
+    const tags = [];
+    if (t.idx.some(x => /hypertable/.test(x))) tags.push('Hypertable');
+    if (t.cols.some(c => /geometry/.test(c.type))) tags.push('PostGIS');
+    return Object.assign(base, {
+      tree,
+      cur: {
+        name: t.name, domain: dn, desc: t.desc, tags,
+        cols: t.cols.map(c => {
+          const keys = [];
+          if (c.pk) keys.push({label: 'PK', bg: '#EBF1F8', color: '#00468C', cursor: 'default', go: () => {}});
+          if (c.fk) keys.push({label: 'FK ' + c.fk, bg: '#EEF0F2', color: '#49515C', cursor: 'pointer', go: this.open(c.fk)});
+          if (c.uq && !c.pk) keys.push({label: 'Unique', bg: '#FAF0DC', color: '#965A00', cursor: 'default', go: () => {}});
+          return {name: c.name, type: c.type, keys, nul: c.nn ? 'No' : 'Yes', note: c.note, weight: c.pk ? 600 : 400};
+        }),
+        out: t.cols.filter(c => c.fk).map(c => ({label: c.name + ' → ' + c.fk, go: this.open(c.fk)})),
+        noOut: !t.cols.some(c => c.fk), inc, noInc: !inc.length,
+        idx: t.idx, noIdx: !t.idx.length, forms: t.forms, noForms: !t.forms.length
+      }
+    });
+  }
+}
+const N = n => n.toLocaleString('en-US');
+</script>
+</body>
+</html>

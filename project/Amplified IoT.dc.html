@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><title>Amplified IoT</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#F4F5F7;font-family:'Public Sans',system-ui,sans-serif;font-size:13px;color:#181D23;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}a{color:#00468C;text-decoration:none}a:hover{color:#003A75}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px}.leaflet-container{font-family:'Public Sans',sans-serif}.leaflet-tooltip{font-family:'Public Sans',sans-serif;font-size:11.5px;line-height:1.45;color:#181D23;border:1px solid #D2D6DC;border-radius:4px;box-shadow:0 2px 8px rgba(16,24,40,.12);padding:6px 9px}</style></helmet>
+<div style="display:flex;min-height:100vh;align-items:stretch">
+
+<aside style="width:232px;flex:none;background:#FFFFFF;border-right:1px solid #E0E3E7;color:#3A424C;z-index:1200;display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+<div style="height:60px;flex:none;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #ECEEF1">
+<img src="assets/at-mark.png" alt="Amplified Trends" style="height:24px;width:auto;display:block;flex:none">
+<span style="width:2px;height:30px;background:#D89E0E;display:block;flex:none"></span>
+<div style="display:flex;flex-direction:column;align-items:center;line-height:1"><span style="font-size:13.5px;font-weight:600;letter-spacing:.08em;color:#606060">AMPLIFIED</span><span style="font-size:10px;font-weight:600;letter-spacing:.7em;color:#606060;margin-top:4px;padding-left:.7em">IoT</span></div>
+</div>
+<nav style="flex:1;overflow-y:auto;padding:10px 8px">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="14">
+<sc-if value="{{ n.isGroup }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px 9px 5px;font-size:11px;font-weight:600;color:#8A919B">{{ n.label }}</div>
+</sc-if>
+<sc-if value="{{ n.isItem }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ n.go }}" style="display:flex;align-items:center;gap:9px;height:32px;padding:0 9px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:{{ n.weight }};color:{{ n.color }};background:{{ n.bg }};margin-bottom:1px" style-hover="background:#F1F3F6">
+<svg viewBox="0 0 24 24" width="16" height="16" style="flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="{{ n.d }}"></path></svg><span style="flex:1">{{ n.label }}</span>
+<sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span style="font-weight:600;font-size:11px;background:#B3261E;color:#fff;padding:1px 5px;border-radius:9px">{{ n.badge }}</span></sc-if>
+</div>
+</sc-if>
+</sc-for>
+</nav>
+<div style="padding:12px 14px;border-top:1px solid #ECEEF1;display:flex;gap:9px;align-items:center">
+<div style="width:26px;height:26px;border-radius:50%;background:#EEF0F2;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#49515C">LK</div>
+<div style="flex:1;min-width:0"><div style="font-size:11.5px;color:#181D23;font-weight:600">Leeroy Kgosi</div><div style="font-size:9.5px;color:#767E89">Network administrator</div></div>
+</div>
+</aside>
+
+<main style="flex:1;min-width:0;display:flex;flex-direction:column">
+<header style="background:#fff;border-bottom:1px solid #E0E3E7;padding:0 24px;height:60px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:1100">
+<div style="flex:1"><div style="font-size:11.5px;color:#767E89">{{ crumb }}</div><div style="font-size:16px;font-weight:600;letter-spacing:-.01em">{{ title }}</div></div>
+<div style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border:1px solid #E0E3E7;border-radius:6px;background:#FAFBFC;width:280px;color:#A1A8B2;font-size:12px"><svg viewBox="0 0 24 24" width="15" height="15" style="flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 1 0 0-13zM20 20l-4.4-4.4"></path></svg><span>Search meter, client or token</span></div>
+<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#49515C"><span style="width:7px;height:7px;border-radius:50%;background:#2E9D5B;display:block"></span>Network server online</div>
+<div style="font-size:12px;color:#767E89">19 Aug 2026, 13:01</div>
+</header>
+
+<div style="flex:1;padding:20px 22px 40px">
+
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+<div>
+<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:10px 12px;margin-bottom:14px">
+<span style="font-size:11.5px;font-weight:600;color:#767E89">PERIOD</span>
+<div style="display:flex;border:1px solid #E0E3E7;border-radius:6px;overflow:hidden">
+<sc-for list="{{ periods }}" as="p" hint-placeholder-count="4"><div onClick="{{ p.go }}" style="padding:5px 11px;font-size:11.5px;font-weight:{{ p.weight }};cursor:pointer;background:{{ p.bg }};color:{{ p.color }};border-right:1px solid #E0E3E7">{{ p.label }}</div></sc-for>
+</div>
+<div style="flex:1"></div>
+<span style="font-size:11px;color:#767E89">Snapshot 19 Aug 2026, 13:01</span>
+<div style="padding:6px 13px;border-radius:6px;background:#fff;border:1px solid #D2D6DC;color:#2B323A;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px" style-hover="background:#F6F7F9"><svg viewBox="0 0 24 24" width="14" height="14" style="flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="M19.5 11A7.5 7.5 0 0 0 6.2 7.2L4.5 9M4.5 4.5V9H9M4.5 13a7.5 7.5 0 0 0 13.3 3.8l1.7-1.8M19.5 19.5V15H15"></path></svg>Refresh</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:10px">
+<sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:12px 13px 11px">
+<div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:7px">{{ k.label }}</div>
+<div style="font-weight:600;font-size:19px;letter-spacing:-.6px;color:#181D23">{{ k.value }}</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:7px"><span style="font-size:10.5px;color:#{{ k.deltaColor }};font-weight:600;font-family:'IBM Plex Mono',monospace">{{ k.delta }}</span><span style="font-size:10.5px;color:#767E89">{{ k.sub }}</span></div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:10px;margin-bottom:16px">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px"><div style="font-size:12.5px;font-weight:600">Daily Sales · August 2026</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">Pula, incl. VAT</div></div>
+<div style="display:flex;align-items:flex-end;gap:3px;height:132px">
+<sc-for list="{{ daily }}" as="d" hint-placeholder-count="19">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%" title="{{ d.tip }}">
+<div style="width:100%;border-radius:2px 2px 0 0;background:{{ d.tone }};height:{{ d.h }}" style-hover="background:#D89E0E"></div>
+<span style="font-weight:500;font-size:11px;color:#A1A8B2">{{ d.label }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:4px">Monthly Sales</div>
+<div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89;margin-bottom:8px">Last 6 months</div>
+<div>{{ monthChart }}</div>
+</div>
+</div>
+
+<div style="font-size:12px;font-weight:600;color:#49515C;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>LoRaWAN Port Traffic</span><span style="flex:1;height:1px;background:#E0E3E7"></span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">uplinks decoded, period</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px">
+<sc-for list="{{ ports }}" as="p" hint-placeholder-count="8">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:11px 13px">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:11.5px;font-weight:600;color:{{ p.tone }}">{{ p.label }}</span></div>
+<div style="font-weight:600;font-size:17px;letter-spacing:-.5px">{{ p.value }}</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-size:10.5px;color:#767E89">{{ p.kind }}</span><span style="font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:{{ p.tone }}">{{ p.delta }}</span></div>
+<div style="height:3px;border-radius:3px;background:#ECEEF1;margin-top:7px;overflow:hidden"><div style="height:100%;background:{{ p.tone }};width:{{ p.w }}"></div></div>
+</div>
+</sc-for>
+</div>
+
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px;margin-bottom:16px">
+<div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+<div style="min-width:180px">
+<div style="font-size:11.5px;font-weight:600;color:#B3261E;margin-bottom:6px">Suspected bypass</div>
+<div style="display:flex;align-items:baseline;gap:7px"><span style="font-weight:600;font-size:24px;letter-spacing:-.8px">1,164</span><span style="font-size:11.5px;color:#767E89">meters flagged</span></div>
+<div style="font-size:10.5px;color:#767E89;margin-top:4px">Detector run 19 Aug 2026, 03:20</div>
+</div>
+<div style="flex:1 1 360px;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px">
+<sc-for list="{{ bypass }}" as="b" hint-placeholder-count="6">
+<div style="border:1px solid #ECEEF1;border-radius:6px;padding:8px 10px;background:#FAFBFC"><div style="font-size:10px;color:#767E89;margin-bottom:3px">{{ b.label }}</div><div style="font-weight:600;font-size:15px;color:{{ b.tone }}">{{ b.value }}</div></div>
+</sc-for>
+</div>
+<div style="padding:7px 13px;border:1px solid #F0C4C0;color:#B3261E;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;flex:none;align-self:center" style-hover="background:#FAE8E6">Open Review Board</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:10px;margin-bottom:16px">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:10px">Sales Share by Suburb</div>
+<div style="display:flex;height:9px;border-radius:5px;overflow:hidden;margin-bottom:12px">
+<sc-for list="{{ shareBar }}" as="s" hint-placeholder-count="8"><div style="width:{{ s.w }};background:{{ s.tone }}" title="{{ s.tip }}"></div></sc-for>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 14px">
+<sc-for list="{{ shareBar }}" as="s" hint-placeholder-count="8">
+<div style="display:flex;align-items:center;gap:7px;font-size:11px;padding:2px 0"><span style="width:8px;height:8px;border-radius:2px;background:{{ s.tone }};flex:none"></span><span style="flex:1;color:#49515C">{{ s.name }}</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ s.pct }}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px"><div style="font-size:12.5px;font-weight:600">Water Usage by Suburb</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">litres</div></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ usageBars }}" as="u" hint-placeholder-count="10">
+<div style="display:flex;align-items:center;gap:9px"><span style="width:112px;font-size:10.5px;color:#49515C;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span><div style="flex:1;height:11px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:#2A7A7E;width:{{ u.w }}"></div></div><span style="width:88px;font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ u.value }}</span></div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="font-size:12px;font-weight:600;color:#49515C;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>Suburb Analysis</span><span style="flex:1;height:1px;background:#E0E3E7"></span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ suburbCount }} zones · sorted by tokens sold</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:16px">
+<sc-for list="{{ suburbs }}" as="s" hint-placeholder-count="12">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:11px 13px 10px" style-hover="border-color:#B8CFE8">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><span style="font-size:12.5px;font-weight:600;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ s.name }}">{{ s.name }}</span><span style="font-size:11.5px;color:#767E89;flex:none;margin-left:8px">{{ s.tokens }} tokens</span></div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Total sales</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ s.sales }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#00468C;width:{{ s.salesW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Total usage</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#2A7A7E">{{ s.usage }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#2A7A7E;width:{{ s.usageW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Transactions</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ s.tx }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#97B8DC;width:{{ s.txW }}"></div></div></div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:8px;border-top:1px solid #F0F2F4"><span style="font-size:10px;color:#A1A8B2">{{ s.meters }} meters</span><span style="font-size:10px;color:#00468C;cursor:pointer;font-weight:500">View history</span></div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:10px">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:12px 15px;border-bottom:1px solid #ECEEF1;font-size:12.5px;font-weight:600">Online payments by provider</div>
+<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ provHead }}" as="h" hint-placeholder-count="4"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ providers }}" as="p" hint-placeholder-count="3">
+<tr style-hover="background:#FAFBFC"><td style="padding:9px 15px;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.id }}</td><td style="padding:9px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.tx }}</td><td style="padding:9px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.amount }}</td><td style="padding:9px 15px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#00468C">{{ p.share }}</span></td></tr>
+</sc-for></tbody>
+</table></div>
+</div>
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:10px 15px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">Sales ledger</span><sc-for list="{{ ledgerTabs }}" as="t" hint-placeholder-count="3"><span onClick="{{ t.go }}" style="font-size:11px;font-weight:{{ t.weight }};padding:4px 10px;border-radius:5px;cursor:pointer;background:{{ t.bg }};color:{{ t.color }}">{{ t.label }}</span></sc-for></div>
+<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ ledgerHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ ledger }}" as="r" hint-placeholder-count="10">
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.date }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ r.total }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.excl }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.vat }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ r.tx }}</td></tr>
+</sc-for></tbody>
+</table></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="position:relative;border:1px solid #C9CED6;border-radius:8px;overflow:hidden;background:#dfe4ea">
+<div ref="{{ mapRef }}" style="height:680px;width:100%"></div>
+
+<div style="position:absolute;left:10px;top:10px;z-index:600;display:flex;flex-direction:column;background:#fff;border:1px solid #D2D6DC;border-radius:5px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.28)">
+<sc-for list="{{ mapTools }}" as="t" hint-placeholder-count="6"><div onClick="{{ t.go }}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#49515C;cursor:pointer;border-bottom:1px solid #E0E3E7" style-hover="background:#EBF1F8" title="{{ t.tip }}"><svg viewBox="0 0 24 24" width="16" height="16" style="flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="{{ t.d }}"></path></svg></div></sc-for>
+</div>
+
+<div style="position:absolute;right:10px;top:10px;z-index:600;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+<sc-for list="{{ mapToggles }}" as="t" hint-placeholder-count="2">
+<div onClick="{{ t.go }}" style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #D2D6DC;border-radius:5px;padding:7px 11px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.22);width:158px">
+<span style="width:26px;height:14px;border-radius:9px;background:{{ t.sw }};position:relative;flex:none"><span style="position:absolute;top:2px;left:{{ t.knob }};width:10px;height:10px;border-radius:50%;background:#fff"></span></span>
+<span style="font-size:11px;color:#49515C;font-weight:500">{{ t.label }}</span>
+</div>
+</sc-for>
+<div style="background:#fff;border:1px solid #D2D6DC;border-radius:5px;box-shadow:0 1px 5px rgba(0,0,0,.22);width:236px;overflow:hidden;margin-top:2px">
+<div style="padding:6px 10px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:7px"><span style="font-size:11.5px;font-weight:600;color:#5d6a7e;flex:1">Layers</span><span onClick="{{ resetLayers }}" style="font-size:10px;color:#00468C;cursor:pointer;font-weight:600">Reset</span></div>
+<div style="max-height:392px;overflow-y:auto;padding:3px 0">
+<sc-for list="{{ layers }}" as="l" hint-placeholder-count="20">
+<div onClick="{{ l.go }}" style="display:flex;align-items:center;gap:7px;padding:3px 10px;cursor:pointer;background:{{ l.bg }}" style-hover="background:#EBF1F8">
+<span style="width:12px;height:12px;border:1px solid {{ l.box }};background:{{ l.fill }};border-radius:2px;color:#fff;font-size:8px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">{{ l.check }}</span>
+<span style="font-size:11px;color:#2B323A;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.label }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div onClick="{{ toggleSelect }}" style="position:absolute;right:10px;bottom:24px;z-index:600;display:flex;align-items:center;gap:7px;background:{{ selectBg }};border:1px solid #D2D6DC;border-radius:5px;padding:8px 12px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.22)"><svg viewBox="0 0 24 24" width="15" height="15" style="flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M11 4h2M11 20h2M4 11v2M20 11v2"></path></svg><span style="font-size:11px;font-weight:600;color:{{ selectColor }}">Select</span></div>
+
+<sc-if value="{{ boxCount }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:52px;top:10px;z-index:600;background:#181D23;border-radius:5px;padding:8px 12px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 6px rgba(0,0,0,.35)">
+<span style="font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#fff">{{ boxCount }} meters in selection</span>
+<span style="font-size:10.5px;color:#8ee0c8;cursor:pointer;font-weight:600">Queue downlink</span>
+<span style="font-size:10.5px;color:#9fb4d0;cursor:pointer;font-weight:600">Export</span>
+<span onClick="{{ clearBox }}" style="font-size:11px;color:#7d8ba1;cursor:pointer">✕</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ notifOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:52px;bottom:24px;z-index:600;width:300px;background:#fff;border:1px solid #D2D6DC;border-radius:5px;box-shadow:0 1px 6px rgba(0,0,0,.25);overflow:hidden">
+<div style="padding:7px 11px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:7px"><span style="width:6px;height:6px;border-radius:50%;background:#2E9D5B"></span><span style="font-size:11.5px;font-weight:600;color:#5d6a7e;flex:1">Live notifications</span></div>
+<sc-for list="{{ notifs }}" as="n" hint-placeholder-count="5">
+<div style="padding:6px 11px;border-bottom:1px solid #F0F2F4;display:flex;gap:8px;align-items:flex-start"><span style="width:6px;height:6px;border-radius:50%;background:{{ n.tone }};margin-top:4px;flex:none"></span><span style="flex:1;font-size:10.5px;color:#49515C;line-height:1.4">{{ n.text }}</span><span style="font-weight:500;font-size:11px;color:#767E89">{{ n.t }}</span></div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:8px 11px">
+<span style="font-size:11.5px;font-weight:600;color:#767E89">Gateways</span>
+<sc-for list="{{ gateways }}" as="g" hint-placeholder-count="6">
+<div onClick="{{ g.go }}" style="display:flex;align-items:center;gap:6px;border:1px solid #E0E3E7;border-radius:20px;padding:4px 10px;cursor:pointer" style-hover="border-color:#B8CFE8;background:#FAFBFC">
+<span style="width:7px;height:7px;border-radius:50%;background:{{ g.dot }};flex:none"></span><span style="font-weight:600;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ g.id }}</span><span style="font-size:10px;color:#767E89">{{ g.meters }} nodes · {{ g.rssi }}</span>
+</div>
+</sc-for>
+<span style="flex:1"></span>
+<span onClick="{{ toggleRings }}" style="font-size:10.5px;color:#00468C;cursor:pointer;font-weight:600">{{ ringLabel }}</span>
+<span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ plotted }} plotted · {{ zoomLabel }}</span>
+</div>
+<sc-if value="{{ sel }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span style="font-weight:600;font-size:13px">{{ sel.id }}</span><span style="font-weight:600;font-size:11px;background:{{ sel.tone }};color:#fff;padding:2px 7px;border-radius:4px">{{ sel.status }}</span><span style="flex:1"></span><span onClick="{{ clearSel }}" style="font-size:11px;color:#767E89;cursor:pointer">Close ✕</span></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:9px">
+<sc-for list="{{ sel.fields }}" as="f" hint-placeholder-count="12"><div style="border:1px solid #ECEEF1;border-radius:6px;padding:8px 10px;background:#FAFBFC"><div style="font-size:9.5px;color:#767E89;margin-bottom:3px;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace">{{ f.k }}</div><div style="font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ f.v }}</div></div></sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTable }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+<sc-for list="{{ tbl.stats }}" as="s" hint-placeholder-count="4">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:11px 13px">
+<div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:6px">{{ s.label }}</div>
+<div style="font-weight:600;font-size:17px;letter-spacing:-.5px">{{ s.value }}</div>
+<div style="font-size:10.5px;color:#767E89;margin-top:4px">{{ s.sub }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:{{ tbl.cols }};gap:10px;align-items:start">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:9px 13px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+<span style="font-size:12.5px;font-weight:600;margin-right:4px">{{ tbl.name }}</span>
+<sc-for list="{{ tbl.chips }}" as="c" hint-placeholder-count="4"><span onClick="{{ c.go }}" style="font-size:10.5px;font-weight:{{ c.weight }};padding:4px 9px;border-radius:20px;cursor:pointer;background:{{ c.bg }};color:{{ c.color }};border:1px solid {{ c.border }}">{{ c.label }}</span></sc-for>
+<span style="flex:1"></span>
+<span style="font-size:11px;color:#767E89">{{ tbl.count }}</span>
+<span style="font-size:11px;color:#00468C;cursor:pointer;font-weight:500">Export CSV</span>
+</div>
+<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ tbl.head }}" as="h" hint-placeholder-count="8"><th style="text-align:{{ h.align }};padding:7px 13px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1;white-space:nowrap">{{ h.label }}</th></sc-for></tr></thead>
+<tbody>
+<sc-for list="{{ tbl.rows }}" as="r" hint-placeholder-count="12">
+<tr onClick="{{ r.go }}" style="cursor:pointer;background:{{ r.bg }}" style-hover="background:#F6F7F9">
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="8">
+<td style="padding:8px 13px;border-bottom:1px solid #F0F2F4;text-align:{{ c.align }};white-space:nowrap"><span style="background:{{ c.bg }};color:{{ c.color }};padding:{{ c.pad }};border-radius:4px;font:{{ c.font }}">{{ c.v }}</span></td>
+</sc-for>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="padding:9px 13px;display:flex;align-items:center;gap:8px;border-top:1px solid #ECEEF1"><span style="font-size:10.5px;color:#767E89;flex:1">{{ tbl.pageInfo }}</span><sc-for list="{{ pager }}" as="p" hint-placeholder-count="5"><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;background:{{ p.bg }};color:{{ p.color }};cursor:pointer">{{ p.label }}</span></sc-for></div>
+</div>
+<sc-if value="{{ kyc }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden;position:sticky;top:66px">
+<div style="padding:12px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:flex-start;gap:10px">
+<div style="width:34px;height:34px;flex:none;border-radius:7px;background:#EBF1F8;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;font-family:'IBM Plex Mono',monospace;color:#00468C">{{ kyc.initials }}</div>
+<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;letter-spacing:-.1px">{{ kyc.name }}</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ kyc.id }} · {{ kyc.kind }}</div></div>
+<span onClick="{{ closeKyc }}" style="font-size:11px;color:#767E89;cursor:pointer">✕</span>
+</div>
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1">
+<div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:8px">KYC Verification</div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="flex:1;height:5px;background:#F0F2F4;border-radius:5px;overflow:hidden"><div style="height:100%;background:{{ kyc.tone }};width:{{ kyc.pctW }}"></div></div><span style="font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:{{ kyc.tone }}">{{ kyc.pct }}</span></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ kyc.docs }}" as="d" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span style="width:14px;height:14px;border-radius:3px;background:{{ d.tone }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex:none">{{ d.mark }}</span><span style="flex:1;color:#49515C">{{ d.label }}</span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ d.meta }}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1">
+<div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:8px">Account</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<sc-for list="{{ kyc.fields }}" as="f" hint-placeholder-count="8"><div><div style="font-size:9.5px;color:#A1A8B2;margin-bottom:2px">{{ f.k }}</div><div style="font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:{{ f.tone }}">{{ f.v }}</div></div></sc-for>
+</div>
+</div>
+<sc-if value="{{ kyc.props }}" hint-placeholder-val="{{ false }}">
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1">
+<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:8px"><span style="font-size:11.5px;font-weight:600;color:#767E89;flex:1">Properties & meters</span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ kyc.propCount }}</span></div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ kyc.props }}" as="p" hint-placeholder-count="4">
+<div style="border:1px solid #ECEEF1;border-radius:6px;padding:8px 9px;background:#FAFBFC">
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#00468C">{{ p.meter }}</span><span style="flex:1;font-size:10.5px;color:#49515C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.plot }}</span></div>
+<div style="display:flex;align-items:center;gap:7px"><span style="font-size:10.5px;color:#181D23;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.tenant }}</span><span style="font-weight:600;font-size:11px;color:{{ p.tone }};background:#fff;border:1px solid #E0E3E7;padding:1px 5px;border-radius:3px">{{ p.vends }}</span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ p.bal }}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:10px;margin-top:9px"><span style="font-size:10.5px;color:#00468C;font-weight:600;cursor:pointer">+ Add property</span><span style="font-size:10.5px;color:#00468C;font-weight:600;cursor:pointer">Assign tenant</span></div>
+</div>
+</sc-if>
+<div style="padding:11px 14px">
+<div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:8px">Recent purchases</div>
+<sc-for list="{{ kyc.purchases }}" as="p" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F0F2F4;font-size:11px"><span style="flex:1;color:#49515C">{{ p.date }}</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ p.channel }}</span><span style="font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace">{{ p.amount }}</span></div>
+</sc-for>
+<div style="display:flex;gap:7px;margin-top:11px"><div style="flex:1;padding:7px;border-radius:6px;background:#00468C;color:#fff;font-size:11px;font-weight:600;text-align:center;cursor:pointer">Open full profile</div><div style="padding:7px 11px;border-radius:6px;border:1px solid #E0E3E7;color:#49515C;font-size:11px;font-weight:600;cursor:pointer">Meters</div></div>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+<sc-for list="{{ reportCards }}" as="c" hint-placeholder-count="9">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 14px;cursor:pointer;display:flex;flex-direction:column;gap:7px" style-hover="border-color:#B8CFE8">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">{{ c.name }}</span></div>
+<div style="font-size:11px;color:#767E89;line-height:1.45;min-height:32px">{{ c.desc }}</div>
+<div style="display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid #F0F2F4"><sc-for list="{{ c.formats }}" as="f" hint-placeholder-count="3"><span style="font-weight:500;font-size:11px;color:#49515C;background:#F0F2F4;padding:2px 6px;border-radius:3px">{{ f }}</span></sc-for><span style="flex:1"></span><span style="font-size:10.5px;color:#00468C;font-weight:600">Generate</span></div>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;font-size:12.5px;font-weight:600">Recently generated</div>
+<table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ genHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ generated }}" as="g" hint-placeholder-count="8">
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 14px;font-size:11.5px;border-bottom:1px solid #F0F2F4;font-weight:500">{{ g.name }}</td><td style="padding:8px 14px;font-size:11px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.range }}</td><td style="padding:8px 14px;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.by }}</td><td style="padding:8px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.status }}</span></td><td style="padding:8px 14px;text-align:right;font-size:11px;border-bottom:1px solid #F0F2F4"><span style="color:#00468C;font-weight:600;cursor:pointer">{{ g.action }}</span></td></tr>
+</sc-for></tbody>
+</table>
+</div>
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center"><span style="font-size:12.5px;font-weight:600;flex:1">Scheduled</span><span style="font-size:11px;color:#00468C;font-weight:600;cursor:pointer">+ New schedule</span></div>
+<sc-for list="{{ schedules }}" as="s" hint-placeholder-count="5">
+<div style="padding:10px 14px;border-bottom:1px solid #F0F2F4">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:11.5px;font-weight:600;flex:1">{{ s.name }}</span><span style="width:26px;height:14px;border-radius:9px;background:{{ s.sw }};position:relative;flex:none"><span style="position:absolute;top:2px;left:{{ s.knob }};width:10px;height:10px;border-radius:50%;background:#fff"></span></span></div>
+<div style="font-size:10.5px;color:#767E89;margin-top:3px;font-family:'IBM Plex Mono',monospace">{{ s.cron }} · {{ s.to }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isNetwork }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px">
+<sc-for list="{{ netKpis }}" as="k" hint-placeholder-count="5">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:12px 13px">
+<div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:7px">{{ k.label }}</div>
+<div style="font-weight:600;font-size:19px;letter-spacing:-.6px">{{ k.value }}</div>
+<div style="font-size:10.5px;color:#767E89;margin-top:6px">{{ k.sub }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:11px">Spreading factor distribution</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ sfBars }}" as="s" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:9px"><span style="width:34px;font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ s.sf }}</span><div style="flex:1;height:13px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ s.tone }};width:{{ s.w }}"></div></div><span style="width:96px;font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89;text-align:right">{{ s.value }}</span></div>
+</sc-for>
+</div>
+<div style="font-size:10.5px;color:#767E89;margin-top:11px;line-height:1.5">Higher spreading factors reach further but consume more airtime. SF12 nodes above 8% of the fleet usually indicate a coverage gap.</div>
+</div>
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:11px">Packet loss by gateway · last 24h</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ lossBars }}" as="g" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:9px"><span style="width:84px;font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ g.id }}</span><div style="flex:1;height:13px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ g.tone }};width:{{ g.w }}"></div></div><span style="width:52px;font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89;text-align:right">{{ g.value }}</span></div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1.25fr 1fr;gap:10px">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;font-size:12.5px;font-weight:600">Gateway fleet</div>
+<table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ gwHead }}" as="h" hint-placeholder-count="7"><th style="text-align:{{ h.align }};padding:7px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ gwRows }}" as="g" hint-placeholder-count="6">
+<tr style-hover="background:#FAFBFC"><td style="padding:9px 14px;font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ g.id }}</td><td style="padding:9px 14px;font-size:11px;color:#49515C;border-bottom:1px solid #F0F2F4">{{ g.site }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ g.nodes }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.rssi }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.up }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.state }}</span></td></tr>
+</sc-for></tbody>
+</table>
+</div>
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">Uplink log</span><span style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#2E9D5B"></span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#237A48">streaming</span></span></div>
+<div style="max-height:340px;overflow-y:auto;background:#FFFFFF">
+<sc-for list="{{ uplinks }}" as="u" hint-placeholder-count="14">
+<div style="display:flex;gap:9px;padding:6px 13px;border-bottom:1px solid #F0F2F4;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">
+<span style="color:#767E89">{{ u.t }}</span><span style="color:#00468C">{{ u.dev }}</span><span style="color:{{ u.tone }}">{{ u.port }}</span><span style="color:#49515C;flex:1;overflow:hidden;text-overflow:ellipsis">{{ u.payload }}</span><span style="color:#767E89">{{ u.rssi }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:flex;gap:7px;margin-bottom:12px">
+<sc-for list="{{ setTabs }}" as="t" hint-placeholder-count="3"><div onClick="{{ t.go }}" style="padding:7px 14px;border-radius:6px;font-size:12px;font-weight:{{ t.weight }};cursor:pointer;background:{{ t.bg }};color:{{ t.color }};border:1px solid {{ t.border }}">{{ t.label }}</div></sc-for>
+</div>
+<sc-if value="{{ setIsUsers }}" hint-placeholder-val="{{ true }}">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center"><span style="font-size:12.5px;font-weight:600;flex:1">Users · 34 accounts</span><span style="padding:6px 12px;border-radius:6px;background:#00468C;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer">+ Invite user</span></div>
+<table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ userHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ users }}" as="u" hint-placeholder-count="8">
+<tr style-hover="background:#FAFBFC"><td style="padding:9px 14px;border-bottom:1px solid #F0F2F4"><div style="display:flex;align-items:center;gap:9px"><span style="width:24px;height:24px;border-radius:50%;background:#ECEEF1;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;color:#49515C">{{ u.ini }}</span><div><div style="font-size:11.5px;font-weight:600">{{ u.name }}</div><div style="font-size:10px;color:#767E89">{{ u.email }}</div></div></div></td><td style="padding:9px 14px;font-size:11.5px;border-bottom:1px solid #F0F2F4">{{ u.role }}</td><td style="padding:9px 14px;font-size:11px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ u.scope }}</td><td style="padding:9px 14px;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ u.seen }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ u.bg }};color:{{ u.tone }};padding:2px 7px;border-radius:4px">{{ u.status }}</span></td><td style="padding:9px 14px;text-align:right;font-size:11px;border-bottom:1px solid #F0F2F4"><span style="color:#00468C;font-weight:600;cursor:pointer">Edit</span></td></tr>
+</sc-for></tbody>
+</table>
+</div>
+</sc-if>
+<sc-if value="{{ setIsRoles }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:auto">
+<table style="width:100%;border-collapse:collapse;min-width:760px">
+<thead><tr><th style="text-align:left;padding:9px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">Capability</th><sc-for list="{{ roleCols }}" as="c" hint-placeholder-count="5"><th style="text-align:center;padding:9px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ c }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ roleRows }}" as="r" hint-placeholder-count="9">
+<tr style-hover="background:#FAFBFC"><td style="padding:9px 14px;font-size:11.5px;border-bottom:1px solid #F0F2F4;color:#181D23">{{ r.cap }}</td><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5"><td style="padding:9px 14px;text-align:center;border-bottom:1px solid #F0F2F4"><span style="font-size:11px;color:{{ c.color }};font-weight:600">{{ c.mark }}</span></td></sc-for></tr>
+</sc-for></tbody>
+</table>
+</div>
+</sc-if>
+<sc-if value="{{ setIsModules }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+<sc-for list="{{ modules }}" as="m" hint-placeholder-count="9">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 14px">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><span style="font-size:12.5px;font-weight:600;flex:1">{{ m.name }}</span><span onClick="{{ m.go }}" style="width:30px;height:16px;border-radius:9px;background:{{ m.sw }};position:relative;cursor:pointer;flex:none"><span style="position:absolute;top:2px;left:{{ m.knob }};width:12px;height:12px;border-radius:50%;background:#fff"></span></span></div>
+<div style="font-size:11px;color:#767E89;line-height:1.45">{{ m.desc }}</div>
+<div style="margin-top:9px;padding-top:8px;border-top:1px solid #F0F2F4;display:flex;align-items:center;gap:7px"><span style="font-weight:500;font-size:11px;color:#767E89">{{ m.meta }}</span></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPortal }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:1180px;margin:0 auto">
+<div style="background:#fff;border:1px solid #E0E3E7;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+<div style="height:34px;background:#F0F2F4;border-bottom:1px solid #E0E3E7;display:flex;align-items:center;gap:8px;padding:0 12px">
+<span style="font-size:12px;color:#767E89">Customer portal preview</span>
+<div style="flex:1;max-width:340px;background:#fff;border:1px solid #E0E3E7;border-radius:5px;padding:3px 9px;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">myaccount.amplifiediot.co.bw/usage</div>
+</div>
+<div style="padding:16px 22px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:14px">
+<img src="assets/at-mark.png" alt="Amplified IoT" style="height:22px;width:auto;display:block">
+<div style="flex:1"><div style="font-size:14px;font-weight:600;letter-spacing:-.2px">My Water Account</div><div style="font-size:11px;color:#767E89">Meter WM-104882 · Plot 21455, Block 8, Gaborone</div></div>
+<sc-for list="{{ portalNav }}" as="p" hint-placeholder-count="4"><span style="font-size:11.5px;font-weight:{{ p.weight }};color:{{ p.color }};border-bottom:2px solid {{ p.border }};padding-bottom:3px;cursor:pointer">{{ p.label }}</span></sc-for>
+</div>
+<div style="padding:10px 22px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:12px;background:#FAFBFC">
+<span style="font-weight:600;font-size:11px;background:{{ portalRoleBg }};color:{{ portalRoleTone }};padding:3px 8px;border-radius:4px">{{ portalRole }}</span>
+<span style="flex:1;font-size:11.5px;color:#49515C">{{ portalRelation }}</span>
+<span style="font-size:11.5px;font-weight:600;color:#767E89">Signed in as</span>
+<div style="display:flex;border:1px solid #E0E3E7;border-radius:6px;overflow:hidden;background:#fff">
+<sc-for list="{{ portalViews }}" as="v" hint-placeholder-count="2"><div onClick="{{ v.go }}" style="padding:5px 11px;font-size:11px;font-weight:{{ v.weight }};cursor:pointer;background:{{ v.bg }};color:{{ v.color }};border-right:1px solid #E0E3E7">{{ v.label }}</div></sc-for>
+</div>
+</div>
+<sc-if value="{{ portalIsOwner }}" hint-placeholder-val="{{ false }}">
+<div style="padding:16px 22px 0">
+<div style="border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 15px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:10px">
+<span style="font-size:12.5px;font-weight:600;flex:1">My properties · {{ portfolioCount }}</span>
+<span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ portfolioSummary }}</span>
+<span style="font-size:11px;color:#00468C;font-weight:600;cursor:pointer">Statement</span>
+</div>
+<table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ portfolioHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ portfolio }}" as="p" hint-placeholder-count="6">
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:#00468C">{{ p.meter }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4">{{ p.plot }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4;color:#49515C">{{ p.tenant }}</td><td style="padding:8px 15px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;color:{{ p.tone }};border:1px solid #E0E3E7;padding:2px 6px;border-radius:3px">{{ p.vends }}</span></td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#2A7A7E;border-bottom:1px solid #F0F2F4">{{ p.usage }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:{{ p.balTone }}">{{ p.bal }}</td></tr>
+</sc-for></tbody>
+</table>
+<div style="padding:9px 15px;border-top:1px solid #ECEEF1;font-size:10.5px;color:#767E89;line-height:1.5">Tenants buy water in their own names against these meters. You keep ownership, see every meter's usage and balance, and are billed directly only for vacant units.</div>
+</div>
+</div>
+</sc-if>
+<div style="padding:18px 22px;display:grid;grid-template-columns:1.6fr 1fr;gap:14px">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+<sc-for list="{{ portalStats }}" as="s" hint-placeholder-count="3">
+<div style="border:1px solid #E0E3E7;border-radius:8px;padding:13px 14px;background:{{ s.card }}">
+<div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:7px">{{ s.label }}</div>
+<div style="font-weight:600;font-size:20px;letter-spacing:-.6px;color:{{ s.tone }}">{{ s.value }}</div>
+<div style="font-size:10.5px;color:#767E89;margin-top:5px">{{ s.sub }}</div>
+</div>
+</sc-for>
+</div>
+<div style="border:1px solid #E0E3E7;border-radius:8px;padding:14px 16px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><div style="font-size:12.5px;font-weight:600">Usage history</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">litres per month · 12 months</div></div>
+<div style="display:flex;align-items:flex-end;gap:5px;height:140px">
+<sc-for list="{{ portalUsage }}" as="u" hint-placeholder-count="12">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%" title="{{ u.tip }}">
+<span style="font-weight:500;font-size:11px;color:#767E89">{{ u.value }}</span>
+<div style="width:100%;border-radius:3px 3px 0 0;background:{{ u.tone }};height:{{ u.h }}"></div>
+<span style="font-weight:500;font-size:11px;color:#A1A8B2">{{ u.label }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 15px;border-bottom:1px solid #ECEEF1;font-size:12.5px;font-weight:600">Purchase history</div>
+<table style="width:100%;border-collapse:collapse">
+<thead><tr><sc-for list="{{ purchHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
+<tbody><sc-for list="{{ purchases }}" as="p" hint-placeholder-count="7">
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-size:11.5px;color:#49515C;border-bottom:1px solid #F0F2F4">{{ p.date }}</td><td style="padding:8px 15px;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.token }}</td><td style="padding:8px 15px;font-size:11.5px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ p.channel }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#2A7A7E;border-bottom:1px solid #F0F2F4">{{ p.units }}</td><td style="padding:8px 15px;text-align:right;font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.amount }}</td></tr>
+</sc-for></tbody>
+</table>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="border:1px solid #E0E3E7;border-radius:8px;padding:15px 16px;background:#FFFFFF">
+<div style="font-size:11.5px;font-weight:600;color:#00468C;margin-bottom:8px">Current balance</div>
+<div style="font-weight:600;font-size:30px;letter-spacing:-1.2px;color:#00468C">P 142.60</div>
+<div style="font-size:11px;color:#49515C;margin-top:6px">≈ 14,260 L at current tariff · about 19 days left</div>
+<div style="margin-top:13px;padding:9px;border-radius:7px;background:#00468C;color:#fff;font-size:12px;font-weight:600;text-align:center;cursor:pointer" style-hover="background:#003A75">Buy water</div>
+<div style="display:flex;gap:6px;margin-top:7px"><sc-for list="{{ quickBuy }}" as="q" hint-placeholder-count="3"><span style="flex:1;text-align:center;padding:6px;border-radius:6px;border:1px solid #B8CFE8;background:#fff;font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#00468C;cursor:pointer">{{ q }}</span></sc-for></div>
+</div>
+<div style="border:1px solid #E0E3E7;border-radius:8px;padding:14px 15px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:10px">Meter data</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ meterData }}" as="m" hint-placeholder-count="7">
+<div style="display:flex;align-items:center;gap:8px;font-size:11px;padding-bottom:8px;border-bottom:1px solid #F0F2F4"><span style="flex:1;color:#767E89">{{ m.k }}</span><span style="font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:{{ m.tone }}">{{ m.v }}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="border:1px solid #EFDDB8;border-radius:8px;padding:13px 15px;background:#FBF6EC">
+<div style="font-size:11.5px;font-weight:600;color:#965A00;margin-bottom:6px">Leak advisory</div>
+<div style="font-size:11.5px;color:#6B4200;line-height:1.5">Continuous flow of 42 L/h detected between 01:00 and 05:00 on 17 Aug. Check internal plumbing or log a technician visit.</div>
+<div style="margin-top:10px;font-size:11px;font-weight:600;color:#965A00;cursor:pointer">Report a problem</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1600,&quot;height&quot;:1000},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dash&quot;,&quot;map&quot;,&quot;reports&quot;,&quot;network&quot;,&quot;gateways&quot;,&quot;sites&quot;,&quot;domestic&quot;,&quot;business&quot;,&quot;gov&quot;,&quot;meters&quot;,&quot;bulk&quot;,&quot;portal&quot;,&quot;settings&quot;],&quot;default&quot;:&quot;dash&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Demo&quot;},&quot;basemap&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Satellite (Esri)&quot;,&quot;Streets (Voyager)&quot;,&quot;OpenStreetMap standard&quot;],&quot;default&quot;:&quot;Satellite (Esri)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Map&quot;},&quot;showCoverage&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Map&quot;}}">
+const rnd = s => () => (s = (s * 1664525 + 1013904223) >>> 0, s / 4294967296);
+const P = n => 'P ' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const N = n => n.toLocaleString('en-US');
+const L_ = n => N(n) + ' L';
+const short = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(0) + 'k' : String(n);
+
+const SUB = [
+  ['PHAKALANE', 1571, 779240.99, 55461439, 1371, 2267, -24.5637, 25.9520],
+  ['BLOCK 8', 2725, 1455232.76, 130123131, 2725, 3170, -24.6273, 25.9420],
+  ['BLOCK 10', 1307, 399495.40, 23958672, 1307, 1557, -24.6210, 25.9530],
+  ['BLOCK 9', 1369, 288151.30, 10830742, 1369, 2219, -24.6180, 25.9310],
+  ['PHASE 4', 1321, 251146.85, 19346924, 1321, 2033, -24.6480, 25.8950],
+  ['TSHOLOFELO', 1303, 239048.46, 12228669, 1303, 1853, -24.6350, 25.9500],
+  ['BROADHURST BBS MALL AREA', 860, 158718.93, 14177242, 860, 1246, -24.6300, 25.9400],
+  ['OLD NALEDI', 851, 183335.00, 5251353, 851, 1231, -24.6720, 25.9200],
+  ['GOVERNMENT ENCLAVE', 532, 163107.74, 10672385, 532, 883, -24.6580, 25.9080],
+  ['BLOCK 5', 731, 153275.79, 8516845, 731, 1103, -24.6480, 25.9130],
+  ['BLOCK 3', 584, 149943.96, 10225101, 584, 1068, -24.6455, 25.9250],
+  ['BROADHURST', 559, 116743.13, 5871032, 559, 998, -24.6250, 25.9350],
+  ['KGALE VIEW', 396, 112885.75, 3490240, 396, 909, -24.6900, 25.8850],
+  ['POPINN', 270, 93433.23, 2394938, 270, 500, -24.6520, 25.9310],
+  ['BONTLENG', 297, 61273.00, 3099636, 297, 370, -24.6640, 25.9070],
+  ['AFRICAN MALL', 133, 31214.60, 2784949, 133, 216, -24.6540, 25.9200],
+  ['NEW STANCE', 116, 30987.15, 709821, 116, 134, -24.6670, 25.9130],
+  ['THE VILLAGE', 94, 36689.98, 578142, 94, 163, -24.6690, 25.9350],
+  ['FIRMS', 183, 20428.73, 770739, 183, 319, -24.6520, 25.9000],
+  ['TEBELOPELE', 59, 19700.00, 303176, 59, 95, -24.6420, 25.9010],
+  ['OLD LOBATSE ROAD', 18, 13312.50, 341042, 18, 38, -24.6800, 25.9300],
+  ['GABORONE NORTH', 41, 12016.04, 386376, 41, 82, -24.5950, 25.9300],
+  ['NEW NALEDI', 93, 11569.00, 433870, 93, 129, -24.6680, 25.9260],
+  ['FAIRGROUNDS', 49, 11243.00, 394212, 49, 135, -24.6480, 25.9280],
+  ['MARUAPULA', 1, 150.00, 9575, 1, 2, -24.6420, 25.9430],
+  ['GABORONE WEST', 9, 3150.00, 76036, 9, 6, -24.6480, 25.8900],
+  ['CBD', 3, 1120.00, 51745, 3, 26, -24.6560, 25.9130],
+  ['WHITE CITY', 0, 0, 2662, 0, 1, -24.6600, 25.8990]
+].map(r => ({name: r[0].split(' ').map(w => /^(CBD|BBS)$/.test(w) ? w : w.charAt(0) + w.slice(1).toLowerCase()).join(' '), tokens: r[1], salesN: r[2], usageN: r[3], txN: r[4], metersN: r[5], lat: r[6], lng: r[7]}));
+
+const GW = [
+  {id: 'GW-GAB-01', site: 'Main Mall rooftop, CBD', lat: -24.6555, lng: 25.9120, meters: 9840, rssi: '-97 dBm', state: 'ONLINE', dot: '#2E9D5B', r: 3400},
+  {id: 'GW-GAB-02', site: 'Broadhurst water tower', lat: -24.6260, lng: 25.9390, meters: 12470, rssi: '-92 dBm', state: 'ONLINE', dot: '#2E9D5B', r: 3800},
+  {id: 'GW-GAB-03', site: 'Phakalane reservoir', lat: -24.5680, lng: 25.9500, meters: 6310, rssi: '-101 dBm', state: 'ONLINE', dot: '#2E9D5B', r: 4200},
+  {id: 'GW-GAB-04', site: 'Gaborone West depot', lat: -24.6500, lng: 25.8930, meters: 8150, rssi: '-104 dBm', state: 'DEGRADED', dot: '#D99A2B', r: 3000},
+  {id: 'GW-GAB-05', site: 'Kgale Hill mast', lat: -24.6880, lng: 25.8880, meters: 5210, rssi: '-88 dBm', state: 'ONLINE', dot: '#2E9D5B', r: 4600},
+  {id: 'GW-GAB-06', site: 'Old Naledi clinic', lat: -24.6725, lng: 25.9215, meters: 3990, rssi: '—', state: 'OFFLINE', dot: '#B3261E', r: 2600}
+];
+
+const STATUS = {
+  online: {label: 'Online', dot: '#2E9D5B', box: '#2E9D5B'},
+  amber: {label: 'Late 12–24h', dot: '#E0A00B', box: '#E0A00B'},
+  offline: {label: 'Offline', dot: '#D6452E', box: '#D6452E'}
+};
+const FW = [['1.1', 6], ['2', 1], ['4', 9], ['5', 2], ['7', 8996], ['11', 135], ['16', 8856], ['17', 12133], ['201', 1], ['202', 2], ['208', 1], ['212', 35], ['217', 157], ['223', 1], ['252', 52], ['253', 16], ['Unknown', 2101]];
+const LAYERS = [['main', 'Main (32,504)'], ['online', 'Online (23,394)'], ['amber', 'Amber / Late 12-24h (5,428)'], ['offline', 'Offline (3,677)'],
+  ['lb50', 'Low Battery (<50, WUC) (939)'], ['lb25', 'Low Battery (<25, WUC) (733)'], ['bv', 'Battery Voltage (004/866) (282)'],
+  ['nc1', 'Negative Credit (-1 to -10) (190)'], ['nc2', 'Negative Credit (< -10 to -1,000) (236)'], ['nc3', 'Negative Credit (< -1,000) (5,043)'],
+  ['rssiHeat', 'RSSI Heatmap (73)'], ['snrHeat', 'SNR Heatmap (32,503)'], ['gwLinks', 'Gateway Links (30d) (0)']]
+  .concat(FW.map(f => ['fw' + f[0], 'Firmware ' + f[0] + ' (' + N(f[1]) + ')']))
+  .concat([['usageHeat', 'Usage Heatmap (32,504)']]);
+const LAYER_TEST = {
+  online: m => m.status === 'online', amber: m => m.status === 'amber', offline: m => m.status === 'offline',
+  lb50: m => m.batt < 50, lb25: m => m.batt < 25, bv: m => m.bv,
+  nc1: m => m.bal <= -1 && m.bal > -10, nc2: m => m.bal <= -10 && m.bal > -1000, nc3: m => m.bal <= -1000
+};
+FW.forEach(f => { LAYER_TEST['fw' + f[0]] = m => m.fw === f[0]; });
+const ramp = (v, stops) => { for (let i = 0; i < stops.length; i++) if (v <= stops[i][0]) return stops[i][1]; return stops[stops.length - 1][1]; };
+const HEAT = {
+  rssiHeat: m => ramp(m.rssi, [[-112, '#7f1d1d'], [-105, '#D6452E'], [-98, '#E0A00B'], [-90, '#a3d977'], [0, '#1a9850']]),
+  snrHeat: m => ramp(m.snr, [[-2, '#7f1d1d'], [2, '#D6452E'], [6, '#E0A00B'], [9, '#a3d977'], [99, '#1a9850']]),
+  usageHeat: m => ramp(m.usage, [[1500, '#fef0d9'], [3500, '#fdcc8a'], [6000, '#fc8d59'], [8000, '#e34a33'], [1e9, '#b30000']])
+};
+
+const ICON = {
+  dash: 'M3.5 3.5h7v8h-7zM13.5 3.5h7v5h-7zM13.5 11.5h7v9h-7zM3.5 14.5h7v6h-7z',
+  map: 'M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5l-6-2zM9 4.5v13M15 6.5v13',
+  reports: 'M6.5 3.5H14l4 4v13H6.5zM14 3.5v4h4M9.5 12h5M9.5 15.5h5',
+  network: 'M12 14.7V21M9 21h6M8.1 9.6a5.5 5.5 0 0 1 7.8 0M5.3 6.8a9.5 9.5 0 0 1 13.4 0M12 12.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 1 0 0-2.4z',
+  gateways: 'M4 13.5h16v6H4zM7.5 16.5h.01M11 16.5h.01M12 13.5V9.5M8.8 7a4.5 4.5 0 0 1 6.4 0',
+  sites: 'M12 21c-3.5-3.2-6.5-6.9-6.5-10.5a6.5 6.5 0 0 1 13 0c0 3.6-3 7.3-6.5 10.5zM12 8a2.5 2.5 0 1 0 0 5 2.5 2.5 0 1 0 0-5z',
+  domestic: 'M3.5 11 12 4l8.5 7M5.5 9.5V20h13V9.5M10 20v-5.5h4V20',
+  business: 'M4.5 20.5V4.5h9v16M13.5 9.5h6v11M3 20.5h18M7.5 8h3M7.5 11.5h3M7.5 15h3M16 13h1M16 16.5h1',
+  gov: 'M3 20.5h18M12 3.5l8 4.5H4zM4.5 17.5h15M6.5 10v7.5M10 10v7.5M14 10v7.5M17.5 10v7.5',
+  meters: 'M4.6 17.5a8.5 8.5 0 1 1 14.8 0M12 13.4l3.2-3.6M12 12.2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 1 0 0-2.4z',
+  bulk: 'M12 3.5c3 3.6 6 7.3 6 10.5a6 6 0 0 1-12 0c0-3.2 3-6.9 6-10.5z',
+  portal: 'M3.5 4.5h17V16h-17zM8.5 20h7M12 16v4',
+  settings: 'M20 5h-6M10 5H4M14 3v4M20 12h-8M8 12H4M8 10v4M20 19h-4M12 19H4M16 17v4'
+};
+const NAV = [
+  ['g', 'Analytics'], ['dash', 'Dashboard'], ['map', 'Network map'], ['reports', 'Reports'],
+  ['g', 'Network'], ['network', 'LoRaWAN', '3'], ['gateways', 'Gateways'], ['sites', 'Sites'],
+  ['g', 'Clients'], ['domestic', 'Domestic'], ['business', 'Business'], ['gov', 'Government'],
+  ['g', 'Assets'], ['meters', 'Meters'], ['bulk', 'Bulk meters'],
+  ['g', 'Portal'], ['portal', 'Customer portal'],
+  ['g', 'System'], ['settings', 'Settings']
+];
+
+const TITLES = {
+  dash: ['Analytics', 'Sales and usage'], map: ['Analytics', 'Network map'],
+  reports: ['Analytics', 'Reports'], network: ['Network', 'LoRaWAN network health'],
+  gateways: ['Network', 'Gateways'], sites: ['Network', 'Sites and zones'],
+  domestic: ['Clients', 'Domestic clients'], business: ['Clients', 'Business clients'],
+  gov: ['Clients', 'Government accounts'], meters: ['Assets', 'Meter register'],
+  bulk: ['Assets', 'Bulk meters'], portal: ['Portal', 'Customer portal'],
+  settings: ['System', 'Settings']
+};
+
+class Component extends DCLogic {
+  state = {screen: this.props.startScreen || 'dash', period: 'Aug 2026', mapMode: this.props.mapMode || 'pins', filters: {online: true, offline: true, lowbat: true, bypass: this.props.showBypass === true}, rings: this.props.showCoverage !== false, sel: null, ledgerTab: 'Sales', gwFocus: null};
+
+  meters() {
+    if (this._m) return this._m;
+    const r = rnd(20260819), out = [];
+    const fwPick = () => { const x = r(); return x < .37 ? '17' : x < .64 ? '16' : x < .91 ? '7' : x < .955 ? 'Unknown' : ['1.1', '2', '4', '5', '11', '201', '202', '208', '212', '217', '223', '252', '253'][Math.floor(r() * 13)]; };
+    SUB.forEach((s, si) => {
+      const n = Math.max(6, Math.round(s.metersN / 9));
+      for (let i = 0; i < n; i++) {
+        const x = r(), gw = GW.reduce((a, g) => {
+          const d = (g.lat - s.lat) ** 2 + (g.lng - s.lng) ** 2;
+          return d < a.d ? {d, g} : a;
+        }, {d: 1e9, g: GW[0]}).g;
+        const bq = r();
+        out.push({
+          id: 'WM-' + (100000 + si * 977 + i * 13),
+          lat: s.lat + (r() - 0.5) * 0.018, lng: s.lng + (r() - 0.5) * 0.022,
+          status: x > 0.887 ? 'offline' : x > 0.72 ? 'amber' : 'online',
+          sub: s.name, gw: gw.id, gwLat: gw.lat, gwLng: gw.lng,
+          rssi: -(78 + Math.round(r() * 40)), snr: (Math.round((r() * 14 - 3) * 10) / 10),
+          sf: 'SF' + [7, 8, 9, 10, 12][Math.floor(r() * 5)],
+          batt: bq < .03 ? Math.round(r() * 24) : bq < .06 ? 25 + Math.round(r() * 24) : Math.round(52 + r() * 48),
+          bv: r() < .012, fw: fwPick(),
+          bal: Math.round((r() < .17 ? -(r() * 1400) : r() * 420) * 100) / 100,
+          usage: Math.round(400 + r() * 9000),
+          loss: Math.round(r() * 90) / 10, seen: Math.round(r() * 55) + 'm ago'
+        });
+      }
+    });
+    this._m = out;
+    return out;
+  }
+
+  activeLayers() { return this.state.layers || {main: true}; }
+
+  visible() {
+    const L_ = this.activeLayers(), on = Object.keys(L_).filter(k => L_[k] && k !== 'main' && !HEAT[k] && k !== 'gwLinks');
+    const all = this.meters();
+    if (!on.length) return L_.main === false ? [] : all;
+    return all.filter(m => on.some(k => LAYER_TEST[k] && LAYER_TEST[k](m)));
+  }
+
+  componentDidMount() { this.sync(); }
+  componentDidUpdate() { this.sync(); }
+
+  sync() {
+    if (this.state.screen !== 'map' || !window.L || !this._el) { return; }
+    if (!this.map) {
+      this.map = L.map(this._el, {zoomControl: false, preferCanvas: true}).setView([-24.645, 25.918], 13);
+      const bmk = this.props.basemap || 'Satellite (Esri)';
+      if (bmk === 'OpenStreetMap standard') {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap contributors · Amplified IoT'}).addTo(this.map);
+      } else if (bmk === 'Streets (Voyager)') {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom: 19, attribution: '© OpenStreetMap · © CARTO · Amplified IoT'}).addTo(this.map);
+      } else {
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom: 19, attribution: 'Imagery © Esri · © OpenStreetMap · Amplified IoT'}).addTo(this.map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {maxZoom: 19, opacity: .92}).addTo(this.map);
+      }
+      this.layer = L.layerGroup().addTo(this.map);
+      this.map.on('zoomend moveend', () => { this._key = null; this.sync(); this.forceUpdate(); });
+      this.map.on('mousedown', e => {
+        if (!this.state.boxing || this._rect) return;
+        this._a = e.latlng;
+        this._rect = L.rectangle([this._a, this._a], {color: '#00468C', weight: 1.5, fillColor: '#00468C', fillOpacity: .14, dashArray: '4 3'}).addTo(this.map);
+      });
+      this.map.on('mousemove', e => { if (this._rect && this._a) this._rect.setBounds(L.latLngBounds(this._a, e.latlng)); });
+      this.map.on('mouseup', () => {
+        if (!this._rect) return;
+        const bd = this._rect.getBounds(), n = this.visible().filter(m => bd.contains([m.lat, m.lng])).length;
+        this.map.removeLayer(this._rect); this._rect = null; this._a = null; this.map.dragging.enable();
+        this.setState({boxing: false, boxCount: n});
+      });
+      setTimeout(() => this.map && this.map.invalidateSize(), 60);
+    }
+    if (this.state.boxing) this.map.dragging.disable(); else if (!this._rect) this.map.dragging.enable();
+    if (this.state.autoFly && !this._fly) {
+      this._fly = setInterval(() => {
+        const bad = this.meters().filter(m => m.status === 'offline'), m = bad[Math.floor(Math.random() * bad.length)];
+        if (m && this.map && this.state.autoFly) { this.map.flyTo([m.lat, m.lng], 17, {duration: 1.8}); this.setState({sel: m}); }
+      }, 6500);
+    }
+    if (!this.state.autoFly && this._fly) { clearInterval(this._fly); this._fly = null; }
+    const c = this.map.getCenter();
+    const key = JSON.stringify([this.state.layers, this.state.rings, this.map.getZoom(), c.lat.toFixed(3), c.lng.toFixed(3)]);
+    if (key === this._key) return;
+    this._key = key;
+    this.drawNew();
+  }
+
+  draw() {
+    const {mapMode, filters, rings} = this.state, lg = this.layer;
+    lg.clearLayers();
+    const pts = this.meters().filter(m => filters[m.status]);
+    if (rings) GW.forEach(g => L.circle([g.lat, g.lng], {radius: g.r, color: g.dot, weight: 1, fillColor: g.dot, fillOpacity: .05, dashArray: '4 4'}).addTo(lg));
+    if (mapMode === 'pins') {
+      pts.forEach(m => L.circleMarker([m.lat, m.lng], {radius: 3.6, color: '#fff', weight: .8, fillColor: STATUS[m.status].dot, fillOpacity: .92})
+        .on('click', () => this.setState({sel: m})).addTo(lg));
+    } else if (mapMode === 'density') {
+      SUB.forEach(s => {
+        const inSub = pts.filter(m => m.sub === s.name).length;
+        if (!inSub) return;
+        const mx = Math.max(...SUB.map(x => x.usageN));
+        L.circle([s.lat, s.lng], {radius: 300 + 1900 * Math.sqrt(s.usageN / mx), color: '#2A7A7E', weight: 1.2, fillColor: '#2A7A7E', fillOpacity: .22})
+          .bindTooltip('<b>' + s.name + '</b><br>' + L_(s.usageN) + '<br>' + N(s.metersN) + ' meters', {direction: 'top'})
+          .on('click', () => this.map.flyTo([s.lat, s.lng], 15)).addTo(lg);
+      });
+      pts.filter(m => m.status !== 'online').forEach(m => L.circleMarker([m.lat, m.lng], {radius: 3, color: '#fff', weight: .8, fillColor: STATUS[m.status].dot, fillOpacity: .95}).on('click', () => this.setState({sel: m})).addTo(lg));
+    } else {
+      const step = Math.max(1, Math.round(pts.length / 260));
+      pts.forEach((m, i) => {
+        if (i % step === 0) L.polyline([[m.lat, m.lng], [m.gwLat, m.gwLng]], {color: m.rssi > -95 ? '#2E9D5B' : m.rssi > -108 ? '#D99A2B' : '#B3261E', weight: .7, opacity: .38}).addTo(lg);
+        L.circleMarker([m.lat, m.lng], {radius: 2.6, color: STATUS[m.status].dot, weight: 1, fillOpacity: 0}).on('click', () => this.setState({sel: m})).addTo(lg);
+      });
+    }
+    GW.forEach(g => L.marker([g.lat, g.lng], {icon: L.divIcon({className: '', html: '<div class="gwico" style="width:44px;height:18px;background:' + (g.state === 'OFFLINE' ? '#B3261E' : g.state === 'DEGRADED' ? '#965A00' : '#181D23') + '">' + g.id.slice(-2) + ' GW</div>', iconSize: [44, 18], iconAnchor: [22, 9]})})
+      .bindTooltip('<b>' + g.id + '</b><br>' + g.site + '<br>' + N(g.meters) + ' nodes · ' + g.rssi, {direction: 'top'})
+      .on('click', () => this.map.flyTo([g.lat, g.lng], 14)).addTo(lg));
+  }
+
+  renderVals() {
+    const st = this.state, go = s => () => this.setState({screen: s, sel: null});
+    const mx = {sales: Math.max(...SUB.map(s => s.salesN)), usage: Math.max(...SUB.map(s => s.usageN)), tx: Math.max(...SUB.map(s => s.txN))};
+    const tone = t => '#EEF0F2';
+    const r = rnd(77), total = SUB.reduce((a, s) => a + s.salesN, 0);
+    const pal = ['#00468C', '#1D5C9C', '#3A72AC', '#5889BD', '#77A0CD', '#97B8DC', '#B8CFE8', '#D5DAE0'];
+    const top = SUB.slice().sort((a, b) => b.salesN - a.salesN).slice(0, 7);
+    const rest = total - top.reduce((a, s) => a + s.salesN, 0);
+    const shareBar = top.map((s, i) => ({name: s.name, tone: pal[i], w: (s.salesN / total * 100).toFixed(1) + '%', pct: (s.salesN / total * 100).toFixed(1) + '%', tip: s.name + ' · ' + P(s.salesN)}))
+      .concat([{name: 'Other zones', tone: pal[7], w: (rest / total * 100).toFixed(1) + '%', pct: (rest / total * 100).toFixed(1) + '%', tip: 'Other'}]);
+    const dailyVals = [91726.06, 102883.19, 146181.55, 126612.59, 70457.36, 102848.14, 108662.03, 105248.16, 165245.66, 175617.43, 151259.03, 87754.85, 154528.95, 148812.31, 121317.43, 252096.74, 234587.92, 166683.18, 168682.98, 173690.41, 173890.41];
+    const dmax = Math.max(...dailyVals);
+    const cnt = this.meters().reduce((a, m) => (a[m.status] = (a[m.status] || 0) + 1, a), {});
+
+    const mode = m => ({weight: st.mapMode === m ? 600 : 500, bg: st.mapMode === m ? '#00468C' : '#fff', color: st.mapMode === m ? '#fff' : '#49515C'});
+    const pd = p => ({weight: st.period === p ? 600 : 500, bg: st.period === p ? '#EBF1F8' : '#fff', color: st.period === p ? '#00468C' : '#767E89'});
+
+    const monthPts = [5.9, 6.35, 7.4, 6.8, 7.1, 7.01];
+    const mmax = 8, mw = 300, mh = 128;
+    const path = monthPts.map((v, i) => (i ? 'L' : 'M') + (14 + i * ((mw - 28) / 5)).toFixed(1) + ' ' + (mh - 18 - (v / mmax) * (mh - 34)).toFixed(1)).join(' ');
+    const monthChart = React.createElement('svg', {viewBox: '0 0 ' + mw + ' ' + mh, style: {width: '100%', height: 132}},
+      [1, 2, 3, 4].map(i => React.createElement('line', {key: 'g' + i, x1: 8, x2: mw - 8, y1: 14 + i * 22, y2: 14 + i * 22, stroke: '#ECEEF1', strokeWidth: 1})),
+      React.createElement('path', {d: path + ' L' + (mw - 14) + ' ' + (mh - 18) + ' L14 ' + (mh - 18) + ' Z', fill: '#00468C', fillOpacity: .07}),
+      React.createElement('path', {d: path, fill: 'none', stroke: '#00468C', strokeWidth: 2, strokeLinejoin: 'round'}),
+      monthPts.map((v, i) => React.createElement('circle', {key: 'c' + i, cx: 14 + i * ((mw - 28) / 5), cy: mh - 18 - (v / mmax) * (mh - 34), r: 3, fill: '#fff', stroke: '#00468C', strokeWidth: 2})),
+      ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((m, i) => React.createElement('text', {key: 't' + i, x: 14 + i * ((mw - 28) / 5), y: mh - 4, fill: '#A1A8B2', fontSize: 8.5, textAnchor: 'middle', fontFamily: 'IBM Plex Mono, monospace'}, m))
+    );
+
+    const sel = st.sel && {
+      id: st.sel.id, status: STATUS[st.sel.status].label, tone: STATUS[st.sel.status].dot,
+      fields: [
+        {k: 'Suburb', v: st.sel.sub}, {k: 'Latitude', v: st.sel.lat.toFixed(5)}, {k: 'Longitude', v: st.sel.lng.toFixed(5)},
+        {k: 'Gateway', v: st.sel.gw}, {k: 'RSSI', v: st.sel.rssi + ' dBm'}, {k: 'SNR', v: st.sel.snr + ' dB'},
+        {k: 'Spread factor', v: st.sel.sf}, {k: 'Packet loss', v: st.sel.loss + '%'}, {k: 'Battery', v: st.sel.batt + '%'},
+        {k: 'Balance', v: P(st.sel.bal)}, {k: 'Usage MTD', v: L_(st.sel.usage)}, {k: 'Last uplink', v: st.sel.seen}
+      ]
+    };
+
+    return {
+      nav: NAV.map(n => n[0] === 'g'
+        ? {isGroup: true, isItem: false, label: n[1]}
+        : {isItem: true, isGroup: false, label: n[1], d: ICON[n[0]], badge: n[2] || false, go: go(n[0]),
+           weight: st.screen === n[0] ? 600 : 500, color: st.screen === n[0] ? '#00468C' : '#3A424C', bg: st.screen === n[0] ? '#EBF1F8' : 'transparent'}),
+      crumb: (TITLES[st.screen] || ['', ''])[0], title: (TITLES[st.screen] || ['', ''])[1],
+      isDash: st.screen === 'dash', isMap: st.screen === 'map',
+      isStub: ['dash', 'map'].indexOf(st.screen) < 0,
+      periods: ['Aug 2026', 'Q3 2026', 'YTD', 'Custom'].map(p => ({label: p, go: () => this.setState({period: p}), ...pd(p)})),
+      kpis: [
+        {label: 'Total sales', value: 'P 7,014,728.71', sub: 'period total', delta: '▲ 8.4%', deltaColor: '0e9a5a', tone: '#00468C'},
+        {label: 'Transactions', value: '26,478', sub: 'token issues', delta: '▲ 5.1%', deltaColor: '0e9a5a', tone: '#00468C'},
+        {label: 'Counter excl. VAT', value: 'P 3,535,646.07', sub: 'vendor desks', delta: '▲ 2.7%', deltaColor: '0e9a5a', tone: '#D99A2B'},
+        {label: 'Total usage', value: '360,739,965 L', sub: 'metered volume', delta: '▲ 1.9%', deltaColor: '0e9a5a', tone: '#2A7A7E'},
+        {label: 'Online payments', value: 'P 3,020,215.40', sub: '11,200 tx · 3 providers', delta: '▲ 14.2%', deltaColor: '0e9a5a', tone: '#00468C'},
+        {label: 'Counter sales', value: 'P 3,994,513.31', sub: '15,278 tx', delta: '▼ 1.4%', deltaColor: 'd92d20', tone: '#A1A8B2'}
+      ],
+      daily: dailyVals.map((v, i) => ({label: String(i + 1), h: (v / dmax * 100).toFixed(1) + '%', tone: '#00468C', tip: 'Aug ' + (i + 1) + ' · ' + P(v)})),
+      monthChart,
+      ports: [
+        {label: 'Port 5 · ACK-ACK', value: '1,301,969', kind: 'Packet count', delta: '▲ 3.2%', tone: '#00468C', icon: '☁', w: '78%'},
+        {label: 'Port 37 · Installation', value: '94,841', kind: 'Packet count', delta: '▲ 1.1%', tone: '#00468C', icon: '⚒', w: '22%'},
+        {label: 'Port 65 · Tamper alarm', value: '83,899', kind: 'Alarm count', delta: '▼ 4.6%', tone: '#B3261E', icon: '⚑', w: '31%'},
+        {label: 'Port 66 · Burst alarm', value: '25,147', kind: 'Alarm count', delta: '▼ 2.2%', tone: '#B3261E', icon: '⚑', w: '14%'},
+        {label: 'Port 60 · Midnight data', value: '12,990,715', kind: 'Packet count', delta: '▲ 6.9%', tone: '#00468C', icon: '☾', w: '96%'},
+        {label: 'Port 61 · Live data', value: '3,170,564', kind: 'Packet count', delta: '▲ 4.4%', tone: '#00468C', icon: '⌁', w: '54%'},
+        {label: 'Port 210 · Credit', value: '432,740', kind: 'Packet count', delta: '▲ 9.7%', tone: '#00468C', icon: '▤', w: '38%'},
+        {label: 'Port 225 · Come back', value: '11,001,247', kind: 'Packet count', delta: '▲ 5.5%', tone: '#2A7A7E', icon: '⟲', w: '88%'}
+      ],
+      bypass: [
+        {label: 'High risk', value: '87', tone: '#B3261E'}, {label: 'Medium risk', value: '635', tone: '#965A00'},
+        {label: 'Low risk', value: '442', tone: '#49515C'}, {label: '30–89 days', value: '155', tone: '#49515C'},
+        {label: '90–119 days', value: '39', tone: '#49515C'}, {label: '120+ days', value: '970', tone: '#181D23'}
+      ],
+      shareBar,
+      usageBars: SUB.slice().sort((a, b) => b.usageN - a.usageN).slice(0, 11).map(s => ({name: s.name, w: (s.usageN / mx.usage * 100).toFixed(1) + '%', value: short(s.usageN) + ' L'})),
+      suburbCount: SUB.length,
+      suburbs: SUB.slice().sort((a, b) => b.tokens - a.tokens).map(s => ({
+        name: s.name, tokens: N(s.tokens), tone: tone(s.tokens), sales: P(s.salesN), usage: L_(s.usageN), tx: N(s.txN), meters: N(s.metersN),
+        salesW: (s.salesN / mx.sales * 100).toFixed(1) + '%', usageW: (s.usageN / mx.usage * 100).toFixed(1) + '%', txW: (s.txN / mx.tx * 100).toFixed(1) + '%'
+      })),
+      provHead: [{label: 'Provider ID', align: 'left'}, {label: 'Transactions', align: 'right'}, {label: 'Total amount', align: 'right'}, {label: 'Share', align: 'right'}],
+      providers: [
+        {id: 'apiPAY/Orange', tx: '7,262', amount: 'P 1,346,724.80', share: '44.6%'},
+        {id: 'apiPAY/DPO', tx: '3,936', amount: 'P 1,288,471.40', share: '42.7%'},
+        {id: 'esw_leeroy', tx: '2', amount: 'P 385,019.20', share: '12.7%'}
+      ],
+      ledgerTabs: ['Sales', 'Usage', 'Meter analysis'].map(t => ({label: t, go: () => this.setState({ledgerTab: t}), weight: st.ledgerTab === t ? 600 : 500, bg: st.ledgerTab === t ? '#00468C' : '#F0F2F4', color: st.ledgerTab === t ? '#fff' : '#49515C'})),
+      ledgerHead: [{label: 'Date', align: 'left'}, {label: 'Total sales', align: 'right'}, {label: 'Excl. VAT', align: 'right'}, {label: 'VAT', align: 'right'}, {label: 'Transactions', align: 'right'}],
+      ledger: ['Wed, Aug 19', 'Tue, Aug 18', 'Mon, Aug 17', 'Sun, Aug 16', 'Sat, Aug 15', 'Fri, Aug 14', 'Thu, Aug 13', 'Wed, Aug 12', 'Tue, Aug 11', 'Mon, Aug 10', 'Sun, Aug 9', 'Sat, Aug 8'].map((d, i) => {
+        const t = dailyVals[dailyVals.length - 1 - i];
+        return {date: d + ', 2026', total: P(t), excl: P(t * 0.88), vat: P(t * 0.12), tx: N(Math.round(t / 190))};
+      }),
+      layers: LAYERS.map(l => {
+        const on = !!(st.layers || {main: true})[l[0]];
+        return {label: l[1], go: () => this.setState(s => ({layers: {...(s.layers || {main: true}), [l[0]]: !(s.layers || {main: true})[l[0]]}, boxCount: 0})),
+          check: on ? '✓' : '', box: on ? '#00468C' : '#B4BAC3', fill: on ? '#00468C' : '#fff', bg: on ? '#EBF1F8' : 'transparent'};
+      }),
+      resetLayers: () => this.setState({layers: {main: true}, boxCount: 0}),
+      mapTools: [
+        {d: 'M12 5v14M5 12h14', tip: 'Zoom in', go: () => this.map && this.map.zoomIn()},
+        {d: 'M5 12h14', tip: 'Zoom out', go: () => this.map && this.map.zoomOut()},
+        {d: 'M12 3v3M12 18v3M3 12h3M18 12h3M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10z', tip: 'Centre on Gaborone', go: () => this.map && this.map.flyTo([-24.645, 25.918], 13)},
+        {d: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5', tip: 'Fit visible meters', go: () => this.map && this.map.fitBounds(this.visible().map(m => [m.lat, m.lng]))}
+      ],
+      mapToggles: [
+        {label: 'Auto Fly To', go: () => this.setState(s => ({autoFly: !s.autoFly})), sw: st.autoFly ? '#00468C' : '#C9CED6', knob: st.autoFly ? '14px' : '2px'},
+        {label: 'Notifications', go: () => this.setState(s => ({notif: !s.notif})), sw: st.notif ? '#00468C' : '#C9CED6', knob: st.notif ? '14px' : '2px'}
+      ],
+      notifOn: !!st.notif,
+      notifs: [
+        {text: 'Burst alarm · WM-104473, Block 8 (port 66)', tone: '#D6452E', t: '12:58'},
+        {text: 'Tamper alarm · WM-118920, Old Naledi', tone: '#D6452E', t: '12:51'},
+        {text: 'GW-GAB-06 unreachable for 3 h 12 m', tone: '#D6452E', t: '12:44'},
+        {text: 'Low battery · 14 meters crossed 25% in Phase 4', tone: '#E0A00B', t: '12:30'},
+        {text: 'Negative credit · 62 meters below −P 1,000', tone: '#E0A00B', t: '12:05'}
+      ],
+      toggleSelect: () => this.setState(s => ({boxing: !s.boxing, boxCount: s.boxing ? s.boxCount : 0})),
+      selectBg: st.boxing ? '#00468C' : '#fff',
+      selectColor: st.boxing ? '#fff' : '#49515C',
+      boxCount: st.boxCount ? N(st.boxCount) : false,
+      clearBox: () => this.setState({boxCount: 0}),
+      zoomLabel: 'zoom ' + (this.map ? this.map.getZoom() : 13) + (this.map && this.map.getZoom() < 15 ? ' · clustered' : ' · individual meters'),
+      plotted: N(this.visible().length) + ' of ' + N(this.meters().length),
+      toggleRings: () => this.setState(s => ({rings: !s.rings})),
+      ringLabel: st.rings ? 'Hide coverage rings' : 'Show coverage rings',
+      gateways: GW.map(g => ({id: g.id, site: g.site, meters: N(g.meters), rssi: g.rssi, state: g.state, dot: g.dot, go: () => this.map && this.map.flyTo([g.lat, g.lng], 15)})),
+      mapRef: el => { this._el = el; this.sync(); },
+      sel, clearSel: () => this.setState({sel: null}),
+      ...this.screenVals()
+    };
+  }
+
+  screenVals() {
+    const st = this.state, s = st.screen;
+    const badge = (v, tone, bg) => ({v, color: tone, bg, pad: '2px 7px', font: "600 9.5px 'IBM Plex Mono',monospace", align: 'right'});
+    const txt = (v, o) => ({v, color: (o && o.color) || '#181D23', bg: 'transparent', pad: '0', font: (o && o.mono) ? "500 11px 'IBM Plex Mono',monospace" : ((o && o.bold) ? "600 11.5px 'Public Sans',sans-serif" : "400 11.5px 'Public Sans',sans-serif"), align: (o && o.align) || 'left'});
+    const ST = {Active: ['#237A48', '#E6F2EA'], Arrears: ['#B3261E', '#FAE8E6'], Suspended: ['#49515C', '#F0F2F4'], Verified: ['#237A48', '#E6F2EA'], Pending: ['#965A00', '#FAF0DC'], Expired: ['#B3261E', '#FAE8E6'], Online: ['#237A48', '#E6F2EA'], Offline: ['#B3261E', '#FAE8E6'], 'Low batt': ['#965A00', '#FAF0DC'], Ready: ['#237A48', '#E6F2EA'], Queued: ['#965A00', '#FAF0DC'], Failed: ['#B3261E', '#FAE8E6']};
+    const b = k => badge(k, ST[k][0], ST[k][1]);
+    const out = {isTable: false, isReports: s === 'reports', isNetwork: s === 'network', isPortal: s === 'portal', isSettings: s === 'settings', kyc: null, tbl: null, pager: [], closeKyc: () => this.setState({rowSel: null})};
+
+    if (s === 'reports') {
+      out.reportCards = REPORTS.map(r => ({name: r[0], desc: r[1], formats: r[2], icon: r[3], tone: r[4], bg: r[5]}));
+      out.genHead = [{label: 'Report', align: 'left'}, {label: 'Range', align: 'left'}, {label: 'Requested by', align: 'left'}, {label: 'Status', align: 'right'}, {label: '', align: 'right'}];
+      out.generated = GENERATED.map(g => ({name: g[0], range: g[1], by: g[2], status: g[3], action: g[3] === 'Ready' ? 'Download' : g[3] === 'Failed' ? 'Retry' : 'Cancel', tone: ST[g[3]][0], bg: ST[g[3]][1]}));
+      out.schedules = SCHEDULES.map(x => ({name: x[0], cron: x[1], to: x[2], sw: x[3] ? '#00468C' : '#C9CED6', knob: x[3] ? '14px' : '2px'}));
+      return out;
+    }
+    if (s === 'network') {
+      out.netKpis = [
+        {label: 'Join success', value: '99.2%', sub: '24h rolling', tone: '#2E9D5B'},
+        {label: 'Avg packet loss', value: '2.7%', sub: 'target < 4%', tone: '#00468C'},
+        {label: 'Avg RSSI', value: '-96 dBm', sub: 'fleet median', tone: '#00468C'},
+        {label: 'Uplinks / day', value: '1.41 M', sub: 'all ports', tone: '#2A7A7E'},
+        {label: 'Nodes unseen 24h', value: '1,842', sub: '3.7% of fleet', tone: '#B3261E'}
+      ];
+      const sfd = [['SF7', 41.2], ['SF8', 22.6], ['SF9', 15.1], ['SF10', 11.4], ['SF11', 5.9], ['SF12', 3.8]];
+      out.sfBars = sfd.map(x => ({sf: x[0], w: (x[1] / 41.2 * 100).toFixed(0) + '%', value: x[1] + '% · ' + N(Math.round(50412 * x[1] / 100)), tone: x[0] === 'SF12' || x[0] === 'SF11' ? '#D99A2B' : '#00468C'}));
+      out.lossBars = GW.map((g, i) => {
+        const v = [1.8, 2.1, 3.4, 7.9, 1.2, 100][i];
+        return {id: g.id, w: Math.min(100, v) + '%', value: v + '%', tone: v > 6 ? '#B3261E' : v > 3 ? '#D99A2B' : '#2E9D5B'};
+      });
+      out.gwHead = [{label: 'Gateway', align: 'left'}, {label: 'Site', align: 'left'}, {label: 'Nodes', align: 'right'}, {label: 'RSSI', align: 'right'}, {label: 'Uptime', align: 'right'}, {label: 'State', align: 'right'}];
+      out.gwRows = GW.map((g, i) => ({id: g.id, site: g.site, nodes: N(g.meters), rssi: g.rssi, up: ['99.9%', '99.7%', '98.4%', '94.1%', '99.9%', '0%'][i],
+        state: g.state, tone: g.state === 'ONLINE' ? '#237A48' : g.state === 'DEGRADED' ? '#965A00' : '#B3261E', bg: g.state === 'ONLINE' ? '#E6F2EA' : g.state === 'DEGRADED' ? '#FAF0DC' : '#FAE8E6'}));
+      const r = rnd(4242), ports = [[5, 'ACK-ACK', '#49515C'], [60, 'Midnight', '#49515C'], [61, 'Live', '#49515C'], [65, 'Tamper', '#B3261E'], [66, 'Burst', '#B3261E'], [210, 'Credit', '#49515C'], [225, 'Come back', '#49515C']];
+      out.uplinks = Array.from({length: 22}, (_, i) => {
+        const p = ports[Math.floor(r() * ports.length)], mm = Math.floor(r() * 60);
+        return {t: '13:' + String(59 - i).padStart(2, '0') + ':' + String(mm).padStart(2, '0'), dev: 'A840' + Math.floor(r() * 9e5 + 1e5).toString(16).toUpperCase(),
+          port: 'p' + p[0] + ' ' + p[1], tone: p[2], payload: Array.from({length: 8}, () => Math.floor(r() * 256).toString(16).padStart(2, '0').toUpperCase()).join(' '), rssi: -(80 + Math.floor(r() * 35)) + 'dBm'};
+      });
+      return out;
+    }
+    if (s === 'settings') {
+      const tab = t => ({label: t, go: () => this.setState({setTab: t}), weight: (st.setTab || 'Users') === t ? 600 : 500, bg: (st.setTab || 'Users') === t ? '#00468C' : '#fff', color: (st.setTab || 'Users') === t ? '#fff' : '#49515C', border: (st.setTab || 'Users') === t ? '#00468C' : '#E0E3E7'});
+      out.setTabs = ['Users', 'Roles & permissions', 'Modules'].map(tab);
+      out.setIsUsers = (st.setTab || 'Users') === 'Users';
+      out.setIsRoles = st.setTab === 'Roles & permissions';
+      out.setIsModules = st.setTab === 'Modules';
+      out.userHead = [{label: 'User', align: 'left'}, {label: 'Role', align: 'left'}, {label: 'Scope', align: 'left'}, {label: 'Last seen', align: 'left'}, {label: 'Status', align: 'right'}, {label: '', align: 'right'}];
+      out.users = USERS.map(u => ({ini: u[0].split(' ').map(x => x[0]).join(''), name: u[0], email: u[1], role: u[2], scope: u[3], seen: u[4], status: u[5], tone: ST[u[5]][0], bg: ST[u[5]][1]}));
+      out.roleCols = ['Admin', 'Ops', 'Finance', 'Vendor', 'Field'];
+      out.roleRows = ROLES.map(r => ({cap: r[0], cells: r[1].map(v => ({mark: v === 2 ? 'Full' : v === 1 ? 'Limited' : '—', color: v === 2 ? '#181D23' : v === 1 ? '#767E89' : '#C9CED6'}))}));
+      out.modules = MODULES.map(m => ({name: m[0], desc: m[1], meta: m[2], go: () => this.setState(x => ({modOff: {...(x.modOff || {}), [m[0]]: !((x.modOff || {})[m[0]])}})), sw: ((st.modOff || {})[m[0]] ? '#C9CED6' : (m[3] ? '#00468C' : '#C9CED6')), knob: ((st.modOff || {})[m[0]] ? '2px' : (m[3] ? '16px' : '2px'))}));
+      return out;
+    }
+    if (s === 'portal') {
+      out.portalNav = ['Overview', 'Usage', 'Purchases', 'Support'].map((p, i) => ({label: p, weight: i === 1 ? 600 : 500, color: i === 1 ? '#00468C' : '#767E89', border: i === 1 ? '#00468C' : 'transparent'}));
+      out.portalStats = [
+        {label: 'This month', value: '14,820 L', sub: '18% below your average', tone: '#2A7A7E', card: '#FAFBFC'},
+        {label: 'Spend YTD', value: 'P 2,184.00', sub: '14 purchases', tone: '#181D23', card: '#FAFBFC'},
+        {label: 'Daily average', value: '478 L', sub: 'household of 4', tone: '#181D23', card: '#FAFBFC'}
+      ];
+      const uv = [12400, 13900, 15600, 14100, 16800, 18200, 17400, 15900, 14700, 13800, 15200, 14820];
+      const um = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
+      const umx = Math.max(...uv);
+      out.portalUsage = uv.map((v, i) => ({label: um[i], value: (v / 1000).toFixed(1) + 'k', h: (v / umx * 100).toFixed(1) + '%', tone: i === 11 ? '#00468C' : '#9CCBC8', tip: um[i] + ' · ' + L_(v)}));
+      out.purchHead = [{label: 'Date', align: 'left'}, {label: 'Token', align: 'left'}, {label: 'Channel', align: 'left'}, {label: 'Units', align: 'right'}, {label: 'Amount', align: 'right'}];
+      out.purchases = PURCH.map(p => ({date: p[0], token: p[1], channel: p[2], units: p[3], amount: p[4]}));
+      out.quickBuy = ['P 50', 'P 100', 'P 200'];
+      const owner = st.portalView === 'Landlord';
+      out.portalIsOwner = owner;
+      out.portalRole = owner ? 'Landlord · owner' : 'Tenant · occupant';
+      out.portalRoleBg = owner ? '#EBF1F8' : '#EBF1F8';
+      out.portalRoleTone = owner ? '#00468C' : '#00468C';
+      out.portalRelation = owner
+        ? 'You own 14 metered properties across Gaborone. Tenants vend in their own names; vacant units bill to you.'
+        : 'Meter WM-104882 is owned by Mpho Sebego (landlord). You buy water in your own name — credit stays on this meter.';
+      out.portalViews = ['Tenant', 'Landlord'].map(v => ({label: v === 'Tenant' ? 'Tenant view' : 'Landlord view', go: () => this.setState({portalView: v}),
+        weight: (st.portalView || 'Tenant') === v ? 600 : 500, bg: (st.portalView || 'Tenant') === v ? '#00468C' : '#fff', color: (st.portalView || 'Tenant') === v ? '#fff' : '#767E89'}));
+      out.portfolioHead = [{label: 'Meter', align: 'left'}, {label: 'Property', align: 'left'}, {label: 'Occupant', align: 'left'}, {label: 'Vending', align: 'right'}, {label: 'Usage MTD', align: 'right'}, {label: 'Balance', align: 'right'}];
+      const pr = rnd(8181);
+      out.portfolio = PROPS(0).map(p => {
+        const bn = Math.round((pr() * 360 - 80) * 100) / 100;
+        return {meter: p.meter, plot: p.plot, tenant: p.tenant, vends: p.vends, tone: p.tone, usage: N(Math.round(6000 + pr() * 16000)) + ' L', bal: P(bn), balTone: bn < 0 ? '#B3261E' : '#181D23'};
+      });
+      out.portfolioCount = '14 meters';
+      out.portfolioSummary = '13 let · 1 vacant · P 384.20 owed on vacant units';
+      out.meterData = [
+        {k: 'Meter serial', v: 'WM-104882', tone: '#181D23'}, {k: 'DevEUI', v: 'A840419B2C7D', tone: '#181D23'},
+        {k: 'Last reading', v: '1,428,905 L', tone: '#181D23'}, {k: 'Last uplink', v: '19 Aug 12:58', tone: '#237A48'},
+        {k: 'Signal (RSSI)', v: '-94 dBm', tone: '#181D23'}, {k: 'Battery', v: '82%', tone: '#237A48'},
+        {k: 'Serving gateway', v: 'GW-GAB-02', tone: '#181D23'}, {k: 'Tariff', v: 'Domestic Band 2', tone: '#181D23'}
+      ];
+      return out;
+    }
+
+    const cfg = TABLES[s];
+    if (!cfg) return out;
+    out.isTable = true;
+    const rows = cfg.rows(b, txt);
+    const sel = st.rowSel;
+    out.tbl = {
+      name: cfg.name, stats: cfg.stats, cols: cfg.kyc && sel ? '1fr 340px' : '1fr',
+      chips: cfg.chips.map((c, i) => {
+        const on = (st.chip || {})[s] === undefined ? i === 0 : (st.chip || {})[s] === i;
+        return {label: c, go: () => this.setState(x => ({chip: {...(x.chip || {}), [s]: i}})), weight: on ? 600 : 500, bg: on ? '#EBF1F8' : '#fff', color: on ? '#00468C' : '#767E89', border: on ? '#B8CFE8' : '#E0E3E7'};
+      }),
+      head: cfg.head.map(h => ({label: h[0], align: h[1] || 'left'})),
+      rows: rows.map((r, i) => ({cells: r, bg: sel === i ? '#F3F7FC' : 'transparent', go: cfg.kyc ? () => this.setState({rowSel: i}) : () => {}})),
+      count: cfg.count, pageInfo: cfg.pageInfo
+    };
+    out.pager = ['‹', '1', '2', '3', '…', '›'].map(p => ({label: p, bg: p === '1' ? '#00468C' : '#F0F2F4', color: p === '1' ? '#fff' : '#49515C'}));
+    if (cfg.kyc && sel !== null && sel !== undefined && rows[sel]) out.kyc = cfg.kyc(sel, rows[sel]);
+    return out;
+  }
+}
+
+Component.prototype.drawNew = function () {
+  const lg = this.layer, act = this.activeLayers(), z = this.map.getZoom();
+  lg.clearLayers();
+  if (this.state.rings) GW.forEach(g => L.circle([g.lat, g.lng], {radius: g.r, color: g.state === 'ONLINE' ? '#FFFFFF' : g.dot, weight: 1.2, opacity: .8, fillColor: '#FFFFFF', fillOpacity: .04, dashArray: '4 6', interactive: false}).addTo(lg));
+  const pts = this.visible();
+  const heat = Object.keys(HEAT).find(k => act[k]);
+  const colour = m => heat ? HEAT[heat](m) : STATUS[m.status].dot;
+  const dot = m => L.circleMarker([m.lat, m.lng], {radius: z >= 17 ? 6 : 4.5, color: '#FFFFFF', weight: 1.2, fillColor: colour(m), fillOpacity: 1})
+    .bindTooltip(m.id + ' · ' + m.sub + '<br>' + STATUS[m.status].label + ' · ' + m.rssi + ' dBm · batt ' + m.batt + '% · fw ' + m.fw, {direction: 'top'})
+    .on('click', () => this.setState({sel: m})).addTo(lg);
+
+  if (z < 15 && !heat) {
+    const cell = 0.42 * 360 / Math.pow(2, z), grid = {};
+    pts.forEach(m => {
+      const k = Math.floor(m.lat / cell) + '_' + Math.floor(m.lng / cell);
+      (grid[k] || (grid[k] = [])).push(m);
+    });
+    Object.keys(grid).forEach(k => {
+      const g = grid[k];
+      if (g.length < 4) { g.forEach(dot); return; }
+      const lat = g.reduce((a, m) => a + m.lat, 0) / g.length, lng = g.reduce((a, m) => a + m.lng, 0) / g.length;
+      const off = g.filter(m => m.status === 'offline').length / g.length, amb = g.filter(m => m.status === 'amber').length / g.length;
+      const okP = (1 - off - amb) * 100, lateP = okP + amb * 100;
+      const bg = 'conic-gradient(#2E9D5B 0 ' + okP + '%,#E0A00B ' + okP + '% ' + lateP + '%,#D6452E ' + lateP + '% 100%)';
+      const d = Math.min(52, 28 + Math.round(Math.sqrt(g.length) * 2.2));
+      L.marker([lat, lng], {icon: L.divIcon({className: '', iconSize: [d, d], iconAnchor: [d / 2, d / 2],
+        html: '<div style="width:' + d + 'px;height:' + d + 'px;border-radius:50%;background:' + bg + ';padding:3px;box-shadow:0 1px 3px rgba(0,0,0,.4)"><div style="width:100%;height:100%;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#181D23;font-family:Public Sans,sans-serif;font-weight:600;font-size:' + (d > 40 ? 12.5 : 11) + 'px">' + g.length + '</div></div>'})})
+        .bindTooltip(N(g.length) + ' meters · ' + Math.round((1 - off - amb) * 100) + '% online', {direction: 'top'})
+        .on('click', () => this.map.flyTo([lat, lng], Math.min(18, z + 3))).addTo(lg);
+    });
+  } else {
+    pts.forEach(dot);
+  }
+
+  if (act.gwLinks) {
+    const step = Math.max(1, Math.round(pts.length / 340));
+    pts.forEach((m, i) => { if (i % step === 0) L.polyline([[m.lat, m.lng], [m.gwLat, m.gwLng]], {color: m.rssi > -95 ? '#7ee08a' : m.rssi > -108 ? '#ffd166' : '#ff6b6b', weight: .8, opacity: .5}).addTo(lg); });
+  }
+
+  GW.forEach(g => L.marker([g.lat, g.lng], {icon: L.divIcon({className: '', iconSize: [96, 22], iconAnchor: [48, 11],
+    html: '<div style="width:96px;height:22px;display:flex;justify-content:center"><div style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px 0 7px;background:#181D23;color:#fff;border:1px solid rgba(255,255,255,.9);border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.4);font-family:Public Sans,sans-serif;font-weight:600;font-size:11px;white-space:nowrap"><span style="width:7px;height:7px;border-radius:50%;background:' + (g.state === 'OFFLINE' ? '#D6452E' : g.state === 'DEGRADED' ? '#E0A00B' : '#2E9D5B') + '"></span>' + g.id + '</div></div>'})})
+    .bindTooltip('<b>' + g.id + '</b><br>' + g.site + '<br>' + N(g.meters) + ' nodes · ' + g.rssi, {direction: 'top'})
+    .on('click', () => this.map.flyTo([g.lat, g.lng], 15)).addTo(lg));
+};
+Component.prototype.componentWillUnmount = function () { if (this._fly) clearInterval(this._fly); };
+
+const REPORTS = [
+  ['Sales report', 'Revenue by channel, vendor, suburb and tariff band with VAT split.', ['PDF', 'XLSX', 'CSV'], '₽', '#00468C', '#EBF1F8'],
+  ['Water usage report', 'Metered volume per suburb, client class and meter, with variance flags.', ['PDF', 'XLSX'], '◍', '#2A7A7E', '#E6F2EA'],
+  ['Negative credit', 'Meters trading below zero balance, ranked by exposure and age.', ['PDF', 'CSV'], '−', '#B3261E', '#FAE8E6'],
+  ['Daily report', 'Yesterday: sales, tokens, uplinks, alarms and failed vends.', ['PDF'], '☀', '#D99A2B', '#FAF0DC'],
+  ['Weekly report', 'Seven-day rollup with week-on-week movement per zone.', ['PDF', 'XLSX'], '▦', '#00468C', '#EBF1F8'],
+  ['Monthly report', 'Board pack: revenue, volume, losses, network availability.', ['PDF', 'PPTX'], '▤', '#00468C', '#EBF1F8'],
+  ['Bypass & tamper', 'Suspected bypass list with risk score and inspection outcome.', ['PDF', 'CSV'], '⚑', '#B3261E', '#FAE8E6'],
+  ['Network health', 'Gateway availability, packet loss, SF spread, unseen nodes.', ['PDF', 'CSV'], '≈', '#2A7A7E', '#E6F2EA'],
+  ['Vending reconciliation', 'Provider settlement vs tokens issued, with unmatched entries.', ['XLSX', 'CSV'], '⇄', '#49515C', '#F0F2F4']
+];
+const GENERATED = [
+  ['Monthly report · July 2026', '1–31 Jul 2026', 'l.kgosi', 'Ready'], ['Sales report · Gaborone zones', '1–18 Aug 2026', 'm.tau', 'Ready'],
+  ['Negative credit exposure', 'as at 18 Aug 2026', 'finance.bot', 'Ready'], ['Water usage · Block 8', '1 Jun – 18 Aug 2026', 'k.moloi', 'Queued'],
+  ['Bypass & tamper weekly', '11–17 Aug 2026', 'scheduler', 'Ready'], ['Vending reconciliation', '1–17 Aug 2026', 'finance.bot', 'Failed'],
+  ['Network health', '12–19 Aug 2026', 'noc.ops', 'Ready'], ['Daily report', '18 Aug 2026', 'scheduler', 'Ready']
+];
+const SCHEDULES = [
+  ['Daily sales digest', '06:00 daily', 'revenue@wuc.co.bw', true], ['Weekly zone rollup', 'Mon 07:00', 'ops@wuc.co.bw', true],
+  ['Monthly board pack', '1st 08:00', 'exec@wuc.co.bw', true], ['Negative credit sweep', 'Wed 05:30', 'credit@wuc.co.bw', false],
+  ['Network health', '04:00 daily', 'noc@amplifiediot.co.bw', true]
+];
+const USERS = [
+  ['Leeroy Kgosi', 'l.kgosi@amplifiediot.co.bw', 'Network Administrator', 'All zones', '2 min ago', 'Active'],
+  ['Mpho Tau', 'm.tau@wuc.co.bw', 'Revenue Analyst', 'Gaborone', '18 min ago', 'Active'],
+  ['Kabelo Moloi', 'k.moloi@wuc.co.bw', 'Field Supervisor', 'Block 8, Block 9', '1 h ago', 'Active'],
+  ['Naledi Seretse', 'n.seretse@wuc.co.bw', 'Vendor Agent', 'CBD counter', '3 h ago', 'Active'],
+  ['Tebogo Phiri', 't.phiri@wuc.co.bw', 'Finance Controller', 'All zones', 'Yesterday', 'Active'],
+  ['Amogelang Dube', 'a.dube@wuc.co.bw', 'Field Technician', 'Old Naledi', '2 days ago', 'Suspended'],
+  ['Gorata Mmusi', 'g.mmusi@wuc.co.bw', 'Municipal Manager', 'Read-only, all', '4 days ago', 'Active'],
+  ['noc.ops (service)', 'noc@amplifiediot.co.bw', 'API integration', 'Network only', 'Live', 'Active']
+];
+const ROLES = [
+  ['View dashboards', [2, 2, 2, 1, 1]], ['Export reports', [2, 2, 2, 0, 0]], ['Issue tokens / vend', [2, 1, 2, 2, 0]],
+  ['Reverse a transaction', [2, 0, 2, 0, 0]], ['Edit client KYC', [2, 2, 1, 0, 0]], ['Commission a meter', [2, 2, 0, 0, 2]],
+  ['Send downlink command', [2, 2, 0, 0, 1]], ['Manage gateways', [2, 1, 0, 0, 0]], ['Manage users & roles', [2, 0, 0, 0, 0]]
+];
+const MODULES = [
+  ['Prepaid vending', 'Token generation, STS meters, counter and online channels.', '3 providers connected', true],
+  ['LoRaWAN network server', 'Uplink decoding, ADR, downlink queue, gateway registry.', '6 gateways · ChirpStack', true],
+  ['Bypass detection', 'Nightly anomaly detector over midnight and live-data ports.', 'Last run 03:20', true],
+  ['Bulk meter balancing', 'District metered areas: bulk vs sub-meter reconciliation.', '38 DMAs configured', true],
+  ['Customer portal', 'Self-service usage, purchases and fault logging.', '18,402 registered', true],
+  ['Leak advisories', 'Continuous-flow detection with SMS notification.', 'SMS gateway: Orange', true],
+  ['Debt management', 'Arrears ageing, payment plans, restriction workflow.', 'Not configured', false],
+  ['Field work orders', 'Technician dispatch, inspection outcomes, photo capture.', 'Pilot · Block 8', true],
+  ['Government billing', 'Vote-based consolidated invoicing for ministries.', '11 ministries', false]
+];
+const PURCH = [
+  ['18 Aug 2026, 14:22', '4823 7719 0042 1188', 'Orange Money', '5,000 L', 'P 50.00'],
+  ['04 Aug 2026, 09:10', '1902 5561 8830 4477', 'Portal card', '10,000 L', 'P 100.00'],
+  ['21 Jul 2026, 17:45', '7741 2093 5518 6620', 'Counter · CBD', '10,000 L', 'P 100.00'],
+  ['06 Jul 2026, 11:03', '3390 8842 1176 9054', 'Orange Money', '5,000 L', 'P 50.00'],
+  ['19 Jun 2026, 16:31', '8812 3374 9902 5518', 'Portal card', '20,000 L', 'P 200.00'],
+  ['02 Jun 2026, 08:57', '5527 6610 3348 8871', 'Counter · Block 8', '10,000 L', 'P 100.00'],
+  ['14 May 2026, 13:12', '9903 1182 7745 2260', 'Orange Money', '5,000 L', 'P 50.00']
+];
+
+const LANDLORDS = {0: 14, 4: 6, 7: 3, 12: 9};
+const TENANTS = [1, 3, 6, 9, 10, 13];
+const TENANT_NAMES = ['Sethunya Mabiletsa', 'Onalenna Kgari', 'Bakang Pilane', 'Larona Segwabe', 'Mosarwa Kebonang', 'Wame Mokgethi', 'Thuso Rankgwe', 'Kelebogile Motshegwa', 'Jimmy Odirile', 'Pearl Sekonopo', 'Tiro Mmolotsi', 'Chedza Gaboiphiwe', 'Mothusi Kalake', 'Lorato Bogosi'];
+const ROLE_OF = i => LANDLORDS[i] ? 'Landlord' : TENANTS.indexOf(i) >= 0 ? 'Tenant' : 'Owner-occupier';
+const ROLE_METERS = i => LANDLORDS[i] || 1;
+const PROPS = i => {
+  const role = ROLE_OF(i), r = rnd(31 + i);
+  if (role === 'Tenant') {
+    const oi = [0, 4, 7, 12][i % 4];
+    return [{plot: 'Plot ' + (12000 + i * 411) + ', ' + SUBS_SHORT[i], meter: 'WM-' + (104000 + i * 91), owner: CLIENT_NAMES[oi], tenant: 'You (tenant)', vends: 'Tenant vends', bal: P(Math.round(r() * 300 * 100) / 100), tone: '#00468C'}];
+  }
+  if (role === 'Owner-occupier') {
+    return [{plot: 'Plot ' + (12000 + i * 411) + ', ' + SUBS_SHORT[i], meter: 'WM-' + (104000 + i * 91), owner: 'Self', tenant: 'Owner-occupied', vends: 'Owner vends', bal: P(Math.round(r() * 300 * 100) / 100), tone: '#767E89'}];
+  }
+  return Array.from({length: Math.min(6, LANDLORDS[i])}, (_, j) => {
+    const bal = Math.round((r() * 380 - 90) * 100) / 100, vacant = j === 4;
+    return {plot: 'Plot ' + (9000 + i * 311 + j * 47) + ', ' + SUBS_SHORT[(i + j * 3) % SUBS_SHORT.length], meter: 'WM-' + (104000 + i * 91 + j * 7),
+      owner: 'Self', tenant: vacant ? 'Vacant' : TENANT_NAMES[(i + j) % TENANT_NAMES.length], vends: vacant ? 'No vending' : 'Tenant vends',
+      bal: P(bal), tone: vacant ? '#A1A8B2' : bal < 0 ? '#B3261E' : '#00468C'};
+  });
+};
+
+const CLIENT_NAMES = ['Mpho Sebego', 'Lesego Kgomotso', 'Thato Molefe', 'Boitumelo Ncube', 'Kagiso Mothibi', 'Neo Ramotswe', 'Tshepo Kwelagobe', 'Dineo Motlhabane', 'Oratile Sekgoma', 'Basimane Tlhage', 'Refilwe Mogapi', 'Karabo Selepeng', 'Goitseone Mmereki', 'Tumelo Baruti'];
+const SUBS_SHORT = ['Block 8', 'Phakalane', 'Block 9', 'Old Naledi', 'Broadhurst', 'Block 5', 'Tsholofelo', 'Phase 4', 'Bontleng', 'CBD', 'Block 10', 'Kgale View', 'Block 3', 'Gaborone North'];
+const BIZ = [['Choppies Broadhurst', 'Retail'], ['Riverwalk Mall', 'Property'], ['Kgale Hub Facilities', 'Property'], ['Sefalana Cash & Carry', 'Wholesale'], ['Botswana Breweries', 'Manufacturing'], ['Cresta Lodge Gaborone', 'Hospitality'], ['Debswana Corporate', 'Mining'], ['Bokamoso Private Hospital', 'Healthcare'], ['Gaborone Motors', 'Automotive'], ['Botswana Craft', 'Retail'], ['Fairgrounds Holdings', 'Events'], ['Sandalwood Apartments', 'Residential']];
+const BIZ_OWNERS = {1: 22, 2: 14, 10: 9, 11: 26};
+const BIZ_TENANTS = [0, 5, 8, 9];
+const BIZ_ROLE = i => BIZ_OWNERS[i] ? 'Property owner' : BIZ_TENANTS.indexOf(i) >= 0 ? 'Tenant' : 'Owner-occupier';
+const BIZ_UNITS = i => BIZ_OWNERS[i] || (BIZ_TENANTS.indexOf(i) >= 0 ? 1 : 2 + (i % 5));
+const UNIT_TENANTS = ['Choppies Supermarket', 'Woolworths', 'Nando\u2019s', 'Standard Chartered', 'Cash Bazaar', 'Mr Price', 'Pep Stores', 'Debonairs Pizza', 'Clicks', 'Barcelos'];
+const BIZ_PROPS = i => {
+  const role = BIZ_ROLE(i), r = rnd(61 + i);
+  if (role === 'Tenant') {
+    const oi = [1, 2, 10, 11][i % 4];
+    return [{plot: 'Unit ' + (10 + i) + ', ' + BIZ[oi][0], meter: 'WM-' + (206000 + i * 31), tenant: 'You (lessee)', vends: 'Tenant vends', bal: P(Math.round(r() * 40000 * 100) / 100), tone: '#00468C'}];
+  }
+  if (role === 'Owner-occupier') {
+    return Array.from({length: Math.min(4, BIZ_UNITS(i))}, (_, j) => ({plot: ['Main plant', 'Admin block', 'Staff housing', 'Warehouse'][j] + ' · ' + BIZ[i][0], meter: 'WM-' + (206000 + i * 31 + j * 5), tenant: 'Own operation', vends: 'Owner vends', bal: P(Math.round(r() * 30000 * 100) / 100), tone: '#767E89'}));
+  }
+  return Array.from({length: Math.min(6, BIZ_OWNERS[i])}, (_, j) => {
+    const bal = Math.round((r() * 60000 - 9000) * 100) / 100, vacant = j === 3;
+    return {plot: 'Unit ' + (101 + j * 7) + ', ' + BIZ[i][0], meter: 'WM-' + (206000 + i * 31 + j * 5),
+      tenant: vacant ? 'Vacant unit' : UNIT_TENANTS[(i + j) % UNIT_TENANTS.length], vends: vacant ? 'Landlord vends' : 'Tenant vends',
+      bal: P(bal), tone: vacant ? '#A1A8B2' : bal < 0 ? '#B3261E' : '#00468C'};
+  });
+};
+
+const GOVT = [['V-0421', 'Ministry of Health', 'Marina Referral Hospital'], ['V-0117', 'Ministry of Education', 'University of Botswana'], ['V-0388', 'Ministry of Defence', 'SSKB Camp Area'], ['V-0204', 'Local Government', 'Gaborone City Council'], ['V-0512', 'Ministry of Health', 'Princess Marina Clinic'], ['V-0093', 'Office of the President', 'State House'], ['V-0741', 'Ministry of Lands', 'Government Enclave'], ['V-0655', 'Ministry of Education', 'Naledi Senior School'], ['V-0288', 'Ministry of Health', 'Institute of Health Sciences'], ['V-0333', 'Local Government', 'Old Naledi Ward Office']];
+
+const TABLES = {
+  domestic: {
+    name: 'Domestic clients', count: '41,208 clients', pageInfo: 'Showing 1–14 of 41,208',
+    stats: [{label: 'Total clients', value: '41,208', sub: '+312 this month', tone: '#00468C'}, {label: 'Active meters', value: '39,860', sub: '96.7% of base', tone: '#2A7A7E'}, {label: 'In arrears', value: '3,142', sub: 'P 1.84 M exposure', tone: '#B3261E'}, {label: 'KYC incomplete', value: '218', sub: 'blocks vending', tone: '#D99A2B'}],
+    chips: ['All', 'Active', 'Arrears', 'KYC pending', 'Suspended'],
+    head: [['Client ID'], ['Name'], ['Role'], ['Meters', 'right'], ['Plot / suburb'], ['Vends as', 'right'], ['Balance', 'right'], ['Status', 'right'], ['KYC', 'right']],
+    rows: (b, txt) => CLIENT_NAMES.map((n, i) => {
+      const r = rnd(900 + i), bal = Math.round((r() * 500 - 120) * 100) / 100;
+      const stt = bal < 0 ? 'Arrears' : i === 5 ? 'Suspended' : 'Active';
+      const k = i === 3 || i === 9 ? 'Pending' : i === 11 ? 'Expired' : 'Verified';
+      const role = ROLE_OF(i), nm = ROLE_METERS(i);
+      return [txt('DOM-' + (204100 + i * 37), {mono: true}), txt(n, {bold: true}),
+        txt(role, {color: role === 'Landlord' ? '#00468C' : role === 'Tenant' ? '#00468C' : '#767E89', bold: role !== 'Owner-occupier'}),
+        txt(String(nm), {mono: true, align: 'right'}),
+        txt(role === 'Landlord' ? nm + ' properties · ' + SUBS_SHORT[i] + ' +' : 'Plot ' + (12000 + i * 411) + ', ' + SUBS_SHORT[i]),
+        txt(role === 'Landlord' ? 'tenants' : 'self', {align: 'right', mono: true, color: role === 'Landlord' ? '#00468C' : '#767E89'}),
+        txt(P(bal), {mono: true, align: 'right', color: bal < 0 ? '#B3261E' : '#181D23'}),
+        b(stt), b(k)];
+    }),
+    kyc: (i, row) => {
+      const n = CLIENT_NAMES[i], r = rnd(900 + i), pct = i === 3 || i === 9 ? 60 : i === 11 ? 80 : 100;
+      const docs = [['Omang (national ID)', 1], ['Proof of residence', 1], ['Signed service agreement', 1], ['Deposit receipt', pct >= 80 ? 1 : 0], ['Landlord consent letter', pct === 100 ? 1 : 0]];
+      return {
+        name: n, id: 'DOM-' + (204100 + i * 37), kind: 'Domestic · prepaid', initials: n.split(' ').map(x => x[0]).join(''),
+        pct: pct + '%', pctW: pct + '%', tone: pct === 100 ? '#2E9D5B' : '#D99A2B',
+        docs: docs.map(d => ({label: d[0], mark: d[1] ? '✓' : '!', tone: d[1] ? '#2E9D5B' : '#D99A2B', meta: d[1] ? 'verified' : 'missing'})),
+        fields: [{k: 'Meter', v: 'WM-' + (104000 + i * 91), tone: '#181D23'}, {k: 'Tariff', v: 'Domestic Band 2', tone: '#181D23'},
+          {k: 'Suburb', v: SUBS_SHORT[i], tone: '#181D23'}, {k: 'Plot', v: String(12000 + i * 411), tone: '#181D23'},
+          {k: 'Phone', v: '+267 7' + Math.floor(r() * 9e6 + 1e6), tone: '#181D23'}, {k: 'Connected', v: '14 Mar 2023', tone: '#181D23'},
+          {k: 'Occupants', v: '4', tone: '#181D23'}, {k: 'Avg monthly', v: '14.8 kL', tone: '#2A7A7E'}],
+        purchases: PURCH.slice(0, 4).map(p => ({date: p[0].split(',')[0], channel: p[2], amount: p[4]})),
+        propCount: ROLE_OF(i) === 'Landlord' ? ROLE_METERS(i) + ' properties' : ROLE_OF(i) === 'Tenant' ? 'rented' : '1 property',
+        props: PROPS(i)
+      };
+    }
+  },
+  business: {
+    name: 'Business clients', count: '1,884 accounts', pageInfo: 'Showing 1–12 of 1,884',
+    stats: [{label: 'Accounts', value: '1,884', sub: '312 on credit terms', tone: '#00468C'}, {label: 'Metered volume', value: '81.4 ML', sub: 'month to date', tone: '#2A7A7E'}, {label: 'Revenue MTD', value: 'P 2.41 M', sub: '34% of total', tone: '#00468C'}, {label: 'KYC / CIPA expiring', value: '46', sub: 'within 30 days', tone: '#D99A2B'}],
+    chips: ['All', 'Prepaid', 'Credit terms', 'KYC expiring'],
+    head: [['Account'], ['Trading name'], ['Sector'], ['Role'], ['Meters', 'right'], ['Volume MTD', 'right'], ['Terms', 'right'], ['Balance', 'right'], ['KYC', 'right']],
+    rows: (b, txt) => BIZ.map((x, i) => {
+      const r = rnd(500 + i), bal = Math.round((r() * 90000 - 15000) * 100) / 100, role = BIZ_ROLE(i);
+      return [txt('BUS-' + (30140 + i * 23), {mono: true}), txt(x[0], {bold: true}), txt(x[1], {color: '#767E89'}),
+        txt(role, {color: role === 'Property owner' ? '#00468C' : role === 'Tenant' ? '#00468C' : '#767E89', bold: role !== 'Owner-occupier'}),
+        txt(String(BIZ_UNITS(i)), {mono: true, align: 'right'}), txt(short(Math.round(r() * 9e6 + 4e5)) + ' L', {mono: true, align: 'right', color: '#2A7A7E'}),
+        txt(i % 3 === 0 ? 'Prepaid' : '30 days', {align: 'right', color: '#767E89'}), txt(P(bal), {mono: true, align: 'right', color: bal < 0 ? '#B3261E' : '#181D23'}),
+        b(i === 2 || i === 8 ? 'Pending' : i === 10 ? 'Expired' : 'Verified')];
+    }),
+    kyc: (i) => {
+      const x = BIZ[i], pct = i === 2 || i === 8 ? 55 : i === 10 ? 75 : 100;
+      const docs = [['CIPA registration certificate', 1], ['Directors\u2019 Omang copies', 1], ['Tax clearance (BURS)', pct >= 75 ? 1 : 0], ['VAT registration', pct >= 75 ? 1 : 0], ['Bank confirmation letter', pct === 100 ? 1 : 0], ['Signed credit agreement', pct === 100 ? 1 : 0]];
+      return {
+        name: x[0], id: 'BUS-' + (30140 + i * 23), kind: x[1] + ' · business', initials: x[0].split(' ').map(y => y[0]).slice(0, 2).join(''),
+        pct: pct + '%', pctW: pct + '%', tone: pct === 100 ? '#2E9D5B' : '#D99A2B',
+        docs: docs.map(d => ({label: d[0], mark: d[1] ? '✓' : '!', tone: d[1] ? '#2E9D5B' : '#D99A2B', meta: d[1] ? 'verified' : 'missing'})),
+        fields: [{k: 'CIPA no.', v: 'BW0001' + (1000 + i * 7), tone: '#181D23'}, {k: 'VAT no.', v: 'C' + (33100 + i * 11), tone: '#181D23'},
+          {k: 'Sector', v: x[1], tone: '#181D23'}, {k: 'Meters', v: String(1 + i), tone: '#181D23'},
+          {k: 'Credit limit', v: 'P 250,000', tone: '#181D23'}, {k: 'Terms', v: i % 3 === 0 ? 'Prepaid' : '30 days', tone: '#181D23'},
+          {k: 'Contact', v: 'accounts@…', tone: '#181D23'}, {k: 'Since', v: '2019', tone: '#181D23'}],
+        purchases: [{date: '18 Aug 2026', channel: 'EFT', amount: 'P 84,200.00'}, {date: '02 Aug 2026', channel: 'EFT', amount: 'P 71,940.00'}, {date: '18 Jul 2026', channel: 'Portal card', amount: 'P 66,310.00'}, {date: '01 Jul 2026', channel: 'EFT', amount: 'P 79,880.00'}],
+        propCount: BIZ_ROLE(i) === 'Property owner' ? BIZ_UNITS(i) + ' let units' : BIZ_ROLE(i) === 'Tenant' ? 'leased unit' : BIZ_UNITS(i) + ' own meters',
+        props: BIZ_PROPS(i)
+      };
+    }
+  },
+  gov: {
+    name: 'Government accounts', count: '212 votes', pageInfo: 'Showing 1–10 of 212',
+    stats: [{label: 'Vote accounts', value: '212', sub: '11 ministries', tone: '#00468C'}, {label: 'Facilities', value: '1,046', sub: 'schools, clinics, offices', tone: '#00468C'}, {label: 'Consumption MTD', value: '112.8 ML', sub: '31% of network', tone: '#2A7A7E'}, {label: 'Unbilled', value: 'P 984,200', sub: 'awaiting vote release', tone: '#D99A2B'}],
+    chips: ['All ministries', 'Health', 'Education', 'Local Government', 'Unbilled'],
+    head: [['Vote'], ['Ministry'], ['Facility'], ['Meters', 'right'], ['Bulk', 'right'], ['Consumption MTD', 'right'], ['Budget used', 'right'], ['Status', 'right']],
+    rows: (b, txt) => GOVT.map((x, i) => {
+      const r = rnd(300 + i), used = 40 + Math.floor(r() * 58);
+      return [txt(x[0], {mono: true}), txt(x[1], {bold: true}), txt(x[2], {color: '#767E89'}),
+        txt(String(2 + Math.floor(r() * 40)), {mono: true, align: 'right'}), txt(String(1 + Math.floor(r() * 4)), {mono: true, align: 'right'}),
+        txt(short(Math.round(r() * 2e7 + 1e6)) + ' L', {mono: true, align: 'right', color: '#2A7A7E'}),
+        txt(used + '%', {mono: true, align: 'right', color: used > 90 ? '#B3261E' : '#181D23'}), b(i === 4 || i === 9 ? 'Pending' : 'Active')];
+    })
+  },
+  meters: {
+    name: 'Meter register', count: '50,412 meters', pageInfo: 'Showing 1–14 of 50,412',
+    stats: [{label: 'Registered meters', value: '50,412', sub: 'STS prepaid, LoRaWAN', tone: '#00468C'}, {label: 'Online now', value: '46,528', sub: '92.3%', tone: '#2E9D5B'}, {label: 'Low battery', value: '1,406', sub: 'replace within 90 days', tone: '#D99A2B'}, {label: 'Unseen 24h', value: '1,842', sub: 'dispatch queue', tone: '#B3261E'}],
+    chips: ['All', 'Online', 'Offline', 'Low battery', 'Suspected bypass'],
+    head: [['Serial'], ['DevEUI'], ['Type'], ['Client'], ['Suburb'], ['Gateway'], ['RSSI / SF', 'right'], ['Battery', 'right'], ['Last uplink', 'right'], ['Status', 'right']],
+    rows: (b, txt) => CLIENT_NAMES.map((n, i) => {
+      const r = rnd(700 + i), rs = -(80 + Math.floor(r() * 34)), bt = 20 + Math.floor(r() * 80);
+      const stt = i === 4 ? 'Offline' : bt < 35 ? 'Low batt' : 'Online';
+      return [txt('WM-' + (104000 + i * 91), {mono: true}), txt('A840' + (419000 + i * 137).toString(16).toUpperCase(), {mono: true, color: '#767E89'}),
+        txt(i % 7 === 3 ? 'Bulk DN80' : 'Domestic DN15', {color: '#767E89'}), txt(n), txt(SUBS_SHORT[i], {color: '#767E89'}),
+        txt(GW[i % GW.length].id, {mono: true}), txt(rs + ' / SF' + [7, 8, 9, 10, 12][i % 5], {mono: true, align: 'right', color: rs < -105 ? '#965A00' : '#181D23'}),
+        txt(bt + '%', {mono: true, align: 'right', color: bt < 35 ? '#965A00' : '#181D23'}),
+        txt(stt === 'Offline' ? '3 d ago' : Math.floor(r() * 55) + ' min', {mono: true, align: 'right', color: '#767E89'}), b(stt)];
+    })
+  },
+  bulk: {
+    name: 'Bulk meters & district metered areas', count: '412 bulk meters', pageInfo: 'Showing 1–10 of 412',
+    stats: [{label: 'Bulk meters', value: '412', sub: '38 DMAs', tone: '#00468C'}, {label: 'Bulk inflow MTD', value: '418.2 ML', sub: 'all zones', tone: '#2A7A7E'}, {label: 'Non-revenue water', value: '13.7%', sub: 'target < 12%', tone: '#D99A2B'}, {label: 'DMAs above target', value: '9', sub: 'investigate', tone: '#B3261E'}],
+    chips: ['All DMAs', 'Above target', 'Balanced', 'Sensor fault'],
+    head: [['Bulk meter'], ['DMA / zone'], ['Size'], ['Inflow MTD', 'right'], ['Sub-meter sum', 'right'], ['Loss', 'right'], ['Daily avg', 'right'], ['Status', 'right']],
+    rows: (b, txt) => ['Block 8 DMA', 'Phakalane DMA', 'Old Naledi DMA', 'Broadhurst DMA', 'Block 5 DMA', 'Phase 4 DMA', 'Tsholofelo DMA', 'CBD DMA', 'Kgale View DMA', 'Bontleng DMA'].map((z, i) => {
+      const r = rnd(200 + i), inflow = Math.round(8e6 + r() * 4.2e7), loss = Math.round((6 + r() * 16) * 10) / 10;
+      return [txt('BM-' + (7100 + i * 17), {mono: true}), txt(z, {bold: true}), txt(['DN150', 'DN200', 'DN100', 'DN150', 'DN100', 'DN150', 'DN100', 'DN200', 'DN80', 'DN80'][i], {color: '#767E89'}),
+        txt(short(inflow) + ' L', {mono: true, align: 'right'}), txt(short(Math.round(inflow * (1 - loss / 100))) + ' L', {mono: true, align: 'right', color: '#767E89'}),
+        txt(loss + '%', {mono: true, align: 'right', color: loss > 14 ? '#B3261E' : loss > 12 ? '#965A00' : '#237A48'}),
+        txt(short(Math.round(inflow / 19)) + ' L', {mono: true, align: 'right', color: '#767E89'}), b(loss > 14 ? 'Arrears' : i === 7 ? 'Pending' : 'Active')];
+    })
+  },
+  sites: {
+    name: 'Sites & zones', count: '38 sites', pageInfo: 'Showing 1–10 of 38',
+    stats: [{label: 'Sites', value: '38', sub: 'reservoirs, depots, masts', tone: '#00468C'}, {label: 'Gateways deployed', value: '6', sub: '1 offline', tone: '#00468C'}, {label: 'Meters covered', value: '46,970', sub: '93.2% of fleet', tone: '#2A7A7E'}, {label: 'Coverage gaps', value: '4', sub: 'SF12 clusters', tone: '#D99A2B'}],
+    chips: ['All sites', 'With gateway', 'Coverage gap', 'Maintenance due'],
+    head: [['Site code'], ['Name'], ['Zone'], ['Type'], ['Meters', 'right'], ['Gateways', 'right'], ['Reservoir level', 'right'], ['Status', 'right']],
+    rows: (b, txt) => [['ST-001', 'Main Mall rooftop', 'CBD', 'Gateway mast'], ['ST-002', 'Broadhurst water tower', 'Broadhurst', 'Reservoir'], ['ST-003', 'Phakalane reservoir', 'Phakalane', 'Reservoir'], ['ST-004', 'Gaborone West depot', 'Gaborone West', 'Depot'], ['ST-005', 'Kgale Hill mast', 'Kgale View', 'Gateway mast'], ['ST-006', 'Old Naledi clinic', 'Old Naledi', 'Gateway mast'], ['ST-007', 'Block 8 pump station', 'Block 8', 'Pump station'], ['ST-008', 'Tsholofelo booster', 'Tsholofelo', 'Booster'], ['ST-009', 'Naledi ward office', 'Naledi', 'Office'], ['ST-010', 'Fairgrounds valve chamber', 'Fairgrounds', 'Valve chamber']].map((x, i) => {
+      const r = rnd(100 + i), lvl = Math.round(35 + r() * 60);
+      return [txt(x[0], {mono: true}), txt(x[1], {bold: true}), txt(x[2], {color: '#767E89'}), txt(x[3], {color: '#767E89'}),
+        txt(N(Math.round(400 + r() * 12000)), {mono: true, align: 'right'}), txt(i < 6 ? '1' : '0', {mono: true, align: 'right'}),
+        txt(x[3] === 'Reservoir' ? lvl + '%' : '—', {mono: true, align: 'right', color: x[3] === 'Reservoir' && lvl < 45 ? '#965A00' : '#181D23'}),
+        b(i === 5 ? 'Arrears' : i === 3 ? 'Pending' : 'Active')];
+    })
+  },
+  gateways: {
+    name: 'Gateway fleet', count: '6 gateways', pageInfo: 'Showing all 6',
+    stats: [{label: 'Gateways', value: '6', sub: 'ChirpStack NS', tone: '#00468C'}, {label: 'Online', value: '4', sub: '1 degraded, 1 offline', tone: '#2E9D5B'}, {label: 'Uplinks 24h', value: '1.41 M', sub: 'all ports', tone: '#2A7A7E'}, {label: 'Downlink queue', value: '318', sub: 'credit + config', tone: '#00468C'}],
+    chips: ['All', 'Online', 'Degraded', 'Offline'],
+    head: [['Gateway'], ['Site'], ['Coordinates'], ['Nodes', 'right'], ['RSSI', 'right'], ['Radius', 'right'], ['Firmware', 'right'], ['State', 'right']],
+    rows: (b, txt) => GW.map((g, i) => [txt(g.id, {mono: true, bold: true}), txt(g.site), txt(g.lat.toFixed(4) + ', ' + g.lng.toFixed(4), {mono: true, color: '#767E89'}),
+      txt(N(g.meters), {mono: true, align: 'right'}), txt(g.rssi, {mono: true, align: 'right', color: '#767E89'}), txt((g.r / 1000).toFixed(1) + ' km', {mono: true, align: 'right'}),
+      txt('2.8.' + (3 + i), {mono: true, align: 'right', color: '#767E89'}), b(g.state === 'ONLINE' ? 'Online' : g.state === 'DEGRADED' ? 'Low batt' : 'Offline')])
+  }
+};
+</script>
+</body>
+</html>

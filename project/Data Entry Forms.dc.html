@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><title>Amplified IoT · Data entry forms</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>*{box-sizing:border-box}body{margin:0;background:#F4F5F7;font-family:'Public Sans',system-ui,sans-serif;font-size:13px;line-height:1.45;color:#181D23;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}a{color:#00468C;text-decoration:none}a:hover{color:#003A75;text-decoration:underline}input,select,textarea{font:inherit;color:inherit}input:focus,select:focus,textarea:focus{outline:2px solid #B8CFE8;outline-offset:0;border-color:#00468C}</style></helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+<header style="height:60px;flex:none;background:#FFFFFF;border-bottom:1px solid #E0E3E7;padding:0 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10">
+<img src="assets/at-mark.png" alt="Amplified Trends" style="height:22px;width:auto;display:block">
+<span style="width:2px;height:26px;background:#D89E0E;display:block"></span>
+<div style="display:flex;flex-direction:column;align-items:center;line-height:1"><span style="font-size:12.5px;font-weight:600;letter-spacing:.08em;color:#606060">AMPLIFIED</span><span style="font-size:9.5px;font-weight:600;letter-spacing:.7em;color:#606060;margin-top:4px;padding-left:.7em">IoT</span></div>
+<span style="width:1px;height:24px;background:#E0E3E7;margin:0 4px"></span>
+<span style="font-size:14px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Data entry forms</span>
+<a href="Database Schema.dc.html" style="font-size:12.5px;font-weight:600;white-space:nowrap">Database design</a>
+<a href="Amplified IoT.dc.html" style="font-size:12.5px;font-weight:600;white-space:nowrap">Open the app</a>
+</header>
+
+<div style="flex:1;width:100%;max-width:1440px;margin:0 auto;padding:20px 24px 48px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+
+<nav style="flex:0 0 210px;background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:6px;position:sticky;top:80px">
+<sc-for list="{{ forms }}" as="f" hint-placeholder-count="6">
+<div onClick="{{ f.go }}" style="padding:8px 10px;border-radius:6px;cursor:pointer;background:{{ f.bg }}" style-hover="background:#F3F7FC">
+<div style="font-size:13px;font-weight:{{ f.weight }};color:{{ f.color }}">{{ f.label }}</div>
+<div style="font-size:11.5px;color:#767E89;margin-top:1px">{{ f.who }}</div>
+</div>
+</sc-for>
+</nav>
+
+<main data-screen-label="Form" style="flex:1 1 520px;display:flex;flex-direction:column;gap:12px;min-width:0">
+<div>
+<div style="font-size:20px;font-weight:600;letter-spacing:-.01em">{{ form.label }}</div>
+<div style="font-size:13px;color:#49515C;margin-top:4px;max-width:720px;text-wrap:pretty">{{ form.desc }}</div>
+</div>
+
+<sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid #BFDCC9;background:#F0F8F3;border-radius:8px">
+<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#1C6B3D">{{ done.title }}</div><div style="font-size:12.5px;color:#2B5A3D;margin-top:2px">{{ done.body }}</div></div>
+<span onClick="{{ resetForm }}" style="font-size:12.5px;font-weight:600;color:#00468C;cursor:pointer;white-space:nowrap">Start another</span>
+</div>
+</sc-if>
+<sc-if value="{{ errCount }}" hint-placeholder-val="{{ false }}">
+<div style="padding:10px 14px;border:1px solid #F0C4C0;background:#FDF3F2;border-radius:8px;font-size:12.5px;color:#8E1F18">{{ errCount }} to fix before this can be saved.</div>
+</sc-if>
+
+<sc-for list="{{ sections }}" as="s" hint-placeholder-count="3">
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px">
+<div style="display:flex;align-items:baseline;gap:12px;padding:12px 18px;border-bottom:1px solid #ECEEF1;flex-wrap:wrap">
+<span style="font-size:13.5px;font-weight:600;flex:1">{{ s.title }}</span>
+<span style="font-size:11.5px;color:#767E89">Writes to <span style="font-family:'IBM Plex Mono',monospace;color:#49515C">{{ s.writes }}</span></span>
+</div>
+<sc-if value="{{ s.note }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 18px 0;font-size:12.5px;color:#49515C;text-wrap:pretty">{{ s.note }}</div></sc-if>
+<div style="padding:14px 18px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 16px">
+<sc-for list="{{ s.fields }}" as="f" hint-placeholder-count="4">
+<div style="grid-column:{{ f.span }};min-width:0;display:flex;flex-direction:column;gap:5px">
+<label style="font-size:12px;font-weight:600;color:#2B323A">{{ f.label }}<span style="color:#B3261E;font-weight:600">{{ f.star }}</span></label>
+
+<sc-if value="{{ f.isText }}" hint-placeholder-val="{{ true }}">
+<input type="{{ f.type }}" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" style="height:36px;padding:0 10px;border:1px solid {{ f.border }};border-radius:6px;background:#FFFFFF;font-size:13px;font-family:{{ f.ff }};width:100%">
+</sc-if>
+<sc-if value="{{ f.isArea }}" hint-placeholder-val="{{ false }}">
+<textarea value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" rows="3" style="padding:8px 10px;border:1px solid {{ f.border }};border-radius:6px;background:#FFFFFF;font-size:13px;resize:vertical;width:100%"></textarea>
+</sc-if>
+<sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+<select value="{{ f.value }}" onChange="{{ f.onChange }}" style="height:36px;padding:0 8px;border:1px solid {{ f.border }};border-radius:6px;background:#FFFFFF;font-size:13px;width:100%">
+<option value="">Select…</option>
+<sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="3"><option value="{{ o }}">{{ o }}</option></sc-for>
+</select>
+</sc-if>
+<sc-if value="{{ f.isSeg }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:2px;padding:2px;border:1px solid {{ f.border }};border-radius:7px;background:#FFFFFF;align-self:flex-start">
+<sc-for list="{{ f.segs }}" as="o" hint-placeholder-count="3"><div onClick="{{ o.go }}" style="height:30px;padding:0 12px;display:flex;align-items:center;border-radius:5px;font-size:12.5px;font-weight:{{ o.weight }};background:{{ o.bg }};color:{{ o.color }};cursor:pointer;white-space:nowrap">{{ o.label }}</div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ f.isChips }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ f.segs }}" as="o" hint-placeholder-count="6"><div onClick="{{ o.go }}" style="height:28px;padding:0 10px;display:flex;align-items:center;border-radius:14px;font-size:12px;font-weight:{{ o.weight }};background:{{ o.bg }};color:{{ o.color }};border:1px solid {{ o.border }};cursor:pointer">{{ o.label }}</div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ f.isFile }}" hint-placeholder-val="{{ false }}">
+<label style="display:flex;align-items:center;gap:10px;min-height:36px;padding:6px 10px;border:1px dashed {{ f.fileBorder }};border-radius:6px;background:{{ f.fileBg }};cursor:pointer">
+<input type="file" onChange="{{ f.onFile }}" style="display:none">
+<span style="flex:1;min-width:0;font-size:12.5px;color:{{ f.fileColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.fileLabel }}</span>
+<span style="font-size:12px;font-weight:600;color:#00468C">{{ f.fileAction }}</span>
+</label>
+</sc-if>
+<sc-if value="{{ f.isCalc }}" hint-placeholder-val="{{ false }}">
+<div style="height:36px;padding:0 10px;display:flex;align-items:center;border:1px solid #ECEEF1;border-radius:6px;background:#FAFBFC;font-size:13px;font-weight:600">{{ f.value }}</div>
+</sc-if>
+
+<sc-if value="{{ f.info }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:{{ f.infoTone }};text-wrap:pretty">{{ f.info }}</div></sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+
+<div style="display:flex;align-items:center;gap:10px;padding-top:4px">
+<div onClick="{{ submit }}" style="height:38px;padding:0 18px;display:flex;align-items:center;border-radius:6px;background:#00468C;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#003A75">{{ form.cta }}</div>
+<div onClick="{{ resetForm }}" style="height:38px;padding:0 14px;display:flex;align-items:center;border:1px solid #D2D6DC;border-radius:6px;background:#FFFFFF;font-size:13px;font-weight:600;color:#2B323A;cursor:pointer" style-hover="background:#F6F7F9">Clear</div>
+<span style="font-size:12px;color:#767E89">Fields marked <span style="color:#B3261E">*</span> are required. Every save is written to audit_log.</span>
+</div>
+</main>
+
+<aside style="flex:1 1 300px;max-width:100%;position:sticky;top:80px;display:flex;flex-direction:column;gap:12px">
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:600;flex:1">Submission payload</span><span style="font-size:11.5px;color:#767E89">{{ filled }}</span></div>
+<pre style="margin:0;padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.55;color:#2B323A;background:#FAFBFC;max-height:calc(100vh - 330px);overflow:auto;white-space:pre-wrap;word-break:break-word">{{ payload }}</pre>
+</section>
+<section style="background:#FFFFFF;border:1px solid #E0E3E7;border-radius:8px;padding:12px 14px">
+<div style="font-size:12.5px;font-weight:600;margin-bottom:6px">On save</div>
+<sc-for list="{{ form.steps }}" as="x" hint-placeholder-count="3"><div style="display:flex;gap:8px;font-size:12px;color:#49515C;padding:3px 0"><span style="color:#A1A8B2;width:14px;flex:none">{{ x.n }}</span><span style="text-wrap:pretty">{{ x.t }}</span></div></sc-for>
+</section>
+</aside>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startForm&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;client&quot;,&quot;property&quot;,&quot;meter&quot;,&quot;gateway&quot;,&quot;sale&quot;,&quot;user&quot;],&quot;default&quot;:&quot;client&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const SUBURBS = ['Block 3', 'Block 5', 'Block 8', 'Block 9', 'Block 10', 'Broadhurst', 'Bontleng', 'CBD', 'Gaborone North', 'Gaborone West', 'Government Enclave', 'Kgale View', 'Old Naledi', 'Phakalane', 'Phase 4', 'Tsholofelo'];
+const CLIENTS = {
+  'DOM-204100': {name: 'Mpho Sebego', kyc: 'verified', role: 'Landlord, 14 properties'},
+  'DOM-204137': {name: 'Lesego Kgomotso', kyc: 'verified', role: 'Tenant'},
+  'DOM-204211': {name: 'Boitumelo Ncube', kyc: 'pending', role: 'Tenant'},
+  'BUS-30163': {name: 'Riverwalk Mall', kyc: 'verified', role: 'Property owner, 22 units'}
+};
+const METERS = {
+  'WM-104882': {plot: 'Plot 21455, Block 8', owner: 'Mpho Sebego (DOM-204100)', tenant: 'Lesego Kgomotso (DOM-204137)', party: 'tenant', bal: 'P 142.60', tariff: 'Domestic Band 2'},
+  'WM-104455': {plot: 'Plot 9628, Old Naledi', owner: 'Mpho Sebego (DOM-204100)', tenant: null, party: 'owner', bal: 'P 18.40', tariff: 'Domestic Band 2'},
+  'WM-206093': {plot: 'Unit 108, Riverwalk Mall', owner: 'Riverwalk Mall (BUS-30163)', tenant: 'Woolworths (BUS-30452)', party: 'tenant', bal: 'P 12,904.10', tariff: 'Commercial'}
+};
+const RX = {omang: /^\d{9}$/, phone: /^\+?267\s?\d{7,8}$/, email: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, hex16: /^[0-9a-fA-F]{16}$/, hex32: /^[0-9a-fA-F]{32}$/, sts: /^\d{11}$/, lat: /^-?\d{1,2}\.\d{3,}$/, lng: /^-?\d{1,3}\.\d{3,}$/, amount: /^\d+(\.\d{1,2})?$/};
+const MSG = {omang: 'Omang numbers are 9 digits.', phone: 'Use a Botswana number, e.g. +267 71 234 567.', email: 'Enter a valid email address.', hex16: '16 hexadecimal characters.', hex32: '32 hexadecimal characters.', sts: 'STS meter numbers are 11 digits.', lat: 'Decimal degrees, e.g. -24.6273.', lng: 'Decimal degrees, e.g. 25.9420.', amount: 'Enter an amount in Pula.'};
+
+// field: [key, label, kind, col, opts]
+// opts: req, ph, opts(list), rx, span, show(v), hint, mono, type
+const F = (k, label, kind, col, o) => Object.assign({k, label, kind, col}, o || {});
+
+const FORMS = [
+  {id: 'client', label: 'Client onboarding', who: 'Customer service', cta: 'Create client',
+    desc: 'Registers a domestic, business or government client and collects KYC evidence. A client cannot buy water until an officer verifies the documents.',
+    steps: ['Insert clients with status active and kyc_status pending.', 'Insert the type detail row: individuals, organisations or government_votes.', 'Upload each file to storage and insert kyc_documents with status submitted.', 'Queue the client for KYC review.'],
+    sections: v => [
+      {title: 'Client type', writes: 'clients', fields: [
+        F('type', 'Client type', 'seg', 'clients.client_type', {req: 1, opts: ['Domestic', 'Business', 'Government']}),
+        F('relation', 'Relationship to property', 'seg', null, {req: 1, opts: v.type === 'Business' ? ['Owner-occupier', 'Property owner', 'Tenant'] : ['Owner-occupier', 'Landlord', 'Tenant'], show: v => v.type !== 'Government', hint: 'Decides which KYC documents are needed and what the next step is.'})]},
+      {title: 'Identity', writes: 'individuals', show: v => v.type === 'Domestic', fields: [
+        F('first', 'First name', 'text', 'individuals.first_name', {req: 1}),
+        F('surname', 'Surname', 'text', 'individuals.surname', {req: 1}),
+        F('omang', 'Omang number', 'text', 'individuals.omang_no', {req: 1, rx: 'omang', ph: '123456789', mono: 1}),
+        F('dob', 'Date of birth', 'text', 'individuals.date_of_birth', {type: 'date'}),
+        F('occupants', 'Occupants', 'text', 'individuals.occupants', {type: 'number', ph: '4'})]},
+      {title: 'Company', writes: 'organisations', show: v => v.type === 'Business', fields: [
+        F('legal', 'Registered name', 'text', 'organisations.legal_name', {req: 1, span: '1 / -1'}),
+        F('trading', 'Trading name', 'text', 'organisations.trading_name'),
+        F('cipa', 'CIPA registration number', 'text', 'organisations.cipa_reg_no', {req: 1, ph: 'BW00001234567', mono: 1}),
+        F('tin', 'BURS TIN', 'text', 'organisations.burs_tin', {mono: 1}),
+        F('vat', 'VAT number', 'text', 'organisations.vat_no', {mono: 1}),
+        F('sector', 'Sector', 'select', 'organisations.sector', {opts: ['Retail', 'Property', 'Hospitality', 'Healthcare', 'Manufacturing', 'Mining', 'Education', 'Other']}),
+        F('terms', 'Payment terms', 'seg', 'organisations.credit_terms_days', {req: 1, opts: ['Prepaid', '30 days']})]},
+      {title: 'Vote account', writes: 'government_votes', show: v => v.type === 'Government', fields: [
+        F('vote', 'Vote code', 'text', 'government_votes.vote_code', {req: 1, ph: 'V-0421', mono: 1}),
+        F('ministry', 'Ministry', 'select', 'government_votes.ministry', {req: 1, opts: ['Ministry of Health', 'Ministry of Education', 'Ministry of Defence', 'Local Government', 'Ministry of Lands', 'Office of the President']}),
+        F('dept', 'Department or facility', 'text', 'government_votes.department'),
+        F('budget', 'Annual water budget (P)', 'text', 'government_votes.budget_amount', {rx: 'amount'})]},
+      {title: 'Contact', writes: 'clients, client_contacts', show: v => !!v.type, fields: [
+        F('phone', 'Mobile number', 'text', 'clients.phone', {req: 1, rx: 'phone', ph: '+267 71 234 567', hint: 'Tokens and alerts are sent here by SMS.'}),
+        F('email', 'Email', 'text', 'clients.email', {rx: 'email', type: 'email'}),
+        F('postal', 'Postal address', 'text', 'clients.postal_address', {ph: 'P O Box 1234, Gaborone'}),
+        F('contact', 'Contact person', 'text', 'client_contacts.name', {show: v => v.type !== 'Domestic'})]},
+      {title: 'KYC documents', writes: 'kyc_documents', show: v => !!v.type, note: 'Scans or photos, PDF or JPG up to 10 MB. Documents are stored encrypted and reviewed by a KYC officer.', fields: kycFields(v)}
+    ]},
+  {id: 'property', label: 'Property and tenancy', who: 'Customer service',  cta: 'Save property',
+    desc: 'Records who owns a plot or unit and who lives or trades there. Ownership stays fixed when tenants change; a new tenancy ends the previous one.',
+    steps: ['Insert or update properties with owner_client_id.', 'If let: end any active tenancy for the property, then insert the new tenancies row.', 'Store the lease in kyc_documents and link it as lease_document_id.', 'Grant the tenant portal access to the property meters.'],
+    sections: v => [
+      {title: 'Owner', writes: 'properties', fields: [
+        F('owner', 'Owner client number', 'lookup', 'properties.owner_client_id', {req: 1, ph: 'DOM-204100', mono: 1})]},
+      {title: 'Property', writes: 'properties', fields: [
+        F('suburb', 'Suburb', 'select', 'properties.suburb_id', {req: 1, opts: SUBURBS}),
+        F('plot', 'Plot number', 'text', 'properties.plot_no', {req: 1, ph: '21455', mono: 1}),
+        F('unit', 'Unit or flat', 'text', 'properties.unit_no', {ph: 'Optional'}),
+        F('ptype', 'Property type', 'select', 'properties.property_type', {req: 1, opts: ['House', 'Flat', 'Commercial unit', 'Facility']}),
+        F('deed', 'Title deed number', 'text', 'properties.title_deed_no', {mono: 1}),
+        F('lat', 'Latitude', 'text', 'properties.location', {rx: 'lat', ph: '-24.6273', mono: 1}),
+        F('lng', 'Longitude', 'text', 'properties.location', {rx: 'lng', ph: '25.9420', mono: 1})]},
+      {title: 'Occupancy', writes: 'tenancies', fields: [
+        F('occ', 'Occupancy', 'seg', null, {req: 1, opts: ['Owner-occupied', 'Let to a tenant', 'Vacant']}),
+        F('tenant', 'Tenant client number', 'lookup', 'tenancies.tenant_client_id', {req: 1, ph: 'DOM-204137', mono: 1, show: v => v.occ === 'Let to a tenant'}),
+        F('start', 'Lease start', 'text', 'tenancies.start_date', {req: 1, type: 'date', show: v => v.occ === 'Let to a tenant'}),
+        F('end', 'Lease end', 'text', 'tenancies.end_date', {type: 'date', show: v => v.occ === 'Let to a tenant', hint: 'Leave empty for open-ended leases.'}),
+        F('party', 'Who buys water', 'seg', 'tenancies.vending_party', {req: 1, opts: ['Tenant buys', 'Owner buys'], show: v => v.occ === 'Let to a tenant', hint: 'Tenant buys: tokens are sold in the tenant\u2019s name. The owner still sees usage and balance.'}),
+        F('lease', 'Signed lease', 'file', 'kyc_documents.file_url', {req: 1, show: v => v.occ === 'Let to a tenant'})]}
+    ]},
+  {id: 'meter', label: 'Meter commissioning', who: 'Field technician', cta: 'Commission meter',
+    desc: 'Links a physical meter to its LoRaWAN identity and to a property or site. The meter shows as installed until its first uplink arrives.',
+    steps: ['Insert meters with status installed and a zero credit_balance.', 'Write the AppKey to the vault and insert lorawan_devices with the vault path.', 'Register the device on the network server (OTAA).', 'Insert meter_events (install) with the technician and photo.'],
+    sections: v => [
+      {title: 'Meter', writes: 'meters', fields: [
+        F('serial', 'Serial number', 'text', 'meters.serial_no', {req: 1, ph: 'WM-104882', mono: 1}),
+        F('sts', 'STS meter number', 'text', 'meters.sts_meter_no', {req: 1, rx: 'sts', ph: '04100012345', mono: 1}),
+        F('mclass', 'Class', 'seg', 'meters.meter_class', {req: 1, opts: ['Domestic', 'Bulk']}),
+        F('size', 'Size', 'select', 'meters.size', {req: 1, opts: ['DN15', 'DN20', 'DN25', 'DN40', 'DN50', 'DN80', 'DN100', 'DN150', 'DN200']}),
+        F('model', 'Model', 'select', 'meters.model', {opts: ['Ultrasonic U15 LoRa', 'Ultrasonic U25 LoRa', 'Woltman W80 LoRa']}),
+        F('tariff', 'Tariff', 'select', 'meters.tariff_id', {req: 1, opts: ['Domestic Band 2', 'Domestic Band 1', 'Commercial', 'Government', 'Bulk']})]},
+      {title: 'LoRaWAN identity', writes: 'lorawan_devices', note: 'Read the keys from the label or scan the QR code. The AppKey goes straight to the vault and is never shown again.', fields: [
+        F('deveui', 'DevEUI', 'text', 'lorawan_devices.dev_eui', {req: 1, rx: 'hex16', ph: 'A840419B2C7D1F06', mono: 1}),
+        F('joineui', 'JoinEUI', 'text', 'lorawan_devices.join_eui', {req: 1, rx: 'hex16', ph: '70B3D57ED0000000', mono: 1}),
+        F('appkey', 'AppKey', 'text', 'lorawan_devices.app_key_ref', {req: 1, rx: 'hex32', type: 'password', mono: 1, span: '1 / -1', secret: 1}),
+        F('dclass', 'Device class', 'seg', 'lorawan_devices.device_class', {req: 1, opts: ['A', 'C']})]},
+      {title: 'Location', writes: 'meters', fields: [
+        F('mprop', 'Property plot', 'text', 'meters.property_id', {req: 1, ph: 'Plot 21455, Block 8', show: v => v.mclass !== 'Bulk'}),
+        F('msite', 'Site', 'select', 'meters.site_id', {req: 1, opts: ['ST-002 Broadhurst water tower', 'ST-003 Phakalane reservoir', 'ST-007 Block 8 pump station'], show: v => v.mclass === 'Bulk'}),
+        F('dma', 'District metered area', 'select', 'meters.dma_id', {opts: ['Block 8 DMA', 'Phakalane DMA', 'Old Naledi DMA', 'Broadhurst DMA']}),
+        F('mlat', 'Latitude', 'text', 'meters.location', {req: 1, rx: 'lat', ph: '-24.6273', mono: 1}),
+        F('mlng', 'Longitude', 'text', 'meters.location', {req: 1, rx: 'lng', ph: '25.9420', mono: 1})]},
+      {title: 'Installation', writes: 'meter_events', fields: [
+        F('tech', 'Technician', 'select', 'meter_events.technician_id', {req: 1, opts: ['Kabelo Moloi', 'Amogelang Dube']}),
+        F('idate', 'Installed on', 'text', 'meters.installed_at', {req: 1, type: 'date'}),
+        F('photo', 'Photo of installed meter', 'file', 'meter_events.photo_url', {req: 1}),
+        F('notes', 'Notes', 'area', 'meter_events.notes', {span: '1 / -1'})]}
+    ]},
+  {id: 'gateway', label: 'Gateway registration', who: 'Network engineer', cta: 'Register gateway',
+    desc: 'Adds a LoRaWAN gateway to the fleet and the network map. Coverage radius drives the ring shown on the map.',
+    steps: ['Insert gateways with status offline.', 'Register the gateway EUI on the network server.', 'Status moves to online on the first stats packet.'],
+    sections: v => [
+      {title: 'Gateway', writes: 'gateways', fields: [
+        F('gname', 'Name', 'text', 'gateways.name', {req: 1, ph: 'GW-GAB-07', mono: 1}),
+        F('geui', 'Gateway EUI', 'text', 'gateways.gateway_eui', {req: 1, rx: 'hex16', mono: 1}),
+        F('gmodel', 'Model', 'select', 'gateways.model', {opts: ['Outdoor 8-channel', 'Outdoor 16-channel', 'Indoor 8-channel']}),
+        F('back', 'Backhaul', 'seg', 'gateways.backhaul', {req: 1, opts: ['Fibre', 'LTE', 'Microwave']}),
+        F('radius', 'Coverage radius (m)', 'text', 'gateways.coverage_radius_m', {type: 'number', ph: '3500'})]},
+      {title: 'Site', writes: 'gateways', fields: [
+        F('gsite', 'Site', 'select', 'gateways.site_id', {req: 1, opts: ['ST-001 Main Mall rooftop', 'ST-002 Broadhurst water tower', 'ST-005 Kgale Hill mast', 'ST-006 Old Naledi clinic', 'New site…']}),
+        F('glat', 'Latitude', 'text', 'gateways.location', {req: 1, rx: 'lat', mono: 1}),
+        F('glng', 'Longitude', 'text', 'gateways.location', {req: 1, rx: 'lng', mono: 1}),
+        F('gdate', 'Installed on', 'text', 'gateways.installed_at', {type: 'date'})]}
+    ]},
+  {id: 'sale', label: 'Token sale', who: 'Vendor agent', cta: 'Issue token',
+    desc: 'Sells water credit at a counter. The purchaser is whoever is allowed to buy for the meter, normally the tenant; the property owner is recorded alongside.',
+    steps: ['Check the purchaser is allowed to vend and has verified KYC.', 'Insert sales with purchaser_client_id and owner_client_id.', 'Generate the STS token, insert tokens, and queue a credit downlink.', 'Insert credit_ledger (vend) and update meters.credit_balance in the same transaction.', 'Send the token to the purchaser by SMS.'],
+    sections: v => [
+      {title: 'Meter', writes: 'sales', fields: [
+        F('smeter', 'Meter serial', 'meterlookup', 'sales.meter_id', {req: 1, ph: 'WM-104882', mono: 1, span: '1 / -1'})]},
+      {title: 'Payment', writes: 'sales, tokens', show: v => !!METERS[(v.smeter || '').toUpperCase()], fields: [
+        F('purchaser', 'Purchaser', 'calc', 'sales.purchaser_client_id'),
+        F('channel', 'Channel', 'select', 'sales.channel_id', {req: 1, opts: ['Counter cash', 'Counter card', 'Orange Money', 'EFT']}),
+        F('amount', 'Amount incl. VAT (P)', 'text', 'sales.amount_incl', {req: 1, rx: 'amount', ph: '100.00'}),
+        F('ref', 'Provider reference', 'text', 'sales.provider_ref', {mono: 1, show: v => v.channel && v.channel !== 'Counter cash'}),
+        F('excl', 'Excl. VAT', 'calc', 'sales.amount_excl'),
+        F('vatc', 'VAT 14%', 'calc', 'sales.vat'),
+        F('units', 'Water units', 'calc', 'sales.units_l')]}
+    ]},
+  {id: 'user', label: 'User and role', who: 'Administrator', cta: 'Send invitation',
+    desc: 'Invites a staff member, sets their role and limits them to zones if needed. They receive an email to set a password.',
+    steps: ['Insert users with status invited.', 'Insert user_scopes for each selected suburb.', 'Email a one-time sign-in link valid for 48 hours.'],
+    sections: v => [
+      {title: 'Person', writes: 'users', fields: [
+        F('uname', 'Full name', 'text', 'users.full_name', {req: 1}),
+        F('uemail', 'Work email', 'text', 'users.email', {req: 1, rx: 'email', type: 'email'}),
+        F('uphone', 'Mobile', 'text', 'users.phone', {rx: 'phone', ph: '+267 71 234 567'})]},
+      {title: 'Access', writes: 'users, user_scopes', fields: [
+        F('urole', 'Role', 'select', 'users.role_id', {req: 1, opts: ['Administrator', 'Operations', 'Finance', 'Vendor agent', 'Field technician', 'Municipal manager (read only)']}),
+        F('uscope', 'Zones', 'chips', 'user_scopes.suburb_id', {opts: SUBURBS, span: '1 / -1', hint: 'Leave all unselected for access to every zone.'})]}
+    ]}
+];
+
+function kycFields(v) {
+  const t = v.type, rel = v.relation;
+  const d = t === 'Business' ? [['cipa_certificate', 'CIPA registration certificate', 1], ['directors_id', 'Directors\u2019 Omang copies', 1], ['tax_clearance', 'BURS tax clearance', 1], ['vat_certificate', 'VAT registration', 0], ['bank_letter', 'Bank confirmation letter', v.terms === '30 days' ? 1 : 0]]
+    : t === 'Government' ? [['vote_authority', 'Vote holder authority letter', 1]]
+    : [['omang', 'Omang, both sides', 1], ['proof_of_residence', 'Proof of residence', 1], ['service_agreement', 'Signed service agreement', 1]];
+  if (rel === 'Tenant') d.push(['lease_agreement', 'Lease agreement', 1], ['landlord_consent', 'Landlord consent letter', 0]);
+  if (rel === 'Landlord' || rel === 'Property owner' || (rel === 'Owner-occupier' && t !== 'Government')) d.push(['title_deed', 'Title deed or proof of ownership', 1]);
+  return d.map(x => F('doc_' + x[0], x[1], 'file', 'kyc_documents[' + x[0] + ']', {req: x[2]}));
+}
+
+class Component extends DCLogic {
+  state = {form: this.props.startForm || 'client', v: {client: {type: 'Domestic', relation: 'Tenant'}, property: {}, meter: {mclass: 'Domestic', dclass: 'A'}, gateway: {}, sale: {smeter: 'WM-104882', channel: 'Counter cash', amount: '100.00'}, user: {}}, tried: {}, done: {}};
+
+  set(k, val) { this.setState(s => { const f = s.form; return {v: Object.assign({}, s.v, {[f]: Object.assign({}, s.v[f], {[k]: val})}), done: Object.assign({}, s.done, {[f]: null})}; }); }
+
+  sale(v) {
+    const m = METERS[(v.smeter || '').toUpperCase()], a = parseFloat(v.amount);
+    if (!m) return {};
+    const ok = isFinite(a) && a > 0, ex = ok ? a / 1.14 : 0;
+    return {m, purchaser: m.party === 'tenant' ? m.tenant : m.owner, excl: ok ? P(ex) : '—', vat: ok ? P(a - ex) : '—', units: ok ? N(Math.floor(a / 10 * 1000)) + ' L' : '—'};
+  }
+
+  fieldsOf(form, v) { return form.sections(v).filter(s => !s.show || s.show(v)).map(s => Object.assign({}, s, {fields: s.fields.filter(f => !f.show || f.show(v))})); }
+
+  errors(form, v) {
+    const e = {};
+    this.fieldsOf(form, v).forEach(s => s.fields.forEach(f => {
+      const val = (v[f.k] == null ? '' : v[f.k]);
+      const empty = Array.isArray(val) ? !val.length : String(val).trim() === '';
+      if (f.req && empty && f.kind !== 'calc') e[f.k] = 'Required.';
+      else if (!empty && f.rx && !RX[f.rx].test(String(val).trim())) e[f.k] = MSG[f.rx];
+      else if (f.kind === 'lookup' && !empty && !CLIENTS[String(val).toUpperCase()]) e[f.k] = 'No client with that number.';
+      else if (f.kind === 'meterlookup' && !empty && !METERS[String(val).toUpperCase()]) e[f.k] = 'No meter with that serial.';
+    }));
+    if (form.id === 'sale') { const x = this.sale(v); if (x.m && !x.purchaser) e.smeter = 'No one is allowed to buy for this meter.'; }
+    return e;
+  }
+
+  renderVals() {
+    const st = this.state, form = FORMS.find(f => f.id === st.form), v = st.v[form.id] || {};
+    const tried = st.tried[form.id], errs = this.errors(form, v), sx = form.id === 'sale' ? this.sale(v) : {};
+    const secs = this.fieldsOf(form, v);
+    const payload = {};
+    let filled = 0, total = 0;
+    const sections = secs.map(s => ({title: s.title, writes: s.writes, note: s.note || false, fields: s.fields.map(f => {
+      let val = v[f.k] == null ? '' : v[f.k];
+      if (f.kind === 'calc') val = f.k === 'purchaser' ? (sx.purchaser || '—') : f.k === 'excl' ? sx.excl : f.k === 'vatc' ? sx.vat : sx.units;
+      const err = tried && errs[f.k];
+      if (f.kind !== 'calc') { total++; if (Array.isArray(val) ? val.length : String(val).trim()) filled++; }
+      if (f.col && (Array.isArray(val) ? val.length : String(val).trim() && val !== '—')) {
+        const [tb, col] = f.col.split('.').length > 1 ? f.col.split('.') : [f.col, ''];
+        const tname = tb.replace(/\[.*\]/, ''), sub = (tb.match(/\[(.*)\]/) || [])[1];
+        payload[tname] = payload[tname] || (sub ? [] : {});
+        const shown = f.secret ? 'vault://lorawan/' + (v.deveui || 'dev') + '/appkey' : f.kind === 'lookup' || f.kind === 'meterlookup' ? String(val).toUpperCase() : val;
+        if (sub) payload[tname].push({doc_type: sub, file: val, status: 'submitted'});
+        else if (col === 'location') payload[tname].location = 'POINT(' + (v[f.k === 'lat' || f.k === 'lng' ? 'lng' : f.k[0] + 'lng'] || '?') + ' ' + (v[f.k === 'lat' || f.k === 'lng' ? 'lat' : f.k[0] + 'lat'] || '?') + ')';
+        else payload[tname][col] = shown;
+      }
+      let info = err || f.hint || false, infoTone = err ? '#B3261E' : '#767E89';
+      if (f.kind === 'lookup' && !err && String(val).trim()) { const c = CLIENTS[String(val).toUpperCase()]; info = c ? c.name + ' · ' + c.role + ' · KYC ' + c.kyc : 'Not found yet'; infoTone = c ? (c.kyc === 'verified' ? '#237A48' : '#965A00') : '#767E89'; }
+      if (f.kind === 'meterlookup' && !err) { const m = sx.m; info = m ? m.plot + ' · Owner ' + m.owner + ' · ' + (m.tenant ? 'Tenant ' + m.tenant : 'Vacant') + ' · ' + (m.party === 'tenant' ? 'Tenant buys' : 'Owner buys') + ' · Balance ' + m.bal : 'Try WM-104882, WM-104455 or WM-206093.'; infoTone = m ? '#2B323A' : '#767E89'; }
+      const opts = f.opts || [];
+      const isFile = f.kind === 'file';
+      return {
+        label: f.label, star: f.req && f.kind !== 'calc' ? ' *' : '', span: f.span || 'auto',
+        isText: f.kind === 'text' || f.kind === 'lookup' || f.kind === 'meterlookup', isArea: f.kind === 'area', isSelect: f.kind === 'select', isSeg: f.kind === 'seg', isChips: f.kind === 'chips', isFile, isCalc: f.kind === 'calc',
+        type: f.type || 'text', value: Array.isArray(val) ? '' : val, ph: f.ph || '', ff: f.mono ? "'IBM Plex Mono',monospace" : "'Public Sans',sans-serif",
+        border: err ? '#B3261E' : '#D2D6DC', onChange: e => this.set(f.k, e.target.value), opts,
+        segs: opts.map(o => { const on = f.kind === 'chips' ? (val || []).indexOf(o) >= 0 : val === o; return {label: o, weight: on ? 600 : 500, bg: on ? '#EBF1F8' : '#FFFFFF', color: on ? '#00468C' : '#49515C', border: on ? '#B8CFE8' : '#E0E3E7',
+          go: () => f.kind === 'chips' ? this.set(f.k, on ? (val || []).filter(x => x !== o) : (val || []).concat([o])) : this.set(f.k, o)}; }),
+        onFile: e => { const fl = e.target.files && e.target.files[0]; if (fl) this.set(f.k, fl.name); },
+        fileLabel: isFile ? (val || 'No file chosen') : '', fileAction: val ? 'Replace' : 'Choose file', fileColor: val ? '#181D23' : '#A1A8B2',
+        fileBorder: err ? '#B3261E' : val ? '#9CCBA9' : '#C9CED6', fileBg: val ? '#F4FAF6' : '#FAFBFC',
+        info, infoTone
+      };
+    })}));
+    if (form.id === 'sale' && sx.purchaser) {
+      const a = parseFloat(v.amount), ok = isFinite(a) && a > 0, ex = ok ? Math.round(a / 1.14 * 100) / 100 : null;
+      payload.sales = Object.assign({}, payload.sales || {}, {
+        meter_id: v.smeter.toUpperCase(),
+        purchaser_client_id: (sx.purchaser.match(/\((.*)\)/) || [])[1],
+        owner_client_id: (sx.m.owner.match(/\((.*)\)/) || [])[1],
+        amount_incl: ok ? a : null, amount_excl: ex, vat: ok ? Math.round((a - ex) * 100) / 100 : null,
+        units_l: ok ? Math.floor(a / 10 * 1000) : null
+      });
+    }
+    const errCount = tried ? Object.keys(errs).length : 0;
+    return {
+      forms: FORMS.map(f => ({label: f.label, who: f.who, go: () => this.setState({form: f.id}), weight: f.id === form.id ? 600 : 500, color: f.id === form.id ? '#00468C' : '#181D23', bg: f.id === form.id ? '#EBF1F8' : 'transparent'})),
+      form: {label: form.label, desc: form.desc, cta: form.cta, steps: form.steps.map((t, i) => ({n: String(i + 1), t}))},
+      sections,
+      errCount: errCount ? (errCount === 1 ? '1 field' : errCount + ' fields') : false,
+      done: st.done[form.id] || false,
+      payload: JSON.stringify(payload, null, 2),
+      filled: filled + ' of ' + total + ' fields',
+      submit: () => {
+        const e = this.errors(form, v);
+        if (Object.keys(e).length) { this.setState(s => ({tried: Object.assign({}, s.tried, {[form.id]: true})})); window.scrollTo(0, 0); return; }
+        const id = {client: (v.type === 'Business' ? 'BUS-' : v.type === 'Government' ? 'GOV-' : 'DOM-') + (204500 + Math.floor(Math.random() * 400)), property: 'Property ' + (v.plot || ''), meter: v.serial, gateway: v.gname, sale: 'Receipt R-' + (880000 + Math.floor(Math.random() * 9999)), user: v.uemail}[form.id];
+        const body = form.id === 'sale' ? 'Token 5813 2270 4419 0386 6152 sent by SMS to ' + sx.purchaser.split(' (')[0] + '. Credit downlink queued for ' + v.smeter.toUpperCase() + '.' : 'Written to ' + Object.keys(payload).join(', ') + '. The change is recorded in audit_log.';
+        this.setState(s => ({tried: Object.assign({}, s.tried, {[form.id]: false}), done: Object.assign({}, s.done, {[form.id]: {title: 'Saved: ' + id, body}})}));
+        window.scrollTo(0, 0);
+      },
+      resetForm: () => this.setState(s => ({v: Object.assign({}, s.v, {[form.id]: {}}), tried: Object.assign({}, s.tried, {[form.id]: false}), done: Object.assign({}, s.done, {[form.id]: null})}))
+    };
+  }
+}
+const P = n => 'P ' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const N = n => n.toLocaleString('en-US');
+</script>
+</body>
+</html>
