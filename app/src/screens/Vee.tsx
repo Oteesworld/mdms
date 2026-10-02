@@ -3,6 +3,7 @@ import { Badge, Card, StatCard, Switch, TableHead } from '../components/ui';
 import { AUDIT_SEED, EXCEPTIONS, OPEN_EXCEPTIONS, RULES, type AuditEntry, type ExceptionStatus, type VeeException } from '../data/mdm';
 import { N } from '../data/format';
 import { addWorkOrder } from '../data/store';
+import { currentHandle } from '../auth';
 
 const FILTERS = ['Open', 'Estimated', 'Approved', 'Rejected', 'All'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -36,7 +37,7 @@ export function Vee() {
       });
       what = `${x.id} · ${x.meter} · rejected → ${wo}`;
     }
-    setAudit((a) => [{ t: NOW, who: 'l.kgosi', what, reason }, ...a]);
+    setAudit((a) => [{ t: NOW, who: currentHandle(), what, reason }, ...a]);
     const next = items.find((y) => y.id !== x.id && y.status === 'Open');
     if (next) setSelId(next.id);
   };

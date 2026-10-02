@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { Icon } from './components/Icon';
+import { canOpen, homeOf, signOut, useAccount, type Account } from './auth';
+import { Login } from './screens/Login';
 import { NAV, TITLES, useScreen, type Screen } from './routes';
 import { Dashboard } from './screens/Dashboard';
 import { NetworkMap } from './screens/NetworkMap';
@@ -14,12 +17,23 @@ import { Operations } from './screens/Operations';
 import type { TableScreen } from './data/clients';
 
 export function App() {
+  const account = useAccount();
+  return account ? <Shell account={account} /> : <Login />;
+}
+
+function Shell({ account }: { account: Account }) {
   const [screen, go] = useScreen();
+  const allowed = canOpen(account.role, screen);
+  // Screens outside the role's access (e.g. a pasted link) send the user to their home screen.
+  useEffect(() => {
+    if (!allowed) go(homeOf(account.role));
+  }, [allowed, account.role, go]);
+  if (!allowed) return null;
   const [crumb, title] = TITLES[screen];
 
   return (
     <div className="shell">
-      <Sidebar screen={screen} go={go} />
+      <Sidebar screen={screen} go={go} account={account} />
       <main className="main">
         <header className="topbar">
           <div className="flex1">
@@ -57,7 +71,10 @@ function ScreenView({ screen }: { screen: Screen }) {
   }
 }
 
-function Sidebar({ screen, go }: { screen: Screen; go: (s: Screen) => void }) {
+function Sidebar({ screen, go, account }: { screen: Screen; go: (s: Screen) => void; account: Account }) {
+  // Drop screens the role can't open, then any group left without items.
+  const items = NAV.filter((n) => 'group' in n || canOpen(account.role, n.screen));
+  const nav = items.filter((n, i) => !('group' in n) || (items[i + 1] && !('group' in items[i + 1])));
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -66,7 +83,7 @@ function Sidebar({ screen, go }: { screen: Screen; go: (s: Screen) => void }) {
         <div className="brand-word"><span>AMPLIFIED</span><span>IoT</span></div>
       </div>
       <nav className="nav">
-        {NAV.map((n) =>
+        {nav.map((n) =>
           'group' in n ? (
             <div key={n.group} className="nav-group">{n.group}</div>
           ) : (
@@ -86,11 +103,14 @@ function Sidebar({ screen, go }: { screen: Screen; go: (s: Screen) => void }) {
         )}
       </nav>
       <div className="user-foot">
-        <div className="avatar">LK</div>
+        <div className="avatar">{account.name.split(' ').map((w) => w[0]).join('')}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink)' }}>Leeroy Kgosi</div>
-          <div style={{ fontSize: 9.5, color: 'var(--muted)' }}>Network administrator</div>
+          <div className="ellipsis" style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink)' }}>{account.name}</div>
+          <div className="ellipsis" style={{ fontSize: 9.5, color: 'var(--muted)' }}>{account.role} · {account.title}</div>
         </div>
+        <button type="button" className="sign-out" onClick={signOut} title="Sign out" aria-label="Sign out">
+          <Icon name="signOut" size={15} />
+        </button>
       </div>
     </aside>
   );

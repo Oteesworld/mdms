@@ -36,6 +36,7 @@ export const SCHEDULES: [name: string, cron: string, to: string, on: boolean][] 
 
 export const USERS: [name: string, email: string, role: string, scope: string, seen: string, status: 'Active' | 'Suspended'][] = [
   ['Leeroy Kgosi', 'l.kgosi@amplifiediot.co.bw', 'Network Administrator', 'All zones', '2 min ago', 'Active'],
+  ['Kefilwe Ramotswe', 'k.ramotswe@wuc.co.bw', 'Operations Controller', 'All zones', '9 min ago', 'Active'],
   ['Mpho Tau', 'm.tau@wuc.co.bw', 'Revenue Analyst', 'Gaborone', '18 min ago', 'Active'],
   ['Kabelo Moloi', 'k.moloi@wuc.co.bw', 'Field Supervisor', 'Block 8, Block 9', '1 h ago', 'Active'],
   ['Naledi Seretse', 'n.seretse@wuc.co.bw', 'Vendor Agent', 'CBD counter', '3 h ago', 'Active'],

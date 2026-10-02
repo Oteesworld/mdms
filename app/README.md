@@ -26,3 +26,19 @@ The MDM screens follow the collect → store → validate → analyse → VEE �
 - **Field operations** (`#/operations`) — work orders (assign, start, complete) and LoRaWAN class A downlink commands
   (on-demand read, valve open/close, clock sync, …); the map's meter panel can queue commands too
 - `src/styles.css` — design tokens (logo navy `#00468C`, gold `#D89E0E`) and shared classes
+
+## Sign-in (demo only)
+
+`src/auth.ts` holds demo accounts (password `amplified2026`) and the role → screen access map; `src/screens/Login.tsx` is the sign-in page.
+Accounts are checked in the browser, so this gates the UI for demos but **does not secure any data**. Swap in a real identity
+provider (e.g. Supabase Auth) before connecting live data.
+
+| Role | Demo account | Can open |
+|---|---|---|
+| Admin | l.kgosi@amplifiediot.co.bw | everything |
+| Ops | k.ramotswe@wuc.co.bw | everything except Settings |
+| Finance | t.phiri@wuc.co.bw | dashboard, reports, data pipeline, VEE, billing, client registers, portal |
+| Vendor | n.seretse@wuc.co.bw | domestic and business clients, portal |
+| Field | k.moloi@wuc.co.bw | map, field operations, meters, bulk meters, LoRaWAN, gateways, sites |
+
+`a.dube@wuc.co.bw` is suspended and shows the blocked-account message.

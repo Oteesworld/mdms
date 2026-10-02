@@ -1,5 +1,6 @@
 /* Tiny in-memory store for state shared across screens (work orders, downlink queue). */
 import { useSyncExternalStore } from 'react';
+import { currentHandle } from '../auth';
 import { COMMAND_SEED, WORK_ORDERS, type Command, type CommandType, type WorkOrder } from './mdm';
 
 interface State {
@@ -35,7 +36,7 @@ export const METER_ID = /^WM-\d{6}$/;
  * Queue a LoRaWAN downlink. Class A devices only listen after they uplink,
  * so the demo walks each command through Queued → Sent → Acknowledged/Failed.
  */
-export function queueCommand(meter: string, cmd: CommandType, by = 'l.kgosi') {
+export function queueCommand(meter: string, cmd: CommandType, by = currentHandle()) {
   const id = 'DL-' + seq++;
   const patch = (p: Partial<Command>) =>
     set((s) => ({ ...s, commands: s.commands.map((c) => (c.id === id ? { ...c, ...p } : c)) }));
