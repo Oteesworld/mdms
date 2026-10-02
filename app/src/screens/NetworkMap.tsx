@@ -7,6 +7,7 @@ import {
   type LayerState, type Meter,
 } from '../data/fleet';
 import { N, P, litres } from '../data/format';
+import { queueCommand, useStore } from '../data/store';
 
 export type Basemap = 'satellite' | 'streets' | 'osm';
 
@@ -318,6 +319,10 @@ export function NetworkMap({ basemap = 'satellite', showCoverage = true }: { bas
 }
 
 function MeterPanel({ m, onClose }: { m: Meter; onClose: () => void }) {
+  const last = useStore((s) => s.commands.find((c) => c.meter === m.id));
+  const closeValve = () => {
+    if (window.confirm(`Close the valve on ${m.id}? The customer loses supply until it is reopened.`)) queueCommand(m.id, 'Close valve');
+  };
   const fields = [
     ['Suburb', m.sub], ['Latitude', m.lat.toFixed(5)], ['Longitude', m.lng.toFixed(5)],
     ['Gateway', m.gw], ['RSSI', m.rssi + ' dBm'], ['SNR', m.snr + ' dB'],
@@ -326,10 +331,13 @@ function MeterPanel({ m, onClose }: { m: Meter; onClose: () => void }) {
   ];
   return (
     <Card style={{ padding: '13px 15px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11, flexWrap: 'wrap' }}>
         <span style={{ fontWeight: 600, fontSize: 13 }}>{m.id}</span>
         <span style={{ fontWeight: 600, fontSize: 11, background: STATUS[m.status].dot, color: '#fff', padding: '2px 7px', borderRadius: 4 }}>{STATUS[m.status].label}</span>
         <span className="flex1" />
+        {last && <span className="sub">{last.cmd}: {last.status.toLowerCase()} · <a href="#/operations">queue</a></span>}
+        <button type="button" className="btn" style={{ fontSize: 11, padding: '5px 10px' }} onClick={() => queueCommand(m.id, 'On-demand read')}>Read now</button>
+        <button type="button" className="btn" style={{ fontSize: 11, padding: '5px 10px', color: 'var(--bad)', borderColor: '#F0C4C0' }} onClick={closeValve}>Close valve</button>
         <button type="button" onClick={onClose} style={{ fontSize: 11, color: 'var(--muted)' }}>Close ✕</button>
       </div>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 9 }}>

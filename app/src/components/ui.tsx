@@ -5,6 +5,17 @@ export function Card({ children, clip, hover, style, className = '' }: { childre
   return <div className={`card${clip ? ' clip' : ''}${hover ? ' card-hover' : ''} ${className}`} style={style}>{children}</div>;
 }
 
+/** Small stat tile used at the top of register-style screens. */
+export function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="card" style={{ padding: '11px 13px' }}>
+      <div className="label" style={{ marginBottom: 6 }}>{label}</div>
+      <div className="stat-value">{value}</div>
+      <div className="sub" style={{ marginTop: 4 }}>{sub}</div>
+    </div>
+  );
+}
+
 /** Section heading with a hairline rule and an optional right-hand note. */
 export function SectionRule({ title, note }: { title: string; note?: ReactNode }) {
   return (

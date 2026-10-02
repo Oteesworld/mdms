@@ -84,7 +84,7 @@ export function domesticProperties(i: number): Property[] {
   });
 }
 
-const BIZ: [name: string, sector: string][] = [
+export const BIZ: [name: string, sector: string][] = [
   ['Choppies Broadhurst', 'Retail'], ['Riverwalk Mall', 'Property'], ['Kgale Hub Facilities', 'Property'], ['Sefalana Cash & Carry', 'Wholesale'],
   ['Botswana Breweries', 'Manufacturing'], ['Cresta Lodge Gaborone', 'Hospitality'], ['Debswana Corporate', 'Mining'], ['Bokamoso Private Hospital', 'Healthcare'],
   ['Gaborone Motors', 'Automotive'], ['Botswana Craft', 'Retail'], ['Fairgrounds Holdings', 'Events'], ['Sandalwood Apartments', 'Residential'],
@@ -128,7 +128,7 @@ function businessProperties(i: number): Property[] {
   });
 }
 
-const GOVT: [vote: string, ministry: string, facility: string][] = [
+export const GOVT: [vote: string, ministry: string, facility: string][] = [
   ['V-0421', 'Ministry of Health', 'Marina Referral Hospital'], ['V-0117', 'Ministry of Education', 'University of Botswana'],
   ['V-0388', 'Ministry of Defence', 'SSKB Camp Area'], ['V-0204', 'Local Government', 'Gaborone City Council'],
   ['V-0512', 'Ministry of Health', 'Princess Marina Clinic'], ['V-0093', 'Office of the President', 'State House'],

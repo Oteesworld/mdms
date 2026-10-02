@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import { Card } from '../components/ui';
+import { Card, StatCard } from '../components/ui';
 import { TABLES, type Cell, type KycProfile, type TableScreen } from '../data/clients';
 
 const CELL_FONT: Record<Cell['kind'], string> = {
@@ -22,13 +22,7 @@ export function Register({ screen }: { screen: TableScreen }) {
   return (
     <div>
       <div className="grid g-stats" style={{ marginBottom: 12 }}>
-        {cfg.stats.map((s) => (
-          <Card key={s.label} style={{ padding: '11px 13px' }}>
-            <div className="label" style={{ marginBottom: 6 }}>{s.label}</div>
-            <div className="stat-value">{s.value}</div>
-            <div className="sub" style={{ marginTop: 4 }}>{s.sub}</div>
-          </Card>
-        ))}
+        {cfg.stats.map((s) => <StatCard key={s.label} {...s} />)}
       </div>
 
       <div className={`grid${kyc ? ' register-split' : ''}`} style={{ alignItems: 'start' }}>

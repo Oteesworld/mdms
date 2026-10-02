@@ -336,3 +336,42 @@ table.tbl { width: 100%; border-collapse: collapse; }
   font-weight: 600; font-size: 10.5px; color: var(--navy);
 }
 .quick-buy:hover { background: var(--navy-tint); }
+
+/* ---------- Meter data (pipeline, VEE, billing, operations) ---------- */
+
+.cycle { display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap; }
+.cycle-stage {
+  flex: 1 1 130px; display: flex; flex-direction: column; gap: 4px; padding: 10px 11px; border: 1px solid var(--line-2);
+  border-top: 3px solid var(--ok); border-radius: 6px; background: var(--surface-2); color: inherit; min-width: 0;
+}
+a.cycle-stage[href]:hover { border-color: var(--navy-soft); background: #fff; color: inherit; }
+.cycle-arrow { align-self: center; color: var(--faint); font-size: 18px; }
+@media (max-width: 1100px) { .cycle-arrow { display: none; } }
+
+.vee-split { grid-template-columns: minmax(0, 1fr) 360px; }
+@media (max-width: 1100px) { .vee-split { grid-template-columns: 1fr; } }
+
+.form-field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.form-field input, .form-field select {
+  height: 32px; padding: 0 9px; border: 1px solid var(--line-strong); border-radius: 6px; font: 400 12px var(--sans);
+  color: var(--ink); background: #fff; outline: 0;
+}
+.form-field input:focus, .form-field select:focus { border-color: var(--navy); box-shadow: 0 0 0 3px var(--navy-tint); }
+.form-field.invalid input { border-color: var(--bad); }
+.form-error { font-size: 10.5px; font-weight: 500; color: var(--bad); }
+button:disabled { cursor: not-allowed; }
+
+.steps { display: flex; gap: 0; flex-wrap: wrap; }
+.step { flex: 1 1 110px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; font-size: 11.5px; color: var(--muted); min-width: 0; }
+.step-dot {
+  width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--off); display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600; flex: none; background: #fff; color: var(--muted);
+}
+.step.done .step-dot { background: var(--ok); border-color: var(--ok); color: #fff; }
+.step.current { color: var(--ink); font-weight: 600; }
+.step.current .step-dot { border-color: var(--navy); color: var(--navy); box-shadow: 0 0 0 3px var(--navy-tint); }
+.inline-select {
+  height: 26px; padding: 0 6px; border: 1px solid var(--line); border-radius: 5px; font: 400 11.5px var(--sans);
+  color: var(--ink); background: #fff;
+}
+.inline-select:disabled { color: var(--muted); background: var(--surface-2); }

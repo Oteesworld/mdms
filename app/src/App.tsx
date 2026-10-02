@@ -7,6 +7,10 @@ import { NetworkHealth } from './screens/NetworkHealth';
 import { Register } from './screens/Register';
 import { Settings } from './screens/Settings';
 import { Portal } from './screens/Portal';
+import { Pipeline } from './screens/Pipeline';
+import { Vee } from './screens/Vee';
+import { Billing } from './screens/Billing';
+import { Operations } from './screens/Operations';
 import type { TableScreen } from './data/clients';
 
 export function App() {
@@ -45,6 +49,10 @@ function ScreenView({ screen }: { screen: Screen }) {
     case 'network': return <NetworkHealth />;
     case 'settings': return <Settings />;
     case 'portal': return <Portal />;
+    case 'mdm': return <Pipeline />;
+    case 'vee': return <Vee />;
+    case 'billing': return <Billing />;
+    case 'operations': return <Operations />;
     default: return <Register key={screen} screen={screen as TableScreen} />;
   }
 }

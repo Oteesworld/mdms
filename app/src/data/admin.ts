@@ -9,6 +9,7 @@ export const REPORTS: { name: string; desc: string; formats: string[] }[] = [
   { name: 'Monthly report', desc: 'Board pack: revenue, volume, losses, network availability.', formats: ['PDF', 'PPTX'] },
   { name: 'Bypass & tamper', desc: 'Suspected bypass list with risk score and inspection outcome.', formats: ['PDF', 'CSV'] },
   { name: 'Network health', desc: 'Gateway availability, packet loss, SF spread, unseen nodes.', formats: ['PDF', 'CSV'] },
+  { name: 'Data quality (VEE)', desc: 'Completeness, validation failures, estimates and manual edits by zone.', formats: ['PDF', 'CSV'] },
   { name: 'Vending reconciliation', desc: 'Provider settlement vs tokens issued, with unmatched entries.', formats: ['XLSX', 'CSV'] },
 ];
 
@@ -63,6 +64,8 @@ export const MODULES: [name: string, desc: string, meta: string, enabled: boolea
   ['Prepaid vending', 'Token generation, STS meters, counter and online channels.', '3 providers connected', true],
   ['LoRaWAN network server', 'Uplink decoding, ADR, downlink queue, gateway registry.', '6 gateways · ChirpStack', true],
   ['Bypass detection', 'Nightly anomaly detector over midnight and live-data ports.', 'Last run 03:20', true],
+  ['Validation & estimation (VEE)', 'Rule engine that flags, estimates and audits interval reads before billing.', '12 rules · 1,653 open exceptions', true],
+  ['Postpaid billing', 'Monthly bill runs for credit-terms business and government accounts.', 'Jul 2026 cycle in review', true],
   ['Bulk meter balancing', 'District metered areas: bulk vs sub-meter reconciliation.', '38 DMAs configured', true],
   ['Customer portal', 'Self-service usage, purchases and fault logging.', '18,402 registered', true],
   ['Leak advisories', 'Continuous-flow detection with SMS notification.', 'SMS gateway: Orange', true],
