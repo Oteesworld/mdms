@@ -28,15 +28,27 @@ function Shell({ account }: { account: Account }) {
   useEffect(() => {
     if (!allowed) go(homeOf(account.role));
   }, [allowed, account.role, go]);
+  const menu = useMenu();
   if (!allowed) return null;
   const [crumb, title] = TITLES[screen];
 
   return (
     <div className="shell">
-      <Sidebar screen={screen} go={go} account={account} />
+      <Sidebar screen={screen} go={go} account={account} menu={menu} />
       <main className="main">
         <header className="topbar">
-          <div className="flex1">
+          <button
+            type="button"
+            className="hamburger"
+            onClick={menu.toggle}
+            aria-label={menu.docked ? 'Hide menu' : menu.open ? 'Close menu' : 'Open menu'}
+            aria-expanded={menu.docked || menu.open}
+            aria-controls="side-menu"
+            title={menu.docked ? 'Hide menu' : 'Open menu'}
+          >
+            <Icon name="menu" size={20} />
+          </button>
+          <div className="flex1" style={{ minWidth: 0 }}>
             <div className="crumb">{crumb}</div>
             <h1 className="page-title" style={{ margin: 0 }}>{title}</h1>
           </div>
@@ -73,26 +85,6 @@ function ScreenView({ screen }: { screen: Screen }) {
 
 const PIN_KEY = 'amplified-iot.navPinned';
 
-/** Menu pinned open (default) or auto-hiding to an icon rail; remembered per browser. */
-function usePinned(): [boolean, (v: boolean) => void] {
-  const [pinned, setPinned] = useState(() => {
-    try {
-      return localStorage.getItem(PIN_KEY) !== 'false';
-    } catch {
-      return true;
-    }
-  });
-  const update = (v: boolean) => {
-    setPinned(v);
-    try {
-      localStorage.setItem(PIN_KEY, String(v));
-    } catch {
-      /* storage unavailable: choice lasts for this page only */
-    }
-  };
-  return [pinned, update];
-}
-
 function useNarrow(query = '(max-width: 900px)') {
   const [narrow, setNarrow] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
@@ -104,29 +96,76 @@ function useNarrow(query = '(max-width: 900px)') {
   return narrow;
 }
 
-function Sidebar({ screen, go, account }: { screen: Screen; go: (s: Screen) => void; account: Account }) {
-  const [pinned, setPinned] = usePinned();
+interface Menu {
+  /** Menu is docked beside the content (pinned, on a wide screen). */
+  docked: boolean;
+  /** Undocked menu is slid in over the page. */
+  open: boolean;
+  pinned: boolean;
+  narrow: boolean;
+  toggle: () => void;
+  close: () => void;
+  setPinned: (v: boolean) => void;
+}
+
+/**
+ * Hamburger menu state. Pinned (the default) docks the menu; the hamburger hides it,
+ * after which it opens as a drawer over the page. The pin choice is kept per browser;
+ * narrow screens always use the drawer.
+ */
+function useMenu(): Menu {
   const narrow = useNarrow();
-  // Narrow screens always use the auto-hiding rail.
-  const rail = !pinned || narrow;
+  const [pinned, setPinnedState] = useState(() => {
+    try {
+      return localStorage.getItem(PIN_KEY) !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [open, setOpen] = useState(false);
+  const setPinned = (v: boolean) => {
+    setPinnedState(v);
+    setOpen(false);
+    try {
+      localStorage.setItem(PIN_KEY, String(v));
+    } catch {
+      /* storage unavailable: choice lasts for this page only */
+    }
+  };
+  const docked = pinned && !narrow;
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+  return {
+    docked, open: open && !docked, pinned, narrow, setPinned,
+    toggle: () => (docked ? setPinned(false) : setOpen((o) => !o)),
+    close: () => setOpen(false),
+  };
+}
+
+function Sidebar({ screen, go, account, menu }: { screen: Screen; go: (s: Screen) => void; account: Account; menu: Menu }) {
   // Drop screens the role can't open, then any group left without items.
   const items = NAV.filter((n) => 'group' in n || canOpen(account.role, n.screen));
   const nav = items.filter((n, i) => !('group' in n) || (items[i + 1] && !('group' in items[i + 1])));
+  const state = menu.docked ? 'docked' : menu.open ? 'open' : 'hidden';
   return (
     <>
-    <div className={`sidebar-slot${rail ? ' rail' : ''}`} aria-hidden="true" />
-    <aside className={`sidebar${rail ? ' rail' : ''}`}>
+    <div className={`sidebar-slot${menu.docked ? '' : ' hidden'}`} aria-hidden="true" />
+    {menu.open && <div className="menu-backdrop" onClick={menu.close} aria-hidden="true" />}
+    <aside id="side-menu" className={`sidebar ${state}`}>
       <div className="brand">
         <img className="brand-logo" src="/assets/leeroy-logo.png" alt="Leeroy Systems" />
-        <img className="brand-mark" src="/assets/leeroy-mark.png" alt="Leeroy Systems" />
-        {!narrow && (
+        {!menu.narrow && (
           <button
             type="button"
-            className={`pin-btn${pinned ? ' on' : ''}`}
-            onClick={() => setPinned(!pinned)}
-            aria-pressed={pinned}
-            title={pinned ? 'Unpin menu (auto-hide)' : 'Pin menu open'}
-            aria-label={pinned ? 'Unpin menu (auto-hide)' : 'Pin menu open'}
+            className={`pin-btn${menu.pinned ? ' on' : ''}`}
+            onClick={() => menu.setPinned(!menu.pinned)}
+            aria-pressed={menu.pinned}
+            title={menu.pinned ? 'Unpin: hide menu behind the ☰ button' : 'Pin menu open'}
+            aria-label={menu.pinned ? 'Unpin menu' : 'Pin menu open'}
           >
             <Icon name="pin" size={16} />
           </button>
@@ -143,7 +182,7 @@ function Sidebar({ screen, go, account }: { screen: Screen; go: (s: Screen) => v
               className={`nav-item${screen === n.screen ? ' active' : ''}`}
               aria-current={screen === n.screen ? 'page' : undefined}
               title={n.label}
-              onClick={() => go(n.screen)}
+              onClick={() => { go(n.screen); menu.close(); }}
             >
               <Icon name={n.screen} />
               <span>{n.label}</span>
