@@ -378,11 +378,27 @@ button:disabled { cursor: not-allowed; }
 
 /* ---------- Sign in ---------- */
 
-.login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; background: var(--bg); }
-.login-card { width: 100%; max-width: 400px; padding: 28px 28px 22px; box-shadow: 0 1px 3px rgba(16, 24, 40, .06); }
-.login-card .form-field input[type=email], .login-card .form-field input[type=password] { height: 36px; font-size: 13px; }
+.login-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: #fff; }
+.login-brand {
+  display: flex; align-items: center; justify-content: center; padding: 48px;
+  background: var(--bg); border-right: 1px solid var(--line);
+}
+.login-brand img { width: min(460px, 80%); height: auto; display: block; }
+.login-panel { display: flex; align-items: center; justify-content: center; padding: 48px 32px; }
+.login-form-wrap { width: 100%; max-width: 380px; }
+.login-form-wrap .form-field { font-size: 11.5px; }
+.login-form-wrap .form-field input[type=email], .login-form-wrap .form-field input[type=password] { height: 40px; font-size: 13.5px; padding: 0 11px; }
+.login-submit { padding: 11px; font-size: 13px; border-radius: 7px; margin-top: 4px; }
+@media (max-width: 800px) {
+  .login-page { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .login-brand { padding: 32px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .login-brand img { width: min(240px, 70%); }
+  .login-panel { align-items: flex-start; padding: 28px 16px 40px; }
+}
 .login-error { font-size: 11.5px; color: var(--bad); background: var(--bad-bg); border: 1px solid #f0c4c0; border-radius: 6px; padding: 8px 10px; }
-.login-demo { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line-2); }
+.login-demo { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--line-2); }
+.login-demo summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--navy); list-style-position: inside; }
+.login-demo summary:hover { color: var(--navy-dark); }
 .login-account {
   display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 7px 9px; border-radius: 6px;
   border: 1px solid transparent;
