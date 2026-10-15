@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { Card, StatCard } from '../components/ui';
+import { ClientProfile } from './ClientProfile';
 import { TABLES, type Cell, type KycProfile, type TableScreen } from '../data/clients';
 
 const CELL_FONT: Record<Cell['kind'], string> = {
@@ -12,7 +13,19 @@ const CELL_FONT: Record<Cell['kind'], string> = {
 const PAGER = ['‹', '1', '2', '3', '…', '›'];
 
 /** Register screens: clients, meters, bulk meters, sites and gateways. */
-export function Register({ screen }: { screen: TableScreen }) {
+/** Index of a valid client profile in the route (`#/domestic/3`), or null. */
+export function profileIndex(screen: string, param?: string): number | null {
+  const cfg = TABLES[screen as TableScreen];
+  const i = param !== undefined ? Number(param) : NaN;
+  return cfg?.kyc && Number.isInteger(i) && i >= 0 && i < cfg.rows().length ? i : null;
+}
+
+export function Register({ screen, profile }: { screen: TableScreen; profile?: string }) {
+  const idx = profileIndex(screen, profile);
+  return idx !== null ? <ClientProfile screen={screen} index={idx} /> : <RegisterTable screen={screen} />;
+}
+
+function RegisterTable({ screen }: { screen: TableScreen }) {
   const cfg = TABLES[screen];
   const rows = cfg.rows();
   const [chip, setChip] = useState(0);
@@ -69,7 +82,7 @@ export function Register({ screen }: { screen: TableScreen }) {
             ))}
           </div>
         </Card>
-        {kyc && <KycPanel k={kyc} onClose={() => setSel(null)} />}
+        {kyc && sel !== null && <KycPanel k={kyc} onClose={() => setSel(null)} onOpen={() => { window.location.hash = `/${screen}/${sel}`; }} />}
       </div>
     </div>
   );
@@ -81,7 +94,7 @@ function CellView({ c }: { c: Cell }) {
   return <span style={style}>{c.v}</span>;
 }
 
-function KycPanel({ k, onClose }: { k: KycProfile; onClose: () => void }) {
+function KycPanel({ k, onClose, onOpen }: { k: KycProfile; onClose: () => void; onOpen: () => void }) {
   const tone = k.pct === 100 ? '#2E9D5B' : '#D99A2B';
   return (
     <Card clip className="kyc-panel">
@@ -159,7 +172,7 @@ function KycPanel({ k, onClose }: { k: KycProfile; onClose: () => void }) {
           </div>
         ))}
         <div style={{ display: 'flex', gap: 7, marginTop: 11 }}>
-          <button type="button" className="btn-primary flex1" style={{ padding: 7, fontSize: 11, textAlign: 'center' }}>Open full profile</button>
+          <button type="button" className="btn-primary flex1" style={{ padding: 7, fontSize: 11, textAlign: 'center' }} onClick={onOpen}>Open full profile</button>
           <button type="button" style={{ padding: '7px 11px', borderRadius: 6, border: '1px solid var(--line)', color: 'var(--ink-4)', fontSize: 11, fontWeight: 600 }}>Meters</button>
         </div>
       </div>

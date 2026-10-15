@@ -42,18 +42,18 @@ export const TITLES: Record<Screen, [crumb: string, title: string]> = {
   settings: ['System', 'Settings'],
 };
 
-const parse = (): Screen => {
-  const s = window.location.hash.replace(/^#\/?/, '') as Screen;
-  return s in TITLES ? s : 'dash';
+const parse = (): [Screen, string | undefined] => {
+  const [s, param] = window.location.hash.replace(/^#\/?/, '').split('/') as [Screen, string | undefined];
+  return s in TITLES ? [s, param || undefined] : ['dash', undefined];
 };
 
-/** Minimal hash router: `#/map`, `#/domestic`, … */
-export function useScreen(): [Screen, (s: Screen) => void] {
-  const [screen, setScreen] = useState<Screen>(parse);
+/** Minimal hash router: `#/map`, `#/domestic`, `#/domestic/3` (screen + optional param). */
+export function useScreen(): [Screen, (s: Screen, param?: string | number) => void, string | undefined] {
+  const [route, setRoute] = useState(parse);
   useEffect(() => {
-    const onHash = () => setScreen(parse());
+    const onHash = () => setRoute(parse());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-  return [screen, (s) => { window.location.hash = '/' + s; }];
+  return [route[0], (s, param) => { window.location.hash = '/' + s + (param !== undefined ? '/' + param : ''); }, route[1]];
 }

@@ -24,7 +24,7 @@ const NOTIFICATIONS = [
   { text: 'Negative credit · 62 meters below −P 1,000', tone: '#E0A00B', t: '12:05' },
 ];
 
-function addBasemap(map: L.Map, basemap: Basemap) {
+export function addBasemap(map: L.Map, basemap: Basemap) {
   if (basemap === 'osm') {
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors · Amplified IoT' }).addTo(map);
   } else if (basemap === 'streets') {

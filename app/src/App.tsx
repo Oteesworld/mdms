@@ -7,7 +7,7 @@ import { Dashboard } from './screens/Dashboard';
 import { NetworkMap } from './screens/NetworkMap';
 import { Reports } from './screens/Reports';
 import { NetworkHealth } from './screens/NetworkHealth';
-import { Register } from './screens/Register';
+import { Register, profileIndex } from './screens/Register';
 import { Settings } from './screens/Settings';
 import { Portal } from './screens/Portal';
 import { Pipeline } from './screens/Pipeline';
@@ -22,7 +22,7 @@ export function App() {
 }
 
 function Shell({ account }: { account: Account }) {
-  const [screen, go] = useScreen();
+  const [screen, go, param] = useScreen();
   const allowed = canOpen(account.role, screen);
   // Screens outside the role's access (e.g. a pasted link) send the user to their home screen.
   useEffect(() => {
@@ -30,7 +30,8 @@ function Shell({ account }: { account: Account }) {
   }, [allowed, account.role, go]);
   const menu = useMenu();
   if (!allowed) return null;
-  const [crumb, title] = TITLES[screen];
+  const [crumb, baseTitle] = TITLES[screen];
+  const title = profileIndex(screen, param) !== null ? 'Client profile' : baseTitle;
 
   return (
     <div className="shell">
@@ -60,14 +61,14 @@ function Shell({ account }: { account: Account }) {
           <div className="clock">19 Aug 2026, 13:01</div>
         </header>
         <div className="content">
-          <ScreenView screen={screen} />
+          <ScreenView screen={screen} param={param} />
         </div>
       </main>
     </div>
   );
 }
 
-function ScreenView({ screen }: { screen: Screen }) {
+function ScreenView({ screen, param }: { screen: Screen; param?: string }) {
   switch (screen) {
     case 'dash': return <Dashboard />;
     case 'map': return <NetworkMap />;
@@ -79,7 +80,7 @@ function ScreenView({ screen }: { screen: Screen }) {
     case 'vee': return <Vee />;
     case 'billing': return <Billing />;
     case 'operations': return <Operations />;
-    default: return <Register key={screen} screen={screen as TableScreen} />;
+    default: return <Register key={screen} screen={screen as TableScreen} profile={param} />;
   }
 }
 
