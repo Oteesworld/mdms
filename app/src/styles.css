@@ -383,7 +383,13 @@ button:disabled { cursor: not-allowed; }
   display: flex; align-items: center; justify-content: center; padding: 48px;
   background: var(--bg); border-right: 1px solid var(--line);
 }
-.login-brand img { width: min(460px, 80%); height: auto; display: block; }
+.login-brand { position: relative; overflow: hidden; }
+/* Field photo of a Leeroy meter at 50% opacity; the logo stays fully opaque above it. */
+.login-brand::before {
+  content: ''; position: absolute; inset: 0; opacity: .5;
+  background: url('/assets/login-meter.jpg') 38% center / cover no-repeat;
+}
+.login-brand img { position: relative; width: min(460px, 80%); height: auto; display: block; }
 .login-panel { display: flex; align-items: center; justify-content: center; padding: 48px 32px; }
 .login-form-wrap { width: 100%; max-width: 380px; }
 .login-form-wrap .form-field { font-size: 11.5px; }
