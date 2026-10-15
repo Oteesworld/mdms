@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from './components/Icon';
 import { canOpen, homeOf, signOut, useAccount, type Account } from './auth';
 import { Login } from './screens/Login';
@@ -71,16 +71,66 @@ function ScreenView({ screen }: { screen: Screen }) {
   }
 }
 
+const PIN_KEY = 'amplified-iot.navPinned';
+
+/** Menu pinned open (default) or auto-hiding to an icon rail; remembered per browser. */
+function usePinned(): [boolean, (v: boolean) => void] {
+  const [pinned, setPinned] = useState(() => {
+    try {
+      return localStorage.getItem(PIN_KEY) !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const update = (v: boolean) => {
+    setPinned(v);
+    try {
+      localStorage.setItem(PIN_KEY, String(v));
+    } catch {
+      /* storage unavailable: choice lasts for this page only */
+    }
+  };
+  return [pinned, update];
+}
+
+function useNarrow(query = '(max-width: 900px)') {
+  const [narrow, setNarrow] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [query]);
+  return narrow;
+}
+
 function Sidebar({ screen, go, account }: { screen: Screen; go: (s: Screen) => void; account: Account }) {
+  const [pinned, setPinned] = usePinned();
+  const narrow = useNarrow();
+  // Narrow screens always use the auto-hiding rail.
+  const rail = !pinned || narrow;
   // Drop screens the role can't open, then any group left without items.
   const items = NAV.filter((n) => 'group' in n || canOpen(account.role, n.screen));
   const nav = items.filter((n, i) => !('group' in n) || (items[i + 1] && !('group' in items[i + 1])));
   return (
-    <aside className="sidebar">
+    <>
+    <div className={`sidebar-slot${rail ? ' rail' : ''}`} aria-hidden="true" />
+    <aside className={`sidebar${rail ? ' rail' : ''}`}>
       <div className="brand">
-        <img src="/assets/at-mark.png" alt="Amplified Trends" />
-        <span className="brand-bar" />
-        <div className="brand-word"><span>AMPLIFIED</span><span>IoT</span></div>
+        <img className="brand-logo" src="/assets/leeroy-logo.png" alt="Leeroy Systems" />
+        <img className="brand-mark" src="/assets/leeroy-mark.png" alt="Leeroy Systems" />
+        {!narrow && (
+          <button
+            type="button"
+            className={`pin-btn${pinned ? ' on' : ''}`}
+            onClick={() => setPinned(!pinned)}
+            aria-pressed={pinned}
+            title={pinned ? 'Unpin menu (auto-hide)' : 'Pin menu open'}
+            aria-label={pinned ? 'Unpin menu (auto-hide)' : 'Pin menu open'}
+          >
+            <Icon name="pin" size={16} />
+          </button>
+        )}
       </div>
       <nav className="nav">
         {nav.map((n) =>
@@ -113,5 +163,6 @@ function Sidebar({ screen, go, account }: { screen: Screen; go: (s: Screen) => v
         </button>
       </div>
     </aside>
+    </>
   );
 }

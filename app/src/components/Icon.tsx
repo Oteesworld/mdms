@@ -23,6 +23,7 @@ export const ICONS = {
   zoomOut: 'M5 12h14',
   locate: 'M12 3v3M12 18v3M3 12h3M18 12h3M12 7a5 5 0 1 0 0 10 5 5 0 1 0 0-10z',
   fit: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  pin: 'M9 4.5h6M10 4.5v5.2L7.5 13h9L14 9.7V4.5M12 13v6.5',
   signOut: 'M14.5 4.5h4a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-4M10 16.5 5.5 12 10 7.5M5.5 12H15',
   check: 'M5 12.5l4.5 4.5L19 7.5',
   select: 'M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M11 4h2M11 20h2M4 11v2M20 11v2',

@@ -116,8 +116,12 @@ export function NetworkMap({ basemap = 'satellite', showCoverage = true }: { bas
     });
 
     const t = setTimeout(() => map.invalidateSize(), 60);
+    // Re-measure when the container changes width (e.g. the side menu is pinned or unpinned).
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(el.current);
     return () => {
       clearTimeout(t);
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
     };

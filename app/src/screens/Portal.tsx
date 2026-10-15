@@ -49,7 +49,7 @@ export function Portal() {
         </div>
 
         <div className="portal-head">
-          <img src="/assets/at-mark.png" alt="Amplified IoT" style={{ height: 22, width: 'auto', display: 'block' }} />
+          <img src="/assets/leeroy-logo.png" alt="Leeroy Systems" style={{ height: 38, width: 'auto', display: 'block' }} />
           <div className="flex1" style={{ minWidth: 180 }}>
             <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: '-.2px' }}>My Water Account</div>
             <div style={{ fontSize: 11, color: 'var(--muted)' }}>Meter WM-104882 · Plot 21455, Block 8, Gaborone</div>
