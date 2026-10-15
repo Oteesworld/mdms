@@ -2,13 +2,18 @@
 import { useSyncExternalStore } from 'react';
 import { currentHandle } from '../auth';
 import { COMMAND_SEED, WORK_ORDERS, type Command, type CommandType, type WorkOrder } from './mdm';
+import type { Property } from './clients';
 
 interface State {
   workOrders: WorkOrder[];
   commands: Command[];
+  /** Properties added in this session, by client ID. */
+  addedProps: Record<string, Property[]>;
+  /** Tenant assignments made in this session, by meter serial. */
+  tenancy: Record<string, { tenant: string; vends: string }>;
 }
 
-let state: State = { workOrders: WORK_ORDERS, commands: COMMAND_SEED };
+let state: State = { workOrders: WORK_ORDERS, commands: COMMAND_SEED, addedProps: {}, tenancy: {} };
 const listeners = new Set<() => void>();
 
 const set = (fn: (s: State) => State) => {
@@ -63,4 +68,21 @@ export function addWorkOrder(wo: Omit<WorkOrder, 'id' | 'status'>) {
 
 export function updateWorkOrder(id: string, p: Partial<WorkOrder>) {
   set((s) => ({ ...s, workOrders: s.workOrders.map((w) => (w.id === id ? { ...w, ...p } : w)) }));
+}
+
+const NO_PROPS: Property[] = [];
+
+export function addProperty(clientId: string, p: Property) {
+  set((s) => ({ ...s, addedProps: { ...s.addedProps, [clientId]: [...(s.addedProps[clientId] ?? []), p] } }));
+}
+
+export function assignTenant(meter: string, tenant: string, vends: string) {
+  set((s) => ({ ...s, tenancy: { ...s.tenancy, [meter]: { tenant, vends } } }));
+}
+
+/** A client's properties with this session's additions and tenant assignments applied. */
+export function useClientProps(clientId: string, base: Property[]): Property[] {
+  const added = useStore((s) => s.addedProps[clientId] ?? NO_PROPS);
+  const tenancy = useStore((s) => s.tenancy);
+  return [...base, ...added].map((p) => (tenancy[p.meter] ? { ...p, ...tenancy[p.meter], tone: '#00468C' } : p));
 }

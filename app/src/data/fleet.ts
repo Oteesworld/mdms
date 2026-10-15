@@ -1,4 +1,4 @@
-import { N, rnd } from './format';
+import { N, rnd } from './format.js';
 
 export interface Suburb {
   name: string;

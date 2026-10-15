@@ -41,7 +41,7 @@ export function NetworkHealth() {
     <div>
       <div className="grid g-5" style={{ marginBottom: 12 }}>
         {KPIS.map((k) => (
-          <Card key={k.label} style={{ padding: '12px 13px' }}>
+          <Card key={k.label} style={{ padding: '16px 18px' }}>
             <div className="label" style={{ marginBottom: 7 }}>{k.label}</div>
             <div className="kpi-value">{k.value}</div>
             <div className="sub" style={{ marginTop: 6 }}>{k.sub}</div>
@@ -50,7 +50,7 @@ export function NetworkHealth() {
       </div>
 
       <div className="grid g-2 stack-md" style={{ marginBottom: 12 }}>
-        <Card style={{ padding: '13px 15px' }}>
+        <Card style={{ padding: '18px 20px' }}>
           <div className="card-title" style={{ marginBottom: 11 }}>Spreading factor distribution</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {SF.map(([sf, v]) => (
@@ -62,7 +62,7 @@ export function NetworkHealth() {
             Higher spreading factors reach further but consume more airtime. SF12 nodes above 8% of the fleet usually indicate a coverage gap.
           </div>
         </Card>
-        <Card style={{ padding: '13px 15px' }}>
+        <Card style={{ padding: '18px 20px' }}>
           <div className="card-title" style={{ marginBottom: 11 }}>Packet loss by gateway · last 24h</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {GATEWAYS.map((g, i) => {
@@ -78,7 +78,7 @@ export function NetworkHealth() {
 
       <div className="grid stack-md" style={{ gridTemplateColumns: '1.25fr 1fr' }}>
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}><span className="card-title">Gateway fleet</span></div>
+          <div className="card-head"><span className="card-title">Gateway fleet</span></div>
           <div className="table-wrap">
             <table className="tbl compact roomy">
               <TableHead cols={[{ label: 'Gateway' }, { label: 'Site' }, { label: 'Nodes', align: 'right' }, { label: 'RSSI', align: 'right' }, { label: 'Uptime', align: 'right' }, { label: 'State', align: 'right' }]} />
@@ -98,16 +98,16 @@ export function NetworkHealth() {
           </div>
         </Card>
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}>
+          <div className="card-head">
             <span className="card-title flex1">Uplink log</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <span className="dot" style={{ width: 6, height: 6, background: 'var(--ok)' }} />
-              <span className="mono" style={{ fontSize: 10, color: 'var(--ok-ink)' }}>streaming</span>
+              <span className="mono" style={{ fontSize: 11, color: 'var(--ok-ink)' }}>streaming</span>
             </span>
           </div>
           <div style={{ maxHeight: 340, overflowY: 'auto' }}>
             {UPLINKS.map((u, i) => (
-              <div key={i} className="mono" style={{ display: 'flex', gap: 9, padding: '6px 13px', borderBottom: '1px solid var(--line-3)', fontSize: 10.5, whiteSpace: 'nowrap' }}>
+              <div key={i} className="mono" style={{ display: 'flex', gap: 9, padding: '6px 13px', borderBottom: '1px solid var(--line-3)', fontSize: 11.5, whiteSpace: 'nowrap' }}>
                 <span style={{ color: 'var(--muted)' }}>{u.t}</span>
                 <span style={{ color: 'var(--navy)' }}>{u.dev}</span>
                 <span style={{ color: u.tone }}>{u.port}</span>

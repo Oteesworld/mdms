@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Icon } from './components/Icon';
+import { Toaster } from './components/overlay';
+import { GlobalSearch } from './components/Search';
 import { canOpen, homeOf, signOut, useAccount, type Account } from './auth';
 import { Login } from './screens/Login';
 import { NAV, TITLES, useScreen, type Screen } from './routes';
@@ -12,13 +14,18 @@ import { Settings } from './screens/Settings';
 import { Portal } from './screens/Portal';
 import { Pipeline } from './screens/Pipeline';
 import { Vee } from './screens/Vee';
-import { Billing } from './screens/Billing';
+import { Vending } from './screens/Vending';
 import { Operations } from './screens/Operations';
 import type { TableScreen } from './data/clients';
 
 export function App() {
   const account = useAccount();
-  return account ? <Shell account={account} /> : <Login />;
+  return (
+    <>
+      {account ? <Shell account={account} /> : <Login />}
+      <Toaster />
+    </>
+  );
 }
 
 function Shell({ account }: { account: Account }) {
@@ -53,10 +60,7 @@ function Shell({ account }: { account: Account }) {
             <div className="crumb">{crumb}</div>
             <h1 className="page-title" style={{ margin: 0 }}>{title}</h1>
           </div>
-          <label className="search">
-            <Icon name="search" size={15} />
-            <input placeholder="Search meter, client or token" aria-label="Search meter, client or token" />
-          </label>
+          <GlobalSearch role={account.role} go={go} />
           <div className="server-state"><span className="dot" style={{ background: 'var(--ok)' }} />Network server online</div>
           <div className="clock">19 Aug 2026, 13:01</div>
         </header>
@@ -78,7 +82,7 @@ function ScreenView({ screen, param }: { screen: Screen; param?: string }) {
     case 'portal': return <Portal />;
     case 'mdm': return <Pipeline />;
     case 'vee': return <Vee />;
-    case 'billing': return <Billing />;
+    case 'vending': return <Vending />;
     case 'operations': return <Operations />;
     default: return <Register key={screen} screen={screen as TableScreen} profile={param} />;
   }

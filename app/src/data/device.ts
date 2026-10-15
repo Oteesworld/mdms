@@ -1,7 +1,7 @@
 /* Per-meter device dashboard data: status, radio, alarms, usage, credit and message history.
    Generated deterministically from the meter serial so each meter always shows the same story. */
-import { GATEWAYS, SUBURBS } from './fleet';
-import { N, P, rnd } from './format';
+import { GATEWAYS, SUBURBS } from './fleet.js';
+import { N, P, rnd } from './format.js';
 
 export type AlarmType = 'Burst alarm' | 'Valve flow' | 'Magnetic tamper' | 'Hardware error' | 'Installation mode';
 

@@ -1,7 +1,7 @@
 /* Client, asset and site registers, including the owner → property → tenant model. */
-import { BADGE, PURCHASES } from './admin';
-import { GATEWAYS } from './fleet';
-import { N, P, initials, rnd, short } from './format';
+import { BADGE, PURCHASES } from './admin.js';
+import { GATEWAYS } from './fleet.js';
+import { N, P, initials, rnd, short } from './format.js';
 
 /* ---------- Cells ---------- */
 

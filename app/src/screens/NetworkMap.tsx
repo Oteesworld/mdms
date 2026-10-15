@@ -8,6 +8,9 @@ import {
 } from '../data/fleet';
 import { N, P, litres } from '../data/format';
 import { queueCommand, useStore } from '../data/store';
+import { COMMANDS, type CommandType } from '../data/mdm';
+import { Field, Modal, toast } from '../components/overlay';
+import { downloadCsv } from '../lib/csv';
 
 export type Basemap = 'satellite' | 'streets' | 'osm';
 
@@ -78,7 +81,10 @@ export function NetworkMap({ basemap = 'satellite', showCoverage = true }: { bas
   const [autoFly, setAutoFly] = useState(false);
   const [notif, setNotif] = useState(false);
   const [boxing, setBoxing] = useState(false);
-  const [boxCount, setBoxCount] = useState(0);
+  const [selection, setSelection] = useState<Meter[]>([]);
+  const boxCount = selection.length;
+  const setBoxCount = (n: number) => { if (n === 0) setSelection([]); };
+  const [bulk, setBulk] = useState(false);
 
   const visible = visibleMeters(layers);
   const layersRef = useRef(layers);
@@ -107,12 +113,12 @@ export function NetworkMap({ basemap = 'satellite', showCoverage = true }: { bas
     map.on('mouseup', () => {
       if (!rect) return;
       const bounds = rect.getBounds();
-      const n = visibleMeters(layersRef.current).filter((m) => bounds.contains([m.lat, m.lng])).length;
+      const picked = visibleMeters(layersRef.current).filter((m) => bounds.contains([m.lat, m.lng]));
       map.removeLayer(rect);
       rect = null;
       anchor = null;
       setBoxing(false);
-      setBoxCount(n);
+      setSelection(picked);
     });
 
     const t = setTimeout(() => map.invalidateSize(), 60);
@@ -279,8 +285,12 @@ export function NetworkMap({ basemap = 'satellite', showCoverage = true }: { bas
         {boxCount > 0 && (
           <div className="map-selection">
             <span className="mono">{N(boxCount)} meters in selection</span>
-            <button type="button" style={{ color: '#8ee0c8' }}>Queue downlink</button>
-            <button type="button" style={{ color: '#9fb4d0' }}>Export</button>
+            <button type="button" style={{ color: '#8ee0c8' }} onClick={() => setBulk(true)}>Queue downlink</button>
+            <button type="button" style={{ color: '#9fb4d0' }} onClick={() => {
+              downloadCsv('map-selection', ['Meter', 'Suburb', 'Status', 'Latitude', 'Longitude', 'Gateway', 'RSSI', 'SNR', 'Battery %', 'Balance (P)', 'Firmware'],
+                selection.map((m) => [m.id, m.sub, STATUS[m.status].label, m.lat.toFixed(5), m.lng.toFixed(5), m.gw, m.rssi, m.snr, m.batt, m.bal.toFixed(2), m.fw]));
+              toast(`Exported ${selection.length} meters`);
+            }}>Export</button>
             <button type="button" aria-label="Clear selection" style={{ color: '#7d8ba1', fontSize: 11, fontWeight: 400 }} onClick={() => setBoxCount(0)}>✕</button>
           </div>
         )}
@@ -304,20 +314,21 @@ export function NetworkMap({ basemap = 'satellite', showCoverage = true }: { bas
         {GATEWAYS.map((g) => (
           <button key={g.id} type="button" className="gw-chip" onClick={() => mapRef.current?.flyTo([g.lat, g.lng], 15)}>
             <span className="dot" style={{ background: g.dot }} />
-            <span className="mono" style={{ fontWeight: 600, fontSize: 10, color: 'var(--ink)' }}>{g.id}</span>
-            <span style={{ fontSize: 10, color: 'var(--muted)' }}>{N(g.meters)} nodes · {g.rssi}</span>
+            <span className="mono" style={{ fontWeight: 600, fontSize: 11, color: 'var(--ink)' }}>{g.id}</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>{N(g.meters)} nodes · {g.rssi}</span>
           </button>
         ))}
         <span className="flex1" />
-        <button type="button" className="link" style={{ fontSize: 10.5 }} onClick={() => setRings((r) => !r)}>
+        <button type="button" className="link" style={{ fontSize: 11.5 }} onClick={() => setRings((r) => !r)}>
           {rings ? 'Hide coverage rings' : 'Show coverage rings'}
         </button>
-        <span className="mono" style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>
+        <span className="mono" style={{ fontSize: 11.5, color: 'var(--ink-4)' }}>
           {N(visible.length)} of {N(meters().length)} plotted · zoom {zoom} · {zoom < CLUSTER_BELOW ? 'clustered' : 'individual meters'}
         </span>
       </Card>
 
       {sel && <MeterPanel m={sel} onClose={() => setSel(null)} />}
+      {bulk && <BulkCommand meters={selection} onClose={() => setBulk(false)} onSent={() => { setBulk(false); setSelection([]); }} />}
     </div>
   );
 }
@@ -334,7 +345,7 @@ function MeterPanel({ m, onClose }: { m: Meter; onClose: () => void }) {
     ['Balance', P(m.bal)], ['Usage MTD', litres(m.usage)], ['Last uplink', m.seen],
   ];
   return (
-    <Card style={{ padding: '13px 15px' }}>
+    <Card style={{ padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11, flexWrap: 'wrap' }}>
         <span style={{ fontWeight: 600, fontSize: 13 }}>{m.id}</span>
         <span style={{ fontWeight: 600, fontSize: 11, background: STATUS[m.status].dot, color: '#fff', padding: '2px 7px', borderRadius: 4 }}>{STATUS[m.status].label}</span>
@@ -347,11 +358,34 @@ function MeterPanel({ m, onClose }: { m: Meter; onClose: () => void }) {
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 9 }}>
         {fields.map(([k, v]) => (
           <div key={k} style={{ border: '1px solid var(--line-2)', borderRadius: 6, padding: '8px 10px', background: 'var(--surface-2)' }}>
-            <div className="mono" style={{ fontSize: 9.5, fontWeight: 400, color: 'var(--muted)', marginBottom: 3, letterSpacing: '.05em' }}>{k}</div>
+            <div className="mono" style={{ fontSize: 10.5, fontWeight: 400, color: 'var(--muted)', marginBottom: 3, letterSpacing: '.05em' }}>{k}</div>
             <div className="mono" style={{ fontSize: 11.5, color: 'var(--ink)' }}>{v}</div>
           </div>
         ))}
       </div>
     </Card>
+  );
+}
+
+/** Queue one downlink command for every meter in the map selection. */
+function BulkCommand({ meters, onClose, onSent }: { meters: Meter[]; onClose: () => void; onSent: () => void }) {
+  const [cmd, setCmd] = useState<CommandType>('On-demand read');
+  const offline = meters.filter((m) => m.status === 'offline').length;
+  const send = () => {
+    if (cmd === 'Close valve' && !window.confirm(`Close the valve on ${meters.length} meters? Every customer in the selection loses supply.`)) return;
+    queueCommand(`${N(meters.length)} meters (bulk)`, cmd);
+    toast(`${cmd} queued for ${N(meters.length)} meters`);
+    onSent();
+  };
+  return (
+    <Modal title={`Queue downlink · ${N(meters.length)} meters`} onClose={onClose} footer={<>
+      <button type="button" className="btn" onClick={onClose}>Cancel</button>
+      <button type="button" className="btn-primary" onClick={send}>Queue for {N(meters.length)} meters</button>
+    </>}>
+      <Field label="Command"><select value={cmd} onChange={(e) => setCmd(e.target.value as CommandType)}>{COMMANDS.map((c) => <option key={c}>{c}</option>)}</select></Field>
+      <div className="sub" style={{ lineHeight: 1.5 }}>
+        Commands go out on each meter’s next uplink (LoRaWAN class A).{offline > 0 && ` ${N(offline)} of these meters are offline and will receive it when they reconnect.`} Track progress in Field operations → Remote commands.
+      </div>
+    </Modal>
   );
 }

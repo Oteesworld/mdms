@@ -1,5 +1,5 @@
-/* Meter data management: pipeline, VEE, billing and field operations fixtures. */
-import { BIZ, CLIENT_NAMES, GOVT, SUBS_SHORT } from './clients';
+/* Meter data management: pipeline, VEE and field operations fixtures. */
+import { CLIENT_NAMES, SUBS_SHORT } from './clients';
 import { SUBURBS } from './fleet';
 import { rnd } from './format';
 
@@ -29,7 +29,7 @@ export const STAGES: Stage[] = [
   { key: 'analyze', name: 'Analyze data', value: '1,164', sub: 'bypass suspects · 212 leaks', state: 'warn', screen: 'dash' },
   { key: 'vee', name: 'VEE analytics', value: '1,653', sub: 'exceptions awaiting review', state: 'warn', screen: 'vee' },
   { key: 'report', name: 'Reporting', value: '8', sub: 'reports today · 1 failed', state: 'warn', screen: 'reports' },
-  { key: 'bill', name: 'Bill issuance', value: '99.4%', sub: 'accounts billing-ready', state: 'ok', screen: 'billing' },
+  { key: 'vend', name: 'Vending validation', value: '97.1%', sub: '18,402 meter checks · approved', state: 'ok', screen: 'vending' },
 ];
 
 /** Interval reads received vs passing validation, per hour today (thousands). */
@@ -76,7 +76,7 @@ export const RETENTION: [data: string, store: string, keep: string, size: string
 ];
 
 export const INTEGRATIONS: [name: string, target: string, last: string, status: 'Ready' | 'Queued' | 'Failed'][] = [
-  ['Billing-ready reads', 'Postpaid billing', '13:00 · 2,096 accounts', 'Ready'],
+  ['Meter validation API', 'Vending system (STS)', 'Live · 41 ms median', 'Ready'],
   ['Token sales ledger', 'STS vending', 'Live', 'Ready'],
   ['General ledger postings', 'Finance ERP', '06:00 · 1,912 lines', 'Ready'],
   ['Meter & pipe layer', 'GIS', '02:00 · 50,412 points', 'Ready'],
@@ -181,65 +181,6 @@ export const AUDIT_SEED: AuditEntry[] = [
   { t: '11:58', who: 'vee.engine', what: 'VX-88148 · WM-104364 · gap → 22 L', reason: 'Linear interpolation (auto)' },
   { t: '10:20', who: 'm.tau', what: 'VX-88071 · WM-105184 · rejected', reason: 'Register rollback — meter swap not recorded; WO raised' },
   { t: '09:02', who: 'vee.engine', what: '23,980 intervals estimated', reason: 'Nightly batch, rules v12' },
-];
-
-/* ---------- Billing ---------- */
-
-export const BILL_STEPS = ['Read cut-off', 'VEE complete', 'Rate & tariff', 'Review', 'Issue bills', 'Post to ledger'];
-
-export const TARIFFS: [band: string, applies: string, rate: string, fixed: string][] = [
-  ['Domestic band 1', '0 – 5 kL / month', 'P 3.58 / kL', 'P 0.00'],
-  ['Domestic band 2', '5 – 15 kL', 'P 10.21 / kL', 'P 0.00'],
-  ['Domestic band 3', '15 – 25 kL', 'P 19.87 / kL', 'P 0.00'],
-  ['Domestic band 4', 'above 25 kL', 'P 27.66 / kL', 'P 0.00'],
-  ['Business', 'flat', 'P 21.40 / kL', 'P 45.00'],
-  ['Government', 'flat, vote-billed', 'P 19.50 / kL', 'P 45.00'],
-  ['Bulk / DMA', 'per bulk meter', 'P 14.05 / kL', 'P 210.00'],
-];
-
-export const VAT_RATE = 0.14;
-
-export type InvoiceStatus = 'Draft' | 'Held' | 'Issued' | 'Paid' | 'Overdue';
-
-export interface Invoice {
-  no: string;
-  account: string;
-  name: string;
-  kind: 'Business' | 'Government';
-  kl: number;
-  amountExcl: number;
-  readQuality: 'Actual' | 'Estimated' | 'Exception';
-  status: InvoiceStatus;
-  due: string;
-}
-
-export const INVOICES: Invoice[] = [
-  ...BIZ.filter((_, i) => i % 3 !== 0).map((b, j): Invoice => {
-    const i = BIZ.indexOf(b);
-    const r = rnd(5100 + i);
-    const kl = Math.round(400 + r() * 8600);
-    return {
-      no: 'INV-2607-' + String(1201 + j * 3), account: 'BUS-' + (30140 + i * 23), name: b[0], kind: 'Business', kl,
-      amountExcl: Math.round((kl * 21.4 + 45) * 100) / 100,
-      readQuality: i === 2 ? 'Exception' : i === 7 ? 'Estimated' : 'Actual',
-      status: i === 2 ? 'Held' : 'Draft', due: '15 Sep 2026',
-    };
-  }),
-  ...GOVT.slice(0, 6).map((g, i): Invoice => {
-    const r = rnd(5300 + i);
-    const kl = Math.round(1200 + r() * 18000);
-    return {
-      no: 'INV-2607-' + String(1301 + i * 3), account: g[0], name: g[2], kind: 'Government', kl,
-      amountExcl: Math.round((kl * 19.5 + 45) * 100) / 100,
-      readQuality: i === 4 ? 'Estimated' : 'Actual', status: 'Draft', due: '15 Sep 2026',
-    };
-  }),
-];
-
-export const PREVIOUS_RUNS: [cycle: string, accounts: string, billed: string, collected: string, status: string][] = [
-  ['Jun 2026', '2,091', 'P 3,412,880.10', '91.6%', 'Posted'],
-  ['May 2026', '2,088', 'P 3,288,104.55', '97.2%', 'Posted'],
-  ['Apr 2026', '2,079', 'P 3,140,662.00', '98.9%', 'Posted'],
 ];
 
 /* ---------- Field operations ---------- */

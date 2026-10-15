@@ -8,7 +8,7 @@ export function Card({ children, clip, hover, style, className = '' }: { childre
 /** Small stat tile used at the top of register-style screens. */
 export function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="card" style={{ padding: '11px 13px' }}>
+    <div className="card" style={{ padding: '16px 18px' }}>
       <div className="label" style={{ marginBottom: 6 }}>{label}</div>
       <div className="stat-value">{value}</div>
       <div className="sub" style={{ marginTop: 4 }}>{sub}</div>
@@ -79,11 +79,11 @@ export function BarRow({ label, value, width, color, labelWidth, valueWidth, hei
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-      <span className="mono" style={{ width: labelWidth, fontWeight: 600, fontSize: 10.5, color: 'var(--ink-4)', ...labelStyle }}>{label}</span>
+      <span className="mono" style={{ width: labelWidth, fontWeight: 600, fontSize: 11.5, color: 'var(--ink-4)', ...labelStyle }}>{label}</span>
       <div className="bar-track" style={{ flex: 1, height }}>
         <div className="bar-fill" style={{ background: color, width }} />
       </div>
-      <span className="mono" style={{ width: valueWidth, fontSize: 10, color: 'var(--muted)', textAlign: 'right' }}>{value}</span>
+      <span className="mono" style={{ width: valueWidth, fontSize: 11, color: 'var(--muted)', textAlign: 'right' }}>{value}</span>
     </div>
   );
 }

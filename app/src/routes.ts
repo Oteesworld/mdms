@@ -3,7 +3,7 @@ import type { IconName } from './components/Icon';
 
 export type Screen =
   | 'dash' | 'map' | 'reports'
-  | 'mdm' | 'vee' | 'billing'
+  | 'mdm' | 'vee' | 'vending'
   | 'operations'
   | 'network' | 'gateways' | 'sites'
   | 'domestic' | 'business' | 'gov'
@@ -14,7 +14,7 @@ type NavEntry = { group: string } | { screen: Screen & IconName; label: string; 
 
 export const NAV: NavEntry[] = [
   { group: 'Analytics' }, { screen: 'dash', label: 'Dashboard' }, { screen: 'map', label: 'Network map' }, { screen: 'reports', label: 'Reports' },
-  { group: 'Meter data' }, { screen: 'mdm', label: 'Data pipeline' }, { screen: 'vee', label: 'Validation (VEE)', badge: '1.6k' }, { screen: 'billing', label: 'Billing' },
+  { group: 'Meter data' }, { screen: 'mdm', label: 'Data pipeline' }, { screen: 'vee', label: 'Validation (VEE)', badge: '1.6k' }, { screen: 'vending', label: 'Vending' },
   { group: 'Network' }, { screen: 'network', label: 'LoRaWAN', badge: '3' }, { screen: 'gateways', label: 'Gateways' }, { screen: 'sites', label: 'Sites' }, { screen: 'operations', label: 'Field operations' },
   { group: 'Clients' }, { screen: 'domestic', label: 'Domestic' }, { screen: 'business', label: 'Business' }, { screen: 'gov', label: 'Government' },
   { group: 'Assets' }, { screen: 'meters', label: 'Meters' }, { screen: 'bulk', label: 'Bulk meters' },
@@ -28,7 +28,7 @@ export const TITLES: Record<Screen, [crumb: string, title: string]> = {
   reports: ['Analytics', 'Reports'],
   mdm: ['Meter data', 'Meter data pipeline'],
   vee: ['Meter data', 'Validation, estimation and editing'],
-  billing: ['Meter data', 'Billing and bill issuance'],
+  vending: ['Meter data', 'Vending validation'],
   operations: ['Network', 'Work orders and remote commands'],
   network: ['Network', 'LoRaWAN network health'],
   gateways: ['Network', 'Gateways'],

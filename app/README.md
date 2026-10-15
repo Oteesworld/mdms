@@ -11,7 +11,7 @@ npm run build      # typecheck + production build to dist/
 
 - `src/App.tsx` — app shell (sidebar, top bar) and screen switch; hash routes such as `#/map` or `#/domestic` (see `src/routes.ts`)
 - `src/screens/` — Dashboard, NetworkMap (Leaflet), Reports, NetworkHealth, Register (client/asset tables + KYC panel), Portal, Settings,
-  and the meter data management (MDM) screens: Pipeline, Vee, Billing, Operations
+  and the meter data management (MDM) screens: Pipeline, Vee, Vending, Operations
 - `src/data/` — fixtures: fleet (suburbs, gateways, meters, map layers), clients (owner → property → tenant model), admin, mdm
 - `src/data/store.ts` — shared in-memory state for work orders and the downlink command queue
 
@@ -22,7 +22,7 @@ The MDM screens follow the collect → store → validate → analyse → VEE �
 - **Data pipeline** (`#/mdm`) — stage throughput, hourly interval reads, storage and retention, data quality by zone, downstream integrations
 - **Validation (VEE)** (`#/vee`) — validation and estimation rules, an exception queue (accept estimate, edit with a required reason,
   or reject and raise a work order) and an append-only audit trail
-- **Billing** (`#/billing`) — postpaid bill run for credit-terms business and government accounts, with reads held on VEE exceptions; tariffs are illustrative
+- **Vending** (`#/vending`) — meter validation for the external vending system: test console, validation log, rules, sales received back, API contract
 - **Field operations** (`#/operations`) — work orders (assign, start, complete) and LoRaWAN class A downlink commands
   (on-demand read, valve open/close, clock sync, …); the map's meter panel can queue commands too
 - `src/styles.css` — design tokens (logo navy `#00468C`, gold `#D89E0E`) and shared classes
@@ -37,8 +37,33 @@ provider (e.g. Supabase Auth) before connecting live data.
 |---|---|---|
 | Admin | l.kgosi@amplifiediot.co.bw | everything |
 | Ops | k.ramotswe@wuc.co.bw | everything except Settings |
-| Finance | t.phiri@wuc.co.bw | dashboard, reports, data pipeline, VEE, billing, client registers, portal |
-| Vendor | n.seretse@wuc.co.bw | domestic and business clients, portal |
+| Finance | t.phiri@wuc.co.bw | dashboard, reports, data pipeline, VEE, vending, client registers, portal |
+| Vendor | n.seretse@wuc.co.bw | vending, domestic and business clients, portal |
 | Field | k.moloi@wuc.co.bw | map, field operations, meters, bulk meters, LoRaWAN, gateways, sites |
 
 `a.dube@wuc.co.bw` is suspended and shows the blocked-account message.
+
+## Vending validation API
+
+Billing and STS token generation live in the external vending system. Before it issues a token it asks this
+app to validate the meter:
+
+```http
+POST /api/vending/validate
+Authorization: Bearer <VENDING_API_KEY>
+Content-Type: application/json
+
+{ "meter": "WM-104091", "purchaser": "occupant", "amount": 100, "vendorRef": "OM-88213" }
+```
+
+The response says `APPROVED` or `DECLINED` with a code (`METER_NOT_FOUND`, `ACCOUNT_SUSPENDED`, `KYC_INCOMPLETE`,
+`TAMPER_HOLD`, `VENDING_NOT_PERMITTED`, `PURCHASER_NOT_PERMITTED`, `INVALID_FORMAT`), the account (owner,
+occupant, who may buy), meter status, STS parameters (SGC, KRN, TI) and the tariff, plus warnings for the cashier
+(meter offline, arrears, low battery). `GET /api/vending/validate` is a health check.
+
+- Rules: `src/vending/validate.ts` — used by both the serverless function (`api/vending/validate.ts`) and the
+  in-app test console, so they cannot drift apart.
+- **Setup:** add `VENDING_API_KEY` in Vercel → Project → Settings → Environment Variables and redeploy.
+  Until it is set the endpoint returns `503 not_configured` and validates nothing.
+- Data modules reachable from the function import with `.js` extensions so they run as native Node ESM.
+- Meter data is still the demo dataset; point `meterIndex()` at the real database when it exists.

@@ -68,7 +68,7 @@ export function Login() {
               <button key={a.email} type="button" className="login-account" onClick={() => fill(a.email)}>
                 <span className="flex1" style={{ minWidth: 0 }}>
                   <span style={{ display: 'block', fontWeight: 600, fontSize: 11.5 }}>{a.name}</span>
-                  <span className="mono ellipsis" style={{ display: 'block', fontSize: 10, color: 'var(--muted)' }}>{a.email}</span>
+                  <span className="mono ellipsis" style={{ display: 'block', fontSize: 11, color: 'var(--muted)' }}>{a.email}</span>
                 </span>
                 <span className="badge" style={{ background: a.suspended ? 'var(--line-3)' : 'var(--navy-tint)', color: a.suspended ? 'var(--muted)' : 'var(--navy)' }}>
                   {a.suspended ? 'Suspended' : a.role}

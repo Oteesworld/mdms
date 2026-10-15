@@ -20,7 +20,7 @@ export function Pipeline() {
     <div>
       <div className="grid g-5" style={{ marginBottom: 12 }}>
         {KPIS.map((k) => (
-          <Card key={k.label} style={{ padding: '12px 13px' }}>
+          <Card key={k.label} style={{ padding: '16px 18px' }}>
             <div className="label" style={{ marginBottom: 7 }}>{k.label}</div>
             <div className="kpi-value">{k.value}</div>
             <div className="sub" style={{ marginTop: 6 }}>{k.sub}</div>
@@ -29,7 +29,7 @@ export function Pipeline() {
       </div>
 
       <SectionRule title="Data cycle · today" note="each stage feeds the next; bills close the cycle" />
-      <Card style={{ padding: '14px 15px', marginBottom: 16 }}>
+      <Card style={{ padding: '18px 20px', marginBottom: 16 }}>
         <div className="cycle">
           {STAGES.map((s, i) => (
             <Fragment key={s.key}>
@@ -49,7 +49,7 @@ export function Pipeline() {
       </Card>
 
       <div className="grid stack-md" style={{ gridTemplateColumns: '1.3fr 1fr', marginBottom: 16 }}>
-        <Card style={{ padding: '13px 15px' }}>
+        <Card style={{ padding: '18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 11, flexWrap: 'wrap' }}>
             <div className="card-title flex1">Interval reads by hour · 19 Aug</div>
             <Legend color="#B8CFE8" label="received" />
@@ -63,7 +63,7 @@ export function Pipeline() {
                 <div style={{ width: '100%', height: (h.received / hmax) * 100 + '%', background: '#B8CFE8', borderRadius: '2px 2px 0 0', display: 'flex', alignItems: 'flex-end' }}>
                   <div style={{ width: '100%', height: (h.passed / h.received) * 100 + '%', background: 'var(--navy)', borderRadius: '2px 2px 0 0' }} />
                 </div>
-                <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--faint)' }}>{h.h % 3 === 0 ? String(h.h).padStart(2, '0') : ' '}</span>
+                <span style={{ fontWeight: 500, fontSize: 11, color: 'var(--faint)' }}>{h.h % 3 === 0 ? String(h.h).padStart(2, '0') : ' '}</span>
               </div>
             ))}
           </div>
@@ -71,7 +71,7 @@ export function Pipeline() {
         </Card>
 
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}><span className="card-title">Data storage & retention</span></div>
+          <div className="card-head"><span className="card-title">Data storage & retention</span></div>
           <div className="table-wrap">
             <table className="tbl compact">
               <TableHead cols={[{ label: 'Data' }, { label: 'Store' }, { label: 'Kept', align: 'right' }, { label: 'Size', align: 'right' }]} />
@@ -93,7 +93,7 @@ export function Pipeline() {
 
       <div className="grid stack-md" style={{ gridTemplateColumns: '1.3fr 1fr' }}>
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}>
+          <div className="card-head">
             <span className="card-title flex1">Data quality by zone · 24h</span>
             <a className="link" href="#/vee" style={{ fontSize: 11 }}>Open VEE queue</a>
           </div>
@@ -124,7 +124,7 @@ export function Pipeline() {
         </Card>
 
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}><span className="card-title">Downstream integrations</span></div>
+          <div className="card-head"><span className="card-title">Downstream integrations</span></div>
           {INTEGRATIONS.map(([name, target, last, status]) => (
             <div key={name} style={{ padding: '9px 14px', borderBottom: '1px solid var(--line-3)', display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="flex1" style={{ minWidth: 0 }}>
@@ -142,7 +142,7 @@ export function Pipeline() {
 
 function Legend({ color, label }: { color: string; label: string }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: 'var(--muted)' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: 'var(--muted)' }}>
       <span style={{ width: 8, height: 8, borderRadius: 2, background: color }} />{label}
     </span>
   );

@@ -6,6 +6,7 @@ import { TABLES, type TableScreen } from '../data/clients';
 import { makeDevice, type AlarmType, type Device } from '../data/device';
 import { N, P } from '../data/format';
 import { addBasemap } from './NetworkMap';
+import { useClientProps } from '../data/store';
 
 const ALARM_ICON: Record<AlarmType, IconName> = {
   'Burst alarm': 'bulk',
@@ -25,8 +26,9 @@ const parseP = (s: string) => Number(s.replace(/[P ,]/g, ''));
 export function ClientProfile({ screen, index }: { screen: TableScreen; index: number }) {
   const cfg = TABLES[screen];
   const k = cfg.kyc!(index);
+  const props = useClientProps(k.id, k.props);
   const [meterIdx, setMeterIdx] = useState(0);
-  const prop = k.props[Math.min(meterIdx, k.props.length - 1)];
+  const prop = props[Math.min(meterIdx, props.length - 1)];
   const dev = useMemo(
     () => makeDevice(prop.meter, { plot: prop.plot, business: screen === 'business', balance: parseP(prop.bal) }),
     [prop.meter, prop.plot, prop.bal, screen],
@@ -34,7 +36,7 @@ export function ClientProfile({ screen, index }: { screen: TableScreen; index: n
 
   return (
     <div className="profile">
-      <Card style={{ padding: '14px 16px', marginBottom: 12 }}>
+      <Card style={{ padding: '18px 20px', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <a className="back-link" href={'#/' + screen}><Icon name="back" size={15} />{cfg.name}</a>
           <span className="flex1" />
@@ -51,9 +53,9 @@ export function ClientProfile({ screen, index }: { screen: TableScreen; index: n
           </div>
           <Badge status={k.pct === 100 ? 'Verified' : 'Pending'} label={`KYC ${k.pct}%`} />
         </div>
-        {k.props.length > 1 && (
+        {props.length > 1 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
-            {k.props.map((p, i) => (
+            {props.map((p, i) => (
               <button key={p.meter} type="button" className={`chip${i === meterIdx ? ' on' : ''}`} aria-pressed={i === meterIdx} onClick={() => setMeterIdx(i)}>
                 <span className="mono">{p.meter}</span> · {p.plot.split(',')[0]}
               </button>
@@ -128,7 +130,7 @@ function Overview({ dev, business }: { dev: Device; business: boolean }) {
   return (
     <div className="grid g-5" style={{ marginBottom: 12 }}>
       {tiles.map((t) => (
-        <Card key={t.label} style={{ padding: '12px 13px', display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+        <Card key={t.label} style={{ padding: '16px 18px', display: 'flex', gap: 11, alignItems: 'flex-start' }}>
           <span className="tile-icon" style={{ color: t.tone, background: t.bg }}><Icon name={t.icon} size={18} /></span>
           <div style={{ minWidth: 0 }}>
             <div className="label" style={{ marginBottom: 5 }}>{t.label}</div>
@@ -145,7 +147,7 @@ function Overview({ dev, business }: { dev: Device; business: boolean }) {
 
 function Panel({ title, note, children, icon }: { title: string; note?: ReactNode; children: ReactNode; icon?: IconName }) {
   return (
-    <Card style={{ padding: '13px 15px', minWidth: 0 }}>
+    <Card style={{ padding: '18px 20px', minWidth: 0 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 11 }}>
         {icon && <span style={{ color: 'var(--muted)', alignSelf: 'center' }}><Icon name={icon} size={15} /></span>}
         <span className="card-title flex1">{title}</span>
@@ -179,7 +181,7 @@ function Bars({ values, labels, color, tip, height = 130 }: { values: number[]; 
       {values.map((v, i) => (
         <div key={i} title={tip(v, i)} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 4, height: '100%' }}>
           <div style={{ width: '100%', height: (v / max) * 100 + '%', minHeight: v ? 2 : 0, background: color(v, i), borderRadius: '2px 2px 0 0' }} />
-          <span style={{ fontWeight: 500, fontSize: 10, color: 'var(--faint)', height: 12, whiteSpace: 'nowrap' }}>{labels[i]}</span>
+          <span style={{ fontWeight: 500, fontSize: 11, color: 'var(--faint)', height: 12, whiteSpace: 'nowrap' }}>{labels[i]}</span>
         </div>
       ))}
     </div>
@@ -216,7 +218,7 @@ function LocationCard({ dev, occupant }: { dev: Device; occupant: string }) {
 function Gateways({ dev }: { dev: Device }) {
   return (
     <Card clip style={{ minWidth: 0 }}>
-      <div className="card-head" style={{ padding: '11px 14px' }}>
+      <div className="card-head">
         <span style={{ color: 'var(--muted)' }}><Icon name="gateways" size={15} /></span>
         <span className="card-title flex1">Gateways · last 3 heard</span>
         <span className="sub">30 days</span>
@@ -248,7 +250,7 @@ function Notifications({ dev }: { dev: Device }) {
   const types: AlarmType[] = ['Burst alarm', 'Valve flow', 'Magnetic tamper', 'Hardware error', 'Installation mode'];
   return (
     <Card clip style={{ minWidth: 0 }}>
-      <div className="card-head" style={{ padding: '11px 14px' }}>
+      <div className="card-head">
         <span style={{ color: 'var(--muted)' }}><Icon name="network" size={15} /></span>
         <span className="card-title flex1">Meter notifications</span>
         <span className="sub">{dev.alarms.filter((a) => a.active).length} active</span>
@@ -272,7 +274,7 @@ function Notifications({ dev }: { dev: Device }) {
               <div style={{ fontSize: 11.5, fontWeight: 600 }}>{a.type} {a.active && <Badge status="Arrears" label="Active" />}</div>
               <div className="sub">{a.detail}</div>
             </div>
-            <span className="mono" style={{ fontSize: 10.5, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{a.at}</span>
+            <span className="mono" style={{ fontSize: 11.5, color: 'var(--muted)', whiteSpace: 'nowrap' }}>{a.at}</span>
           </div>
         ))}
       </div>
@@ -320,7 +322,7 @@ function Messages({ dev }: { dev: Device }) {
   const [tab, setTab] = useState<MsgTab>('Timeline');
   return (
     <Card clip style={{ marginBottom: 12 }}>
-      <div className="card-head" style={{ padding: '9px 14px', flexWrap: 'wrap' }}>
+      <div className="card-head" style={{ flexWrap: 'wrap' }}>
         <span className="card-title flex1">Communication & messages</span>
         <div className="segmented" role="tablist">
           {MSG_TABS.map((t) => (

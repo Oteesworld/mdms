@@ -45,7 +45,7 @@ export function Vee() {
   return (
     <div>
       <div className="grid g-stats" style={{ marginBottom: 12 }}>
-        <StatCard label="Open exceptions" value={N(OPEN_EXCEPTIONS - resolved)} sub="block billing for 1,102 accounts" />
+        <StatCard label="Open exceptions" value={N(OPEN_EXCEPTIONS - resolved)} sub="affect 1,102 accounts" />
         <StatCard label="Auto-estimated, awaiting approval" value={N(311 + count('Estimated'))} sub="approve in bulk or one by one" />
         <StatCard label="Resolved today" value={N(87 + resolved)} sub="accepted, edited or rejected" />
         <StatCard label="Rules active" value={`${rules.filter(Boolean).length} of ${RULES.length}`} sub="rule set v12 · edited 14 Aug" />
@@ -53,7 +53,7 @@ export function Vee() {
 
       <div className="grid vee-split" style={{ alignItems: 'start', marginBottom: 16 }}>
         <Card clip style={{ minWidth: 0 }}>
-          <div className="card-head" style={{ padding: '9px 13px', gap: 7, flexWrap: 'wrap' }}>
+          <div className="card-head" style={{ gap: 7, flexWrap: 'wrap' }}>
             <span className="card-title" style={{ marginRight: 4 }}>Exception queue</span>
             {FILTERS.map((f) => (
               <button key={f} type="button" className={`chip${filter === f ? ' on' : ''}`} aria-pressed={filter === f} onClick={() => setFilter(f)}>
@@ -91,7 +91,7 @@ export function Vee() {
 
       <div className="grid stack-md" style={{ gridTemplateColumns: '1.3fr 1fr' }}>
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}>
+          <div className="card-head">
             <span className="card-title flex1">Rules</span>
             <span className="sub">hits in the last 24 h</span>
           </div>
@@ -119,7 +119,7 @@ export function Vee() {
         </Card>
 
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}>
+          <div className="card-head">
             <span className="card-title flex1">Audit trail</span>
             <span className="sub">append-only · kept indefinitely</span>
           </div>
@@ -127,9 +127,9 @@ export function Vee() {
             {audit.map((a, i) => (
               <div key={i} style={{ padding: '9px 14px', borderBottom: '1px solid var(--line-3)' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                  <span className="mono" style={{ fontSize: 10.5, color: 'var(--muted)' }}>{a.t}</span>
-                  <span className="mono" style={{ fontSize: 10.5, color: 'var(--navy)' }}>{a.who}</span>
-                  <span className="mono flex1" style={{ fontSize: 10.5 }}>{a.what}</span>
+                  <span className="mono" style={{ fontSize: 11.5, color: 'var(--muted)' }}>{a.t}</span>
+                  <span className="mono" style={{ fontSize: 11.5, color: 'var(--navy)' }}>{a.who}</span>
+                  <span className="mono flex1" style={{ fontSize: 11.5 }}>{a.what}</span>
                 </div>
                 <div className="sub" style={{ marginTop: 3 }}>{a.reason}</div>
               </div>
@@ -203,7 +203,7 @@ function ExceptionPanel({ x, onResolve }: { x: VeeException; onResolve: (x: VeeE
 
       <div className="kyc-section" style={{ borderBottom: 0 }}>
         {done ? (
-          <div className="sub">Resolved — see the audit trail. Billing will use {x.status === 'Approved' ? fmtL(x.estimate) : 'no value until the work order closes'}.</div>
+          <div className="sub">Resolved — see the audit trail. Reports and usage will use {x.status === 'Approved' ? fmtL(x.estimate) : 'no value until the work order closes'}.</div>
         ) : editing ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label className="form-field">
@@ -242,7 +242,7 @@ function ExceptionPanel({ x, onResolve }: { x: VeeException; onResolve: (x: VeeE
 function Field({ k, v, tone }: { k: string; v: string; tone?: string }) {
   return (
     <div>
-      <div style={{ fontSize: 9.5, color: 'var(--faint)', marginBottom: 2 }}>{k}</div>
+      <div style={{ fontSize: 10.5, color: 'var(--faint)', marginBottom: 2 }}>{k}</div>
       <div className="mono" style={{ fontSize: 11, color: tone ?? 'var(--ink)' }}>{v}</div>
     </div>
   );

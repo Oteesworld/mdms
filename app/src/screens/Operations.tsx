@@ -53,7 +53,7 @@ function WorkOrders() {
       </div>
 
       <Card clip>
-        <div className="card-head" style={{ padding: '9px 13px', gap: 7, flexWrap: 'wrap' }}>
+        <div className="card-head" style={{ gap: 7, flexWrap: 'wrap' }}>
           <span className="card-title" style={{ marginRight: 4 }}>Work orders</span>
           {WO_FILTERS.map((f) => (
             <button key={f} type="button" className={`chip${filter === f ? ' on' : ''}`} aria-pressed={filter === f} onClick={() => setFilter(f)}>{f}</button>
@@ -130,7 +130,7 @@ function Commands() {
       </div>
 
       <div className="grid stack-md" style={{ gridTemplateColumns: '320px minmax(0, 1fr)', alignItems: 'start' }}>
-        <Card style={{ padding: '13px 14px' }}>
+        <Card style={{ padding: '16px 18px' }}>
           <div className="card-title" style={{ marginBottom: 11 }}>Send a command</div>
           <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }} noValidate>
             <label className={`form-field${touched && !valid ? ' invalid' : ''}`}>
@@ -152,7 +152,7 @@ function Commands() {
         </Card>
 
         <Card clip>
-          <div className="card-head" style={{ padding: '11px 14px' }}><span className="card-title">Recent commands</span></div>
+          <div className="card-head"><span className="card-title">Recent commands</span></div>
           <div className="table-wrap">
             <table className="tbl compact">
               <TableHead cols={[{ label: 'Downlink' }, { label: 'Meter' }, { label: 'Command' }, { label: 'By' }, { label: 'Queued' }, { label: 'Result' }, { label: 'Status', align: 'right' }]} />

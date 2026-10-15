@@ -32,9 +32,9 @@ export const ACCOUNTS: Account[] = [
 /** Screens each role may open; the first one is the role's home screen. */
 export const ACCESS: Record<Role, Screen[] | 'all'> = {
   Admin: 'all',
-  Ops: ['dash', 'map', 'reports', 'mdm', 'vee', 'billing', 'network', 'gateways', 'sites', 'operations', 'domestic', 'business', 'gov', 'meters', 'bulk', 'portal'],
-  Finance: ['dash', 'reports', 'billing', 'mdm', 'vee', 'domestic', 'business', 'gov', 'portal'],
-  Vendor: ['domestic', 'business', 'portal'],
+  Ops: ['dash', 'map', 'reports', 'mdm', 'vee', 'vending', 'network', 'gateways', 'sites', 'operations', 'domestic', 'business', 'gov', 'meters', 'bulk', 'portal'],
+  Finance: ['dash', 'reports', 'vending', 'mdm', 'vee', 'domestic', 'business', 'gov', 'portal'],
+  Vendor: ['domestic', 'business', 'vending', 'portal'],
   Field: ['map', 'operations', 'meters', 'bulk', 'network', 'gateways', 'sites'],
 };
 
