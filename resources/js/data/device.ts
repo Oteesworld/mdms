@@ -40,6 +40,8 @@ export interface Device {
   lastDay: string;
   lat: number;
   lng: number;
+  /** Commissioning date, ISO yyyy-mm-dd. */
+  installedOn: string;
   address: string;
   info: [string, string][];
   connectivity: [string, string][];
@@ -225,11 +227,12 @@ export function makeDevice(meter: string, o: Opts): Device {
   const installed = fmtStamp(installedH);
   return {
     meter, devEui, online, lastSeen, lat, lng,
+    installedOn: new Date(NOW.getTime() - installedH * 36e5).toISOString().slice(0, 10),
     lastDay: fmtDay(new Date(NOW.getTime() - lastSeenH * 36e5)),
     address: o.plot + ', Gaborone',
     info: [
-      ['Meter serial', meter], ['Make / model', 'Lesira YWM 255C'], ['Type', biz ? 'Ultrasonic DN40, prepaid' : 'Ultrasonic DN15, prepaid'],
-      ['Meter class', 'Class C · H'], ['Rated flow (Q3)', biz ? '16 m³/h' : '1.5 m³/h'], ['Max pressure', '1,400 kPa'],
+      ['Meter serial', meter], ['Make / model', 'Kalahari Ultrasonic'], ['Type', 'Ultrasonic DN15, STS prepaid'],
+      ['Range / class', 'R250 · T50 · IP68'], ['Rated flow (Q3)', '2.5 m³/h'], ['Max pressure', 'PN16 (1,600 kPa)'],
       ['Firmware', ['16', '17', '7'][Math.floor(r() * 3)]], ['Valve', online ? 'Open' : 'Unknown'], ['STS key revision', 'KRN 2 · TI 07'],
       ['Installed', installed],
     ],

@@ -17,13 +17,15 @@ import { Vee } from '../screens/Vee';
 import { Vending } from '../screens/Vending';
 import { Operations } from '../screens/Operations';
 import { AccountScreen } from '../screens/Account';
+import { Meters, meterTitle } from '../screens/meters';
 import type { TableScreen } from '../data/clients';
 
 /** The signed-in app: Laravel serves it at /{screen} once it has checked the role may open that screen. */
 export default function App() {
   const { user } = useAuth();
   const [screen, go, param] = useScreen();
-  const { flash } = usePage<SharedProps>().props;
+  const page = usePage<SharedProps>().props;
+  const { flash } = page;
   const menu = useMenu();
   setCurrentHandle(user!.handle);
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function App() {
   }, [flash]);
 
   const [crumb, baseTitle] = TITLES[screen];
-  const title = profileIndex(screen, param) !== null ? 'Client profile' : baseTitle;
+  const title = (screen === 'meters' && meterTitle(param, page)) || (profileIndex(screen, param) !== null ? 'Client profile' : baseTitle);
 
   return (
     <div className="shell">
@@ -56,7 +58,7 @@ export default function App() {
           </div>
           <GlobalSearch go={go} />
           <div className="server-state"><span className="dot" style={{ background: 'var(--ok)' }} />Network server online</div>
-          <div className="clock">19 Aug 2026, 13:01</div>
+          <Clock />
         </header>
         <div className="content">
           <ScreenView screen={screen} param={param} />
@@ -80,6 +82,7 @@ function ScreenView({ screen, param }: { screen: Screen; param?: string }) {
     case 'vee': return <Vee />;
     case 'vending': return <Vending />;
     case 'operations': return <Operations />;
+    case 'meters': return <Meters param={param} />;
     default: return <Register key={screen} screen={screen as TableScreen} profile={param} />;
   }
 }
@@ -206,4 +209,16 @@ function Sidebar({ screen, account, menu }: { screen: Screen; account: Account; 
     </aside>
     </>
   );
+}
+
+const clockFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Gaborone', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+
+/** Current time in Gaborone, the time zone the dashboards use. */
+function Clock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(t);
+  }, []);
+  return <div className="clock" title="Gaborone time (CAT)">{clockFmt.format(now)}</div>;
 }

@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from '@inertiajs/react';
 import L from 'leaflet';
 import { Icon, type IconName } from '../components/Icon';
 import { Badge, Card, TableHead } from '../components/ui';
+import { Bars, KeyValues, Legend, Panel } from '../components/charts';
 import { TABLES, type TableScreen } from '../data/clients';
 import { makeDevice, type AlarmType, type Device } from '../data/device';
 import { N, P } from '../data/format';
 import { addBasemap } from './NetworkMap';
 import { useClientProps } from '../data/store';
+import { useAuth } from '../auth';
 
 const ALARM_ICON: Record<AlarmType, IconName> = {
   'Burst alarm': 'bulk',
@@ -29,6 +31,7 @@ export function ClientProfile({ screen, index }: { screen: TableScreen; index: n
   const k = cfg.kyc!(index);
   const props = useClientProps(k.id, k.props);
   const [meterIdx, setMeterIdx] = useState(0);
+  const { canOpen } = useAuth();
   const prop = props[Math.min(meterIdx, props.length - 1)];
   const dev = useMemo(
     () => makeDevice(prop.meter, { plot: prop.plot, business: screen === 'business', balance: parseP(prop.bal) }),
@@ -41,6 +44,7 @@ export function ClientProfile({ screen, index }: { screen: TableScreen; index: n
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <Link className="back-link" href={'/' + screen}><Icon name="back" size={15} />{cfg.name}</Link>
           <span className="flex1" />
+          {canOpen('meters') && <Link href={'/meters/' + prop.meter} className="link" style={{ fontSize: 12 }}>Live meter data →</Link>}
           <span className={`status-pill ${dev.online ? 'on' : 'off'}`}>
             <span className="dot" />{dev.online ? 'Online' : 'Offline'}
           </span>
@@ -145,49 +149,6 @@ function Overview({ dev, business }: { dev: Device; business: boolean }) {
 }
 
 /* ---------- Building blocks ---------- */
-
-function Panel({ title, note, children, icon }: { title: string; note?: ReactNode; children: ReactNode; icon?: IconName }) {
-  return (
-    <Card style={{ padding: '18px 20px', minWidth: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 11 }}>
-        {icon && <span style={{ color: 'var(--muted)', alignSelf: 'center' }}><Icon name={icon} size={15} /></span>}
-        <span className="card-title flex1">{title}</span>
-        {note && <span className="meta">{note}</span>}
-      </div>
-      {children}
-    </Card>
-  );
-}
-
-function KeyValues({ title, icon, rows }: { title: string; icon: IconName; rows: [string, string][] }) {
-  return (
-    <Panel title={title} icon={icon}>
-      <div className="kv">
-        {rows.map(([k, v]) => (
-          <div key={k}><span>{k}</span><span className="mono">{v}</span></div>
-        ))}
-      </div>
-    </Panel>
-  );
-}
-
-function Legend({ color, label }: { color: string; label: string }) {
-  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: 2, background: color }} />{label}</span>;
-}
-
-function Bars({ values, labels, color, tip, height = 130 }: { values: number[]; labels: string[]; color: (v: number, i: number) => string; tip: (v: number, i: number) => string; height?: number }) {
-  const max = Math.max(...values, 1);
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: values.length > 20 ? 2 : 4, height }}>
-      {values.map((v, i) => (
-        <div key={i} title={tip(v, i)} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 4, height: '100%' }}>
-          <div style={{ width: '100%', height: (v / max) * 100 + '%', minHeight: v ? 2 : 0, background: color(v, i), borderRadius: '2px 2px 0 0' }} />
-          <span style={{ fontWeight: 500, fontSize: 11, color: 'var(--faint)', height: 12, whiteSpace: 'nowrap' }}>{labels[i]}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 /* ---------- Location ---------- */
 

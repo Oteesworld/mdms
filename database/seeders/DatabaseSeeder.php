@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([MeterSeeder::class, VendingLogSeeder::class]);
 
         if (config('mdms.demo')) {
-            $this->call(DemoUserSeeder::class);
+            $this->call([DemoUserSeeder::class, DemoTelemetrySeeder::class]);
         } else {
             $this->command?->info('Create the first administrator with: php artisan mdms:create-admin');
         }

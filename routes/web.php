@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Screens;
+use App\Http\Controllers\MeterController;
 use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendingCheckController;
@@ -12,6 +13,12 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/', [ScreenController::class, 'home'])->name('home');
 
     Route::post('/vending/check', VendingCheckController::class)->name('vending.check');
+
+    Route::middleware('can:manage-meters')->prefix('meters')->name('meters.')->group(function () {
+        Route::post('/', [MeterController::class, 'store'])->name('store');
+        Route::put('/{meter:serial}', [MeterController::class, 'update'])->name('update');
+        Route::post('/{meter:serial}/simulate', [MeterController::class, 'simulate'])->name('simulate');
+    });
 
     Route::middleware('can:manage-users')->prefix('settings/users')->name('users.')->group(function () {
         Route::post('/', [UserController::class, 'store'])->name('store');

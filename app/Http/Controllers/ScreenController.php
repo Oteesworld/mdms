@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Enums\Screens;
+use App\Metering\MeterPage;
+use App\Models\Meter;
 use App\Models\User;
 use App\Vending\VendingPage;
 use Illuminate\Http\RedirectResponse;
@@ -31,11 +33,26 @@ class ScreenController extends Controller
             'screen' => $screen,
             'param' => $param,
             ...match ($screen) {
+                'meters' => $this->meters($request, $param),
                 'vending' => app(VendingPage::class)->props(),
                 'settings' => $this->settings(),
                 default => [],
             },
         ]);
+    }
+
+    private function meters(Request $request, ?string $param): array
+    {
+        $page = app(MeterPage::class);
+        if ($param === null) {
+            return $page->register();
+        }
+        if ($param === 'new') {
+            return $page->form();
+        }
+        $meter = Meter::where('serial', strtoupper($param))->firstOrFail();
+
+        return $request->boolean('edit') ? [...$page->form($meter), 'serial' => $meter->serial] : $page->dashboard($meter);
     }
 
     private function settings(): array

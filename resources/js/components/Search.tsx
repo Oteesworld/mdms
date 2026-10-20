@@ -6,7 +6,7 @@ import { GATEWAYS } from '../data/fleet';
 import { NAV, type Screen } from '../routes';
 import { meterIndex } from '../data/meters';
 
-interface Hit { kind: 'Client' | 'Meter' | 'Gateway' | 'Screen'; label: string; sub: string; screen: Screen; param?: number; key: string }
+interface Hit { kind: 'Client' | 'Meter' | 'Gateway' | 'Screen'; label: string; sub: string; screen: Screen; param?: number | string; key: string }
 
 function buildIndex(): Hit[] {
   const hits: Hit[] = [];
@@ -21,7 +21,10 @@ function buildIndex(): Hit[] {
   }
   meterIndex().forEach((m) => {
     const c = clientIdx.get(m.clientId);
-    if (c) hits.push({ kind: 'Meter', label: m.serial, sub: `${m.clientName} · ${m.plot}`, screen: c.screen, param: c.i, key: (m.serial + ' ' + m.plot).toLowerCase() });
+    // The meter dashboard when the role has the meter register, otherwise the client's profile.
+    const key = (m.serial + ' ' + m.plot).toLowerCase();
+    hits.push({ kind: 'Meter', label: m.serial, sub: `${m.clientName} · ${m.plot}`, screen: 'meters', param: m.serial, key });
+    if (c) hits.push({ kind: 'Meter', label: m.serial, sub: `${m.clientName} · ${m.plot}`, screen: c.screen, param: c.i, key });
   });
   GATEWAYS.forEach((g) => hits.push({ kind: 'Gateway', label: g.id, sub: g.site, screen: 'gateways', key: (g.id + ' ' + g.site).toLowerCase() }));
   NAV.forEach((n) => 'screen' in n && hits.push({ kind: 'Screen', label: n.label, sub: 'Go to screen', screen: n.screen, key: n.label.toLowerCase() }));
@@ -29,7 +32,7 @@ function buildIndex(): Hit[] {
 }
 
 /** Top-bar search across clients, meters, gateways and screens the user may open. */
-export function GlobalSearch({ go }: { go: (s: Screen, param?: number) => void }) {
+export function GlobalSearch({ go }: { go: (s: Screen, param?: number | string) => void }) {
   const { canOpen } = useAuth();
   const index = useMemo(buildIndex, []);
   const [q, setQ] = useState('');
@@ -38,7 +41,8 @@ export function GlobalSearch({ go }: { go: (s: Screen, param?: number) => void }
   const input = useRef<HTMLInputElement>(null);
 
   const needle = q.trim().toLowerCase();
-  const results = needle.length < 2 ? [] : index.filter((h) => canOpen(h.screen) && h.key.includes(needle)).slice(0, 8);
+  const results = needle.length < 2 ? [] : index.filter((h, i, all) => canOpen(h.screen) && h.key.includes(needle)
+    && all.findIndex((o) => o.kind === h.kind && o.label === h.label && canOpen(o.screen)) === i).slice(0, 8);
 
   const pick = (h: Hit) => {
     go(h.screen, h.param);

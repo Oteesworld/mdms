@@ -10,4 +10,7 @@ return [
 
     /* Shared secret the vending system sends to POST /api/vending/validate. */
     'vending_api_key' => env('VENDING_API_KEY'),
+
+    /* Shared secret the LoRaWAN network server sends to POST /api/lorawan/uplink. */
+    'lorawan_webhook_token' => env('LORAWAN_WEBHOOK_TOKEN'),
 ];

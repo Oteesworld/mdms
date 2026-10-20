@@ -35,6 +35,8 @@ Run the tests with `php artisan test`. The TypeScript check is `npm run typechec
 | `app/Http/Controllers/UserController.php` | Settings → Users: invite (emails a link to set a password), edit role/title/scope, suspend or reactivate. Admin only. |
 | `app/Providers/FortifyServiceProvider.php` | Sign-in rules (suspended and not-yet-activated accounts are refused), sign-in rate limits, and the Inertia auth pages. |
 | `app/Vending/MeterValidator.php` | The vending validation rules used by the API, the Vending test console and the customer portal. |
+| `app/Lorawan/`, `app/Metering/` | Uplink webhook normalising (ChirpStack/TTN), the Kalahari decoder, ingestion, alarms, meter dashboard data and the demo simulator. |
+| `config/kalahari.php` | Meter specs, alarm thresholds, reporting options, volume scale and the status-bit map. |
 | `resources/js/pages/` | Inertia pages: `App.tsx` (the signed-in shell) and `auth/*` (sign-in, forgot/reset password, two-factor challenge). |
 | `resources/js/screens/` | One component per screen, including `Account.tsx` (password and two-factor set-up) and `Settings.tsx` (users and role access). |
 | `resources/js/data/` | Demo fixtures for the fleet, clients, MDM and device dashboards. Most screens still use these; the `meters` table holds client meters for vending validation. |
@@ -45,6 +47,116 @@ Run the tests with `php artisan test`. The TypeScript check is `npm run typechec
 - **Admin safeguard:** an administrator can't change their own role or status, so there is always at least one active admin.
 - **Two-factor sign-in:** anyone can turn it on under **My account** with an authenticator app. They get 8 recovery codes. Settings → Users shows who has it on.
 - **Passwords in production:** at least 10 characters with mixed case and a number, and checked against known breaches. Elsewhere the minimum is 8 characters.
+
+## Kalahari meters and LoRaWAN data
+
+The platform is built around the **Kalahari Ultrasonic Water Meter** (Leeroy Systems, [user manual V1.03](docs/hardware/Kalahari_Ultrasonic_Water_Meter_User_Manual_V1.03.pdf)).
+
+| | |
+| --- | --- |
+| **Hardware** | DN15, Q3 2.5 m³/h, R250, T50, PN16, IP68, motorised ball valve |
+| **Prepayment** | STS Edition 2 (20-digit tokens on the CIU or infrared keypad). Credit is held on the meter as water volume (m³). |
+| **Data** | The meter stores a reading every hour and sends them in packages of 1, 2, 3, 4, 6, 8 or 24 hours (the default is 24). |
+| **Identifiers** | Each meter has a 13-digit **meter address**, which is also its STS meter number and its CIU binding address (Luhn check digit), plus LoRaWAN OTAA keys (DevEUI, JoinEUI, AppKey). |
+
+### Adding a meter
+
+Go to **Meters → + Add meter** (Admin, Ops and Field roles). The form covers:
+
+- **Meter:** serial and meter address. The address's check digit is validated as you type.
+- **LoRaWAN:** DevEUI, JoinEUI and AppKey (stored encrypted, never shown again), region, class, reporting package and sampling interval.
+- **STS:** SGC, KRN and TI.
+- **Installation:** plot, suburb, GPS (with **Use my location**), install date, reading at install and seal.
+- **Customer:** an optional account, or leave it unassigned as stock. Vending is refused for unassigned and decommissioned meters.
+- **Commissioning checklist (from the manual):**
+  - Added to the network server.
+  - Out of non-reporting mode. Meters ship silent until touch-key code **11111** (D1 U1 D1 U1 D1) is entered.
+  - CIU bound: the labels match, and entering **00** shows ACCEPT.
+  - Valve tested.
+
+The meter shows *Awaiting first uplink* until data arrives. Then `/meters/{serial}` shows:
+- tiles that match the meter display codes (P-0 reading, P-1 flow, P-2 credit, P-A temperature, P-B battery);
+- hourly and daily use;
+- credit and register trends, battery and temperature;
+- alarms;
+- gateways and RSSI/SNR;
+- the hourly frozen records in the manual's column layout (CSV export);
+- the raw uplink log.
+
+### Connecting the network server
+
+The network server (ChirpStack v4 or The Things Stack v3) holds the session keys and **decrypts** each frame. It then forwards the application payload to:
+
+```
+POST https://your-domain/api/lorawan/uplink
+Authorization: Bearer <LORAWAN_WEBHOOK_TOKEN>      (or X-Api-Key)
+```
+
+- **ChirpStack:** add an HTTP integration to the application, with event URL `…/api/lorawan/uplink` and the header above. The `up` and `join` events are used; the others are acknowledged and ignored.
+- **The Things Stack:** add a custom webhook with the same header, and enable *Uplink message* and *Join accept*.
+
+Every frame is stored in `uplinks` with its raw payload (hex), radio metadata and decode status:
+
+| Decode status | Meaning |
+| --- | --- |
+| `decoded` | Readings were written. |
+| `undecoded` | Nothing could decode it yet. |
+| `error` | The decoded data was malformed. |
+| `unknown_device` | No meter has that DevEUI. |
+| `join` | A join event. |
+
+Hourly records are unique per meter and hour, so repeated packages don't double count.
+
+### Payload format (pending the Kalahari protocol document)
+
+The byte layout is in the separate *Kalahari Ultrasonic Water Meter Communication Protocol*, which we don't have yet. Until it arrives, either route works:
+
+1. **Codec on the network server (recommended).** Write the ChirpStack/TTN payload codec from the protocol so it outputs this object:
+
+   ```json
+   {
+     "records": [
+       { "time": "2026-10-20T08:00:00Z", "Total+": 69.9, "Flow+": 0, "Vol-RTU": 3.68, "Voltage": 0,
+         "Water Temp": 21.4, "Status": 66, "Consume": 0, "Total-": 1.2, "Flow-": 0 }
+     ],
+     "remainingVolume": 4.2,
+     "valve": "open",
+     "alarms": ["leakage"],
+     "firmware": "KU-1.03"
+   }
+   ```
+
+   - **Field names:** the manual's column names, as above, or camelCase (`totalForward`, `flowForward`, `rtuVoltage`, `meterVoltage`, `temperature`, `status`, `consumption`, `totalReverse`, `flowReverse`).
+   - **`time`:** ISO 8601, epoch seconds, or the meter's own `yy/mm/dd hh` (read as Gaborone time). Without times, records are taken as consecutive hours ending at the hour the uplink was received.
+   - **`consumption`:** if missing, it is worked out from the register.
+2. **Decoder in this app.** Implement `App\Lorawan\KalahariDecoder::decodeBytes()`, then run `php artisan mdms:redecode` to decode every stored frame that is still undecoded.
+
+**Units:** volumes are taken as m³. The manual's sample table looks like it could be litres. Once the protocol confirms the unit, set `KALAHARI_VOLUME_SCALE=0.001` if needed.
+
+**Status bits:** the meaning of the `Status` byte goes in `config/kalahari.php` → `status_bits`. Until then the dashboard shows it in hex.
+
+### Alarms
+
+Alarms are opened and cleared automatically as packages arrive. Ones the meter reports in `alarms` are labelled *from meter*. The platform also derives these from the hourly records:
+
+| Alarm | Raised when |
+| --- | --- |
+| Burst | Flow is above 1.25 × Q3. |
+| Leak | Water flowed every hour for 24 hours. |
+| Reverse flow | There is reverse flow. |
+| Low battery | Battery is below 3.40 V. |
+| Low credit | Credit is at or below 1 m³. |
+| Credit exhausted | Credit has run out. |
+
+Thresholds are in `config/kalahari.php`.
+
+### Demo data
+
+With `MDMS_DEMO=true`:
+- the seeder simulates two weeks of uplinks for the demo meters through the same pipeline;
+- each meter page has a **Simulate uplinks** button.
+
+The vending validation API also accepts the 13-digit meter number. It now uses the meter's live state (last uplink, battery, valve, credit).
 
 ## Vending validation API
 
@@ -83,6 +195,7 @@ Every call is logged, and the log appears on the **Vending** screen. The meters 
    - `DB_CONNECTION=mysql`, plus the database name, user and password Forge created.
    - Mail settings (`MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`). Invitations and password resets are sent by email.
    - `VENDING_API_KEY`: a long random value (`openssl rand -hex 32`). Share it with the vending system's team.
+   - `LORAWAN_WEBHOOK_TOKEN`: another long random value. Put it in the network server's webhook header.
    - `MDMS_DEMO=false`.
 4. **Use this deploy script.** It replaces Forge's default:
 

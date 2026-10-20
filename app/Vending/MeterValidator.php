@@ -17,6 +17,9 @@ class MeterValidator
 {
     public const SERIAL = '/^WM-\d{6}$/';
 
+    /** The 13-digit Meter Address, which is also the STS meter number. */
+    public const ADDRESS = '/^\d{13}$/';
+
     /**
      * @param  array{meter: string, purchaser?: ?string, amount?: ?float, vendorRef?: ?string}  $req
      */
@@ -32,22 +35,32 @@ class MeterValidator
         ];
         $decline = fn (string $code, string $message, array $extra = []) => [...$base, ...$extra, 'result' => 'DECLINED', 'code' => $code, 'message' => $message];
 
-        if (! preg_match(self::SERIAL, $serial)) {
-            return $decline('INVALID_FORMAT', 'Meter number must look like WM- followed by six digits.');
+        $byAddress = (bool) preg_match(self::ADDRESS, $serial);
+        if (! $byAddress && ! preg_match(self::SERIAL, $serial)) {
+            return $decline('INVALID_FORMAT', 'Use the 13-digit meter number or the serial (WM- followed by six digits).');
         }
-        $m = Meter::firstWhere('serial', $serial);
+        $m = Meter::firstWhere($byAddress ? 'meter_address' : 'serial', $serial);
         if (! $m) {
             return $decline('METER_NOT_FOUND', "Meter {$serial} is not registered in the MDMS.");
         }
+        $serial = $m->serial;
+        $online = $m->isOnline();
+        $lastSeen = $m->lastSeenText();
 
         $extra = [
-            'meter' => ['serial' => $serial, 'devEui' => $m->dev_eui, 'status' => $m->online ? 'online' : 'offline', 'lastSeen' => $m->last_seen, 'property' => $m->plot],
+            'meter' => ['serial' => $serial, 'meterNumber' => $m->meter_address, 'devEui' => $m->dev_eui, 'status' => $online ? 'online' : 'offline', 'lastSeen' => $lastSeen, 'property' => $m->plot, 'remainingM3' => $m->remaining_m3],
             'account' => [
                 'clientId' => $m->client_id, 'clientName' => $m->client_name, 'type' => $m->type, 'owner' => $m->owner,
                 'occupant' => $m->occupant, 'vendingParty' => $m->vending_party, 'kyc' => $m->kyc, 'status' => $m->account_status,
             ],
         ];
 
+        if ($m->network_status === 'decommissioned') {
+            return $decline('VENDING_NOT_PERMITTED', "Meter {$serial} has been decommissioned.", $extra);
+        }
+        if (! $m->isAssigned()) {
+            return $decline('VENDING_NOT_PERMITTED', "Meter {$serial} is registered but not yet assigned to a customer account.", $extra);
+        }
         if ($rules->blockSuspended && $m->account_status === 'Suspended') {
             return $decline('ACCOUNT_SUSPENDED', "Account {$m->client_id} is suspended. Refer the customer to the utility office.", $extra);
         }
@@ -65,14 +78,14 @@ class MeterValidator
         }
 
         $warnings = [];
-        if (! $m->online && $m->offline_days >= $rules->offlineWarnDays) {
-            $warnings[] = 'Meter has been offline '.str_replace(' ago', '', $m->last_seen).'; a remote token will apply on its next uplink. Advise the customer to key it in.';
+        if (! $online && $m->offlineDays() >= $rules->offlineWarnDays) {
+            $warnings[] = 'Meter has been offline '.str_replace(' ago', '', $lastSeen).'; a remote token will apply on its next uplink. Advise the customer to key it in on the CIU.';
         }
         if ($m->balance < 0) {
             $warnings[] = sprintf('Account is in arrears (P %.2f); 25%% of this purchase goes to debt recovery.', abs($m->balance));
         }
-        if ($m->battery_pct < 40) {
-            $warnings[] = "Meter battery is at {$m->battery_pct}%; replacement is scheduled.";
+        if (($batt = $m->batteryPercent()) < 40) {
+            $warnings[] = "Meter battery is at {$batt}%; replacement is scheduled.";
         }
 
         $biz = $m->type === 'business';
@@ -85,7 +98,7 @@ class MeterValidator
             'result' => 'APPROVED',
             'code' => 'OK',
             'message' => "Meter {$serial} may be vended. Purchaser: {$buyer} ({$m->vending_party}).",
-            'sts' => ['supplyGroupCode' => $biz ? '600742' : '600741', 'keyRevision' => 2, 'tariffIndex' => $biz ? '02' : '01', 'tokenTech' => 'STS6 · numeric 20-digit', 'algorithm' => 'EA07'],
+            'sts' => ['meterNumber' => $m->meter_address, 'supplyGroupCode' => $m->sts_sgc, 'keyRevision' => $m->sts_krn, 'tariffIndex' => $m->sts_ti, 'tokenTech' => 'STS Edition 2 · 20-digit', 'algorithm' => 'EA07', 'units' => 'm³'],
             'tariff' => $biz ? ['name' => 'Business', 'ratePerKl' => 21.4, 'vatRate' => 0.14] : ['name' => 'Domestic block tariff', 'ratePerKl' => 10.21, 'vatRate' => 0.14],
         ];
     }

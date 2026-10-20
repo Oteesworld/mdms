@@ -29,6 +29,7 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="MDMS_DEMO" value="false"/>
         <env name="VENDING_API_KEY" value=""/>
+        <env name="LORAWAN_WEBHOOK_TOKEN" value=""/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

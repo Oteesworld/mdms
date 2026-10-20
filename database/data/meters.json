@@ -16,7 +16,11 @@
   "last_seen": "14 min ago",
   "offline_days": 0,
   "battery_pct": 75,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 8",
+  "lat": -24.621688952264563,
+  "lng": 25.947760267814623,
+  "installed_at": "2025-04-12"
  },
  {
   "serial": "WM-104007",
@@ -35,7 +39,11 @@
   "last_seen": "22 min ago",
   "offline_days": 0,
   "battery_pct": 97,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Old Naledi",
+  "lat": -24.67146630493831,
+  "lng": 25.924198382060975,
+  "installed_at": "2024-11-27"
  },
  {
   "serial": "WM-104014",
@@ -54,7 +62,11 @@
   "last_seen": "14 min ago",
   "offline_days": 0,
   "battery_pct": 75,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Tsholofelo",
+  "lat": -24.63640895744134,
+  "lng": 25.949772031358442,
+  "installed_at": "2025-02-26"
  },
  {
   "serial": "WM-104021",
@@ -73,7 +85,11 @@
   "last_seen": "1 min ago",
   "offline_days": 0,
   "battery_pct": 67,
-  "tamper": false
+  "tamper": false,
+  "suburb": "CBD",
+  "lat": -24.651113276204093,
+  "lng": 25.906420158450956,
+  "installed_at": "2025-03-28"
  },
  {
   "serial": "WM-104028",
@@ -92,7 +108,11 @@
   "last_seen": "16 min ago",
   "offline_days": 0,
   "battery_pct": 92,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 3",
+  "lat": -24.64570680604316,
+  "lng": 25.9311918792394,
+  "installed_at": "2025-05-08"
  },
  {
   "serial": "WM-104035",
@@ -111,7 +131,11 @@
   "last_seen": "21 min ago",
   "offline_days": 0,
   "battery_pct": 78,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Phakalane",
+  "lat": -24.560654316643998,
+  "lng": 25.950761259788184,
+  "installed_at": "2024-11-23"
  },
  {
   "serial": "WM-104091",
@@ -130,7 +154,11 @@
   "last_seen": "2 d 2 h ago",
   "offline_days": 2,
   "battery_pct": 63,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Phakalane",
+  "lat": -24.56537647483852,
+  "lng": 25.9567659947034,
+  "installed_at": "2024-11-15"
  },
  {
   "serial": "WM-104182",
@@ -149,7 +177,11 @@
   "last_seen": "1 d 17 h ago",
   "offline_days": 1,
   "battery_pct": 67,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 9",
+  "lat": -24.612872350928374,
+  "lng": 25.924984469069635,
+  "installed_at": "2025-03-02"
  },
  {
   "serial": "WM-104273",
@@ -168,7 +200,11 @@
   "last_seen": "1 min ago",
   "offline_days": 0,
   "battery_pct": 91,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Old Naledi",
+  "lat": -24.672159966772423,
+  "lng": 25.92236630458292,
+  "installed_at": "2025-05-28"
  },
  {
   "serial": "WM-104364",
@@ -187,7 +223,11 @@
   "last_seen": "6 min ago",
   "offline_days": 0,
   "battery_pct": 37,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Broadhurst",
+  "lat": -24.629085272419267,
+  "lng": 25.936505278951486,
+  "installed_at": "2024-11-14"
  },
  {
   "serial": "WM-104371",
@@ -206,7 +246,11 @@
   "last_seen": "23 min ago",
   "offline_days": 0,
   "battery_pct": 78,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Phase 4",
+  "lat": -24.651002391745337,
+  "lng": 25.893926777943967,
+  "installed_at": "2025-04-20"
  },
  {
   "serial": "WM-104378",
@@ -225,7 +269,11 @@
   "last_seen": "1 d 8 h ago",
   "offline_days": 1,
   "battery_pct": 62,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 10",
+  "lat": -24.62073433426302,
+  "lng": 25.946437276767565,
+  "installed_at": "2025-01-24"
  },
  {
   "serial": "WM-104385",
@@ -244,7 +292,11 @@
   "last_seen": "21 min ago",
   "offline_days": 0,
   "battery_pct": 85,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Gaborone North",
+  "lat": -24.593926892085932,
+  "lng": 25.926975207984913,
+  "installed_at": "2025-02-10"
  },
  {
   "serial": "WM-104392",
@@ -263,7 +315,11 @@
   "last_seen": "19 min ago",
   "offline_days": 0,
   "battery_pct": 72,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 9",
+  "lat": -24.615592282757163,
+  "lng": 25.925637791906485,
+  "installed_at": "2025-01-15"
  },
  {
   "serial": "WM-104399",
@@ -282,7 +338,11 @@
   "last_seen": "12 min ago",
   "offline_days": 0,
   "battery_pct": 97,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 5",
+  "lat": -24.644145982428455,
+  "lng": 25.914508506997954,
+  "installed_at": "2025-03-23"
  },
  {
   "serial": "WM-104455",
@@ -301,7 +361,11 @@
   "last_seen": "17 min ago",
   "offline_days": 0,
   "battery_pct": 41,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 5",
+  "lat": -24.64672153381258,
+  "lng": 25.912750540546142,
+  "installed_at": "2025-03-17"
  },
  {
   "serial": "WM-104546",
@@ -320,7 +384,11 @@
   "last_seen": "1 min ago",
   "offline_days": 0,
   "battery_pct": 44,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Tsholofelo",
+  "lat": -24.63425740174018,
+  "lng": 25.944677435873075,
+  "installed_at": "2025-02-14"
  },
  {
   "serial": "WM-104637",
@@ -339,7 +407,11 @@
   "last_seen": "14 min ago",
   "offline_days": 0,
   "battery_pct": 52,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Phase 4",
+  "lat": -24.64847541395109,
+  "lng": 25.901922918992117,
+  "installed_at": "2025-02-10"
  },
  {
   "serial": "WM-104644",
@@ -358,7 +430,11 @@
   "last_seen": "14 min ago",
   "offline_days": 0,
   "battery_pct": 80,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 10",
+  "lat": -24.619055764588527,
+  "lng": 25.94818573385151,
+  "installed_at": "2025-02-12"
  },
  {
   "serial": "WM-104651",
@@ -377,7 +453,11 @@
   "last_seen": "15 min ago",
   "offline_days": 0,
   "battery_pct": 36,
-  "tamper": true
+  "tamper": true,
+  "suburb": "Gaborone North",
+  "lat": -24.596722549897617,
+  "lng": 25.927137456954455,
+  "installed_at": "2024-10-15"
  },
  {
   "serial": "WM-104728",
@@ -396,7 +476,11 @@
   "last_seen": "10 min ago",
   "offline_days": 0,
   "battery_pct": 82,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Bontleng",
+  "lat": -24.667802227795125,
+  "lng": 25.911759474914057,
+  "installed_at": "2025-01-05"
  },
  {
   "serial": "WM-104819",
@@ -415,7 +499,11 @@
   "last_seen": "3 min ago",
   "offline_days": 0,
   "battery_pct": 51,
-  "tamper": true
+  "tamper": true,
+  "suburb": "CBD",
+  "lat": -24.660960002243517,
+  "lng": 25.90787913763523,
+  "installed_at": "2025-06-27"
  },
  {
   "serial": "WM-104910",
@@ -434,7 +522,11 @@
   "last_seen": "7 min ago",
   "offline_days": 0,
   "battery_pct": 58,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 10",
+  "lat": -24.625906571022234,
+  "lng": 25.95901928614685,
+  "installed_at": "2025-03-15"
  },
  {
   "serial": "WM-105001",
@@ -453,7 +545,11 @@
   "last_seen": "6 min ago",
   "offline_days": 0,
   "battery_pct": 77,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale View",
+  "lat": -24.695761828377844,
+  "lng": 25.889989397331608,
+  "installed_at": "2025-05-23"
  },
  {
   "serial": "WM-105092",
@@ -472,7 +568,11 @@
   "last_seen": "10 min ago",
   "offline_days": 0,
   "battery_pct": 57,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 3",
+  "lat": -24.649674638317897,
+  "lng": 25.92984192252951,
+  "installed_at": "2024-12-14"
  },
  {
   "serial": "WM-105099",
@@ -491,7 +591,11 @@
   "last_seen": "2 d 22 h ago",
   "offline_days": 2,
   "battery_pct": 89,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Phakalane",
+  "lat": -24.568769739994593,
+  "lng": 25.95654153989302,
+  "installed_at": "2024-10-10"
  },
  {
   "serial": "WM-105106",
@@ -510,7 +614,11 @@
   "last_seen": "20 min ago",
   "offline_days": 0,
   "battery_pct": 76,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Broadhurst",
+  "lat": -24.626268389508127,
+  "lng": 25.935693035646807,
+  "installed_at": "2025-07-14"
  },
  {
   "serial": "WM-105113",
@@ -529,7 +637,11 @@
   "last_seen": "16 min ago",
   "offline_days": 0,
   "battery_pct": 46,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Phase 4",
+  "lat": -24.65267236594297,
+  "lng": 25.889928813925014,
+  "installed_at": "2025-02-11"
  },
  {
   "serial": "WM-105120",
@@ -548,7 +660,11 @@
   "last_seen": "19 min ago",
   "offline_days": 0,
   "battery_pct": 79,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Block 10",
+  "lat": -24.619689996639266,
+  "lng": 25.95270169200981,
+  "installed_at": "2025-03-08"
  },
  {
   "serial": "WM-105127",
@@ -567,7 +683,11 @@
   "last_seen": "12 min ago",
   "offline_days": 0,
   "battery_pct": 82,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Gaborone North",
+  "lat": -24.598092361775226,
+  "lng": 25.926290539065842,
+  "installed_at": "2025-03-27"
  },
  {
   "serial": "WM-105183",
@@ -586,7 +706,11 @@
   "last_seen": "1 d 18 h ago",
   "offline_days": 1,
   "battery_pct": 71,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Gaborone North",
+  "lat": -24.59223179039266,
+  "lng": 25.92884405853739,
+  "installed_at": "2025-04-21"
  },
  {
   "serial": "WM-206000",
@@ -605,7 +729,11 @@
   "last_seen": "1 min ago",
   "offline_days": 0,
   "battery_pct": 65,
-  "tamper": true
+  "tamper": true,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.62361661824882,
+  "lng": 25.945135942046065,
+  "installed_at": "2025-05-21"
  },
  {
   "serial": "WM-206031",
@@ -624,7 +752,11 @@
   "last_seen": "4 min ago",
   "offline_days": 0,
   "battery_pct": 60,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.625367072182705,
+  "lng": 25.941524312626107,
+  "installed_at": "2024-12-24"
  },
  {
   "serial": "WM-206036",
@@ -643,7 +775,11 @@
   "last_seen": "6 min ago",
   "offline_days": 0,
   "battery_pct": 38,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.624015432925894,
+  "lng": 25.93620376708824,
+  "installed_at": "2025-01-31"
  },
  {
   "serial": "WM-206041",
@@ -662,7 +798,11 @@
   "last_seen": "18 min ago",
   "offline_days": 0,
   "battery_pct": 68,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.646397228479383,
+  "lng": 25.889949388752225,
+  "installed_at": "2024-11-27"
  },
  {
   "serial": "WM-206046",
@@ -681,7 +821,11 @@
   "last_seen": "20 min ago",
   "offline_days": 0,
   "battery_pct": 38,
-  "tamper": true
+  "tamper": true,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.648846788677385,
+  "lng": 25.888026966337115,
+  "installed_at": "2025-07-08"
  },
  {
   "serial": "WM-206051",
@@ -700,7 +844,11 @@
   "last_seen": "1 d 23 h ago",
   "offline_days": 1,
   "battery_pct": 56,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.652404515541157,
+  "lng": 25.915982695086395,
+  "installed_at": "2025-02-03"
  },
  {
   "serial": "WM-206056",
@@ -719,7 +867,11 @@
   "last_seen": "14 min ago",
   "offline_days": 0,
   "battery_pct": 63,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.564411458612234,
+  "lng": 25.951457516786178,
+  "installed_at": "2025-04-30"
  },
  {
   "serial": "WM-206062",
@@ -738,7 +890,11 @@
   "last_seen": "14 min ago",
   "offline_days": 0,
   "battery_pct": 44,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.64649545809254,
+  "lng": 25.893718468649777,
+  "installed_at": "2025-02-20"
  },
  {
   "serial": "WM-206067",
@@ -757,7 +913,11 @@
   "last_seen": "7 min ago",
   "offline_days": 0,
   "battery_pct": 46,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.619994851847178,
+  "lng": 25.953786992145236,
+  "installed_at": "2025-02-20"
  },
  {
   "serial": "WM-206072",
@@ -776,7 +936,11 @@
   "last_seen": "1 min ago",
   "offline_days": 0,
   "battery_pct": 48,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.64391440752521,
+  "lng": 25.931379625773523,
+  "installed_at": "2025-04-30"
  },
  {
   "serial": "WM-206077",
@@ -795,7 +959,11 @@
   "last_seen": "3 d 3 h ago",
   "offline_days": 3,
   "battery_pct": 94,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.65077142728213,
+  "lng": 25.918616636543536,
+  "installed_at": "2024-11-02"
  },
  {
   "serial": "WM-206082",
@@ -814,7 +982,11 @@
   "last_seen": "5 min ago",
   "offline_days": 0,
   "battery_pct": 94,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.675830003318378,
+  "lng": 25.913522874041927,
+  "installed_at": "2024-11-03"
  },
  {
   "serial": "WM-206087",
@@ -833,7 +1005,11 @@
   "last_seen": "15 min ago",
   "offline_days": 0,
   "battery_pct": 43,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.615112810903227,
+  "lng": 25.924448560830673,
+  "installed_at": "2025-07-12"
  },
  {
   "serial": "WM-206093",
@@ -852,7 +1028,11 @@
   "last_seen": "17 min ago",
   "offline_days": 0,
   "battery_pct": 99,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.655423085654157,
+  "lng": 25.904709925340025,
+  "installed_at": "2025-07-14"
  },
  {
   "serial": "WM-206098",
@@ -871,7 +1051,11 @@
   "last_seen": "5 min ago",
   "offline_days": 0,
   "battery_pct": 55,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.623513508426026,
+  "lng": 25.939667275994548,
+  "installed_at": "2024-11-08"
  },
  {
   "serial": "WM-206103",
@@ -890,7 +1074,11 @@
   "last_seen": "7 min ago",
   "offline_days": 0,
   "battery_pct": 77,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.65340721498523,
+  "lng": 25.89176796017913,
+  "installed_at": "2024-12-16"
  },
  {
   "serial": "WM-206108",
@@ -909,7 +1097,11 @@
   "last_seen": "22 min ago",
   "offline_days": 0,
   "battery_pct": 88,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.66090417762194,
+  "lng": 25.9013279763707,
+  "installed_at": "2025-04-13"
  },
  {
   "serial": "WM-206124",
@@ -928,7 +1120,11 @@
   "last_seen": "12 min ago",
   "offline_days": 0,
   "battery_pct": 88,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.617470952541566,
+  "lng": 25.93375445386162,
+  "installed_at": "2024-09-26"
  },
  {
   "serial": "WM-206129",
@@ -947,7 +1143,11 @@
   "last_seen": "3 d 12 h ago",
   "offline_days": 3,
   "battery_pct": 83,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.637591185555795,
+  "lng": 25.94360746576963,
+  "installed_at": "2025-06-10"
  },
  {
   "serial": "WM-206134",
@@ -966,7 +1166,11 @@
   "last_seen": "1 d 10 h ago",
   "offline_days": 1,
   "battery_pct": 72,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.627737877025268,
+  "lng": 25.93107067296887,
+  "installed_at": "2025-03-25"
  },
  {
   "serial": "WM-206139",
@@ -985,7 +1189,11 @@
   "last_seen": "16 min ago",
   "offline_days": 0,
   "battery_pct": 79,
-  "tamper": true
+  "tamper": true,
+  "suburb": null,
+  "lat": -24.630831210659817,
+  "lng": 25.940842740030494,
+  "installed_at": "2025-03-06"
  },
  {
   "serial": "WM-206155",
@@ -1004,7 +1212,11 @@
   "last_seen": "12 min ago",
   "offline_days": 0,
   "battery_pct": 87,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.619013665859587,
+  "lng": 25.924352660168896,
+  "installed_at": "2025-02-25"
  },
  {
   "serial": "WM-206186",
@@ -1023,7 +1235,11 @@
   "last_seen": "2 min ago",
   "offline_days": 0,
   "battery_pct": 48,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.64081530051399,
+  "lng": 25.93149082115246,
+  "installed_at": "2024-11-03"
  },
  {
   "serial": "WM-206191",
@@ -1042,7 +1258,11 @@
   "last_seen": "24 min ago",
   "offline_days": 0,
   "battery_pct": 41,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.64578158039879,
+  "lng": 25.894172784720546,
+  "installed_at": "2024-11-02"
  },
  {
   "serial": "WM-206196",
@@ -1061,7 +1281,11 @@
   "last_seen": "20 min ago",
   "offline_days": 0,
   "battery_pct": 36,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.64695125810988,
+  "lng": 25.92475620518159,
+  "installed_at": "2025-03-18"
  },
  {
   "serial": "WM-206217",
@@ -1080,7 +1304,11 @@
   "last_seen": "1 d 22 h ago",
   "offline_days": 1,
   "battery_pct": 99,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.672123682525008,
+  "lng": 25.917933213303332,
+  "installed_at": "2025-06-27"
  },
  {
   "serial": "WM-206222",
@@ -1099,7 +1327,11 @@
   "last_seen": "4 min ago",
   "offline_days": 0,
   "battery_pct": 91,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.67467094458919,
+  "lng": 25.926783738267144,
+  "installed_at": "2025-01-10"
  },
  {
   "serial": "WM-206227",
@@ -1118,7 +1350,11 @@
   "last_seen": "1 min ago",
   "offline_days": 0,
   "battery_pct": 81,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.663131223366598,
+  "lng": 25.90377647943562,
+  "installed_at": "2025-03-15"
  },
  {
   "serial": "WM-206232",
@@ -1137,7 +1373,11 @@
   "last_seen": "2 d 10 h ago",
   "offline_days": 2,
   "battery_pct": 66,
-  "tamper": false
+  "tamper": false,
+  "suburb": null,
+  "lat": -24.66714112716168,
+  "lng": 25.91436707629124,
+  "installed_at": "2025-01-21"
  },
  {
   "serial": "WM-206248",
@@ -1156,7 +1396,11 @@
   "last_seen": "3 d 18 h ago",
   "offline_days": 3,
   "battery_pct": 40,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Riverwalk Mall",
+  "lat": -24.64280314407684,
+  "lng": 25.91796337038046,
+  "installed_at": "2024-09-28"
  },
  {
   "serial": "WM-206279",
@@ -1175,7 +1419,11 @@
   "last_seen": "2 d 17 h ago",
   "offline_days": 2,
   "battery_pct": 42,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Kgale Hub Facilities",
+  "lat": -24.627154335243628,
+  "lng": 25.940217980742453,
+  "installed_at": "2024-09-21"
  },
  {
   "serial": "WM-206310",
@@ -1194,7 +1442,11 @@
   "last_seen": "2 min ago",
   "offline_days": 0,
   "battery_pct": 90,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Fairgrounds Holdings",
+  "lat": -24.644368124842643,
+  "lng": 25.921765177355148,
+  "installed_at": "2024-10-27"
  },
  {
   "serial": "WM-206315",
@@ -1213,7 +1465,11 @@
   "last_seen": "15 min ago",
   "offline_days": 0,
   "battery_pct": 75,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Fairgrounds Holdings",
+  "lat": -24.649290195532142,
+  "lng": 25.92427488879161,
+  "installed_at": "2025-02-03"
  },
  {
   "serial": "WM-206320",
@@ -1232,7 +1488,11 @@
   "last_seen": "21 min ago",
   "offline_days": 0,
   "battery_pct": 86,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Fairgrounds Holdings",
+  "lat": -24.65290901895985,
+  "lng": 25.928859821377788,
+  "installed_at": "2025-02-09"
  },
  {
   "serial": "WM-206325",
@@ -1251,7 +1511,11 @@
   "last_seen": "15 min ago",
   "offline_days": 0,
   "battery_pct": 47,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Fairgrounds Holdings",
+  "lat": -24.64796569604706,
+  "lng": 25.931050700094087,
+  "installed_at": "2025-02-20"
  },
  {
   "serial": "WM-206330",
@@ -1270,7 +1534,11 @@
   "last_seen": "13 min ago",
   "offline_days": 0,
   "battery_pct": 98,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Fairgrounds Holdings",
+  "lat": -24.64790518868901,
+  "lng": 25.928099476204256,
+  "installed_at": "2024-11-20"
  },
  {
   "serial": "WM-206335",
@@ -1289,7 +1557,11 @@
   "last_seen": "13 min ago",
   "offline_days": 0,
   "battery_pct": 83,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Fairgrounds Holdings",
+  "lat": -24.646949944376015,
+  "lng": 25.934940420168452,
+  "installed_at": "2025-07-09"
  },
  {
   "serial": "WM-206341",
@@ -1308,7 +1580,11 @@
   "last_seen": "8 min ago",
   "offline_days": 0,
   "battery_pct": 38,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Sandalwood Apartments",
+  "lat": -24.62930805175379,
+  "lng": 25.945004196158145,
+  "installed_at": "2024-09-19"
  },
  {
   "serial": "WM-206346",
@@ -1327,7 +1603,11 @@
   "last_seen": "9 min ago",
   "offline_days": 0,
   "battery_pct": 54,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Sandalwood Apartments",
+  "lat": -24.619226488045417,
+  "lng": 25.935539671027566,
+  "installed_at": "2025-01-19"
  },
  {
   "serial": "WM-206351",
@@ -1346,7 +1626,11 @@
   "last_seen": "15 min ago",
   "offline_days": 0,
   "battery_pct": 59,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Sandalwood Apartments",
+  "lat": -24.63112630618941,
+  "lng": 25.94826396675315,
+  "installed_at": "2025-03-29"
  },
  {
   "serial": "WM-206356",
@@ -1365,7 +1649,11 @@
   "last_seen": "16 min ago",
   "offline_days": 0,
   "battery_pct": 72,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Sandalwood Apartments",
+  "lat": -24.62262959276233,
+  "lng": 25.93344842210924,
+  "installed_at": "2025-05-21"
  },
  {
   "serial": "WM-206361",
@@ -1384,7 +1672,11 @@
   "last_seen": "2 d 20 h ago",
   "offline_days": 2,
   "battery_pct": 49,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Sandalwood Apartments",
+  "lat": -24.653679591503927,
+  "lng": 25.90487821033085,
+  "installed_at": "2025-04-01"
  },
  {
   "serial": "WM-206366",
@@ -1403,6 +1695,10 @@
   "last_seen": "6 min ago",
   "offline_days": 0,
   "battery_pct": 53,
-  "tamper": false
+  "tamper": false,
+  "suburb": "Sandalwood Apartments",
+  "lat": -24.62534604345448,
+  "lng": 25.958864100382662,
+  "installed_at": "2025-04-01"
  }
 ]

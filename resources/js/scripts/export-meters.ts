@@ -31,6 +31,10 @@ const rows = [...meterIndex().values()].map((m) => {
     offline_days: dev.online ? 0 : parseInt(dev.lastSeen, 10) || 0,
     battery_pct: dev.overview.battPct,
     tamper: dev.alarms.some((a) => a.active && a.type === 'Magnetic tamper'),
+    suburb: m.plot.split(', ')[1] ?? null,
+    lat: dev.lat,
+    lng: dev.lng,
+    installed_at: dev.installedOn,
   };
 });
 
