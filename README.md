@@ -186,7 +186,45 @@ Content-Type: application/json
 
 Every call is logged, and the log appears on the **Vending** screen. The meters it checks are seeded from `database/data/meters.json`. Regenerate that file from the front-end fixtures with `npm run fixtures`.
 
-## Deploying on Laravel Forge
+## Hosting on your own Ubuntu VPS
+
+`deploy/` sets the app up on a fresh Ubuntu 22.04 or 24.04 server (no cPanel). Production is
+**https://metering.leeroysystems.co.bw**, a HostGator VPS at 129.121.95.203.
+
+1. **Point DNS at the server.** Add an A record for the domain → the VPS IP, and wait until `getent hosts metering.leeroysystems.co.bw` on the VPS shows that IP.
+2. **Run the setup script** on the VPS as root:
+
+   ```sh
+   curl -fsSLO https://raw.githubusercontent.com/Oteesworld/mdms/main/deploy/setup.sh   # or copy it over with scp
+   sudo LETSENCRYPT_EMAIL=you@leeroysystems.co.bw bash setup.sh
+   ```
+
+   Pass `BRANCH=amplified-iot-app` if the PR isn't merged yet. The script:
+   - installs PHP 8.4, MySQL 8, Nginx, Node 22, Composer and certbot;
+   - turns on the firewall (SSH/HTTP/HTTPS only);
+   - creates an `mdms` user and a PHP-FPM pool that runs as it;
+   - creates a GitHub deploy key and **pauses so you can add it** under the repo's Settings → Deploy keys;
+   - clones into `/var/www/mdms` and creates the database and `.env`, with a random DB password, `VENDING_API_KEY` and `LORAWAN_WEBHOOK_TOKEN`;
+   - builds, migrates and gets a Let's Encrypt certificate.
+3. **Create the first administrator:** `sudo -u mdms php /var/www/mdms/artisan mdms:create-admin`
+4. **Set up mail.** Set `MAIL_*` in `/var/www/mdms/.env` (SMTP, Resend, Mailgun…), then run `sudo -u mdms php /var/www/mdms/artisan config:cache`.
+5. **Point ChirpStack at the app.** In ChirpStack (`teemane.leeroysystems.co.bw`), go to Applications → *your application* → Integrations → **HTTP** and set:
+   - **Payload encoding:** JSON
+   - **Event endpoint URL:** `https://metering.leeroysystems.co.bw/api/lorawan/uplink`
+   - **Header:** `Authorization` = `Bearer <LORAWAN_WEBHOOK_TOKEN from .env>`
+
+   Then register each meter on the **Meters** screen with the same DevEUI, JoinEUI and AppKey you give it in ChirpStack.
+
+To deploy later changes, run `sudo -u mdms bash /var/www/mdms/deploy/update.sh`. It runs in maintenance mode while it pulls, installs, builds, migrates and caches, then reloads PHP-FPM.
+
+**Where to look when something breaks:**
+- `/var/www/mdms/storage/logs/laravel.log`
+- `/var/log/nginx/error.log`
+- `journalctl -u php8.4-fpm`
+
+Live mode (`MDMS_DEMO=false`) starts with no meters, users or vending log; everything comes from registration and uplinks.
+
+## Deploying on Laravel Forge (alternative)
 
 1. **Create the server.** In Forge, create a server with PHP 8.4, MySQL (or Postgres) and Node 22. Add a site for your domain with the web directory `/public`.
 2. **Connect the repository.** Choose `Oteesworld/mdms` and the `main` branch, then enable **Quick deploy**.
