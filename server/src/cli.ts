@@ -7,6 +7,8 @@
 //   npm run cs -- gateway:list
 //   npm run cs -- meters:import secrets/meters.keys.csv [--dry-run]
 //   npm run cs -- meters:list
+//   npm run cs -- gateway:frames [--eui <gateway eui>] [--minutes 10]
+//                                            live LoRaWAN frames heard by a gateway (joins, uplinks), for diagnosis
 //   npm run cs -- mdp:gateways               gateways on Milesight Development Platform + forwarder settings
 //   npm run cs -- mdp:forward [--device <id|sn|eui>] [--dry-run]
 //                                            point the UG67 packet forwarder at ChirpStack (Semtech UDP 1700)
@@ -15,7 +17,9 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { config } from './config.js';
+import internalPb from '@chirpstack/chirpstack-api/api/internal_pb.js';
 import { ChirpStackApi } from './chirpstack/api.js';
+import { streamCall } from './chirpstack/grpcweb.js';
 import { codecSource } from './decode.js';
 import { FORWARDER_KEYS, MilesightApi, PKT_TYPE_NAMES, pick, semtechForwarderValues, type MdpDevice } from './milesight.js';
 
@@ -124,6 +128,34 @@ function api(): ChirpStackApi {
   return new ChirpStackApi(config.chirpstack.url, config.chirpstack.apiToken);
 }
 
+/** One line per frame from ChirpStack's gateway frame log (JSON body of a LogItem). */
+export function describeFrame(description: string, bodyJson: string, known: Set<string>): string {
+  let b: Record<string, any> = {};
+  try {
+    b = JSON.parse(bodyJson);
+  } catch {
+    /* keep empty */
+  }
+  const p = b.phy_payload ?? b.phyPayload ?? {};
+  const pl = p.payload ?? {};
+  const rx = (b.rx_info ?? b.rxInfo ?? [])[0] ?? {};
+  const tx = b.tx_info ?? b.txInfo ?? {};
+  const lora = tx.modulation?.lora ?? {};
+  const radio = `rssi ${rx.rssi ?? '?'} snr ${rx.snr != null ? Number(rx.snr).toFixed(1) : '?'} SF${lora.spreading_factor ?? lora.spreadingFactor ?? '?'} ${((tx.frequency ?? 0) / 1e6).toFixed(1)} MHz`;
+  const time = new Date().toISOString().slice(11, 19);
+  const devEui = pl.dev_eui ?? pl.devEui;
+  if (devEui) {
+    const reg = known.has(String(devEui).toLowerCase()) ? 'registered' : 'NOT registered';
+    return `${time}  ${description.padEnd(18)} DevEUI ${devEui} JoinEUI ${pl.join_eui ?? pl.joinEui}  (${reg})  ${radio}`;
+  }
+  const fhdr = pl.fhdr ?? {};
+  const addr = fhdr.devaddr ?? fhdr.devAddr;
+  if (addr) {
+    return `${time}  ${description.padEnd(18)} DevAddr ${addr} fCnt ${fhdr.f_cnt ?? fhdr.fCnt} fPort ${pl.f_port ?? pl.fPort ?? '-'}  ${radio}`;
+  }
+  return `${time}  ${description}  ${radio}`;
+}
+
 function milesight(): MilesightApi {
   return new MilesightApi(config.milesight.url, config.milesight.clientId, config.milesight.clientSecret);
 }
@@ -167,6 +199,7 @@ async function main(argv: string[]) {
       'dry-run': { type: 'boolean', default: false },
       'public-url': { type: 'string' },
       device: { type: 'string' },
+      minutes: { type: 'string' },
       host: { type: 'string' },
       port: { type: 'string' },
     },
@@ -246,6 +279,24 @@ async function main(argv: string[]) {
       const tenantId = await cs.resolveTenantId(config.chirpstack.tenantId);
       for (const g of await cs.listGateways(tenantId)) {
         console.log(`${g.gatewayId}  ${g.state.padEnd(10)} ${g.name}  (${g.latitude}, ${g.longitude})  last seen ${g.lastSeenAt ?? 'never'}`);
+      }
+      return;
+    }
+
+    case 'gateway:frames': {
+      const cs = api();
+      const tenantId = await cs.resolveTenantId(config.chirpstack.tenantId);
+      const eui = cleanHex(values.eui) || (await cs.listGateways(tenantId))[0]?.gatewayId;
+      if (!eui) throw new Error('No gateway: pass --eui');
+      const minutes = Number(values.minutes ?? 10);
+      const known = new Set<string>();
+      const ctx = await context(cs);
+      if (ctx.applicationId) for (const d of await cs.listDevices(ctx.applicationId)) known.add(d.devEui);
+      console.log(`Live frames on gateway ${eui} for ${minutes} min (ChirpStack replays the last few first). Ctrl+C to stop.`);
+      const req = new internalPb.StreamGatewayFramesRequest();
+      req.setGatewayId(eui);
+      for await (const item of streamCall(config.chirpstack.url, config.chirpstack.apiToken, 'api.InternalService/StreamGatewayFrames', req, internalPb.LogItem, AbortSignal.timeout(minutes * 60_000))) {
+        console.log(describeFrame(item.getDescription(), item.getBody(), known));
       }
       return;
     }

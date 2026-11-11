@@ -97,6 +97,51 @@ export class GrpcWebClient {
   }
 }
 
+/** Server-streaming call: yields each decoded message until the stream ends or the signal aborts. */
+export async function* streamCall<T>(
+  baseUrl: string,
+  token: string,
+  method: string,
+  req: PbMessage,
+  resp: PbClass<T>,
+  signal?: AbortSignal,
+): AsyncGenerator<T> {
+  const res = await fetch(`${baseUrl}/${method}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/grpc-web+proto',
+      'x-grpc-web': '1',
+      authorization: `Bearer ${token}`,
+    },
+    body: encodeFrame(req.serializeBinary()),
+    signal,
+  });
+  if (!res.ok || !res.body) throw new GrpcError(method, 14, `HTTP ${res.status} ${res.statusText}`);
+  const status = res.headers.get('grpc-status');
+  if (status && status !== '0') throw new GrpcError(method, Number(status), safeDecode(res.headers.get('grpc-message') ?? ''));
+  let buf = new Uint8Array();
+  try {
+    for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+      const n = new Uint8Array(buf.length + chunk.length);
+      n.set(buf);
+      n.set(chunk, buf.length);
+      buf = n;
+      while (buf.length >= 5) {
+        const len = new DataView(buf.buffer, buf.byteOffset + 1, 4).getUint32(0);
+        if (buf.length < 5 + len) break;
+        const flag = buf[0];
+        const data = buf.slice(5, 5 + len);
+        buf = buf.slice(5 + len);
+        if (flag & 0x80) return;
+        yield resp.deserializeBinary(data);
+      }
+    }
+  } catch (e) {
+    if ((e as Error).name === 'TimeoutError' || (e as Error).name === 'AbortError') return;
+    throw e;
+  }
+}
+
 function safeDecode(s: string): string {
   try {
     return decodeURIComponent(s);
