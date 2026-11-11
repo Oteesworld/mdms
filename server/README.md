@@ -81,7 +81,22 @@ On the UG67 web UI (default `https://192.168.23.150`, user `admin`):
    UG67 only forwards packets.
 5. Make sure the gateway has internet access (WAN or cellular) and can resolve the hostname.
 
-Then register it in ChirpStack, using the EUI from step 1 and the mast location:
+**If the UG67 is managed from Milesight Development Platform** (no local web UI
+access), let the CLI do steps 1 to 4 and the ChirpStack registration through the
+platform's OpenAPI. Put the Application's credentials in `.env` (`MDP_CLIENT_ID`,
+`MDP_CLIENT_SECRET`, `MDP_URL`), then run:
+
+```bash
+npm run cs -- mdp:gateways                   # list gateways and their current forwarder settings
+npm run cs -- mdp:forward --dry-run          # show the before/after forwarder settings
+npm run cs -- mdp:forward                    # push the change, register the gateway in ChirpStack
+```
+
+This sends a configuration task that changes only `pkt_enable`, `pkt_type` (1 = Semtech),
+`semtech_addr` and `semtech_up_port`/`semtech_down_port`. The gateway's Milesight
+management connection (`dm_*`) is left on, so it stays manageable from the platform.
+
+Otherwise, register it in ChirpStack yourself, using the EUI from step 1 and the mast location:
 
 ```bash
 npm run cs -- gateway:add --eui 24E124FFFEXXXXXX --name "UG67 Leeroy HQ" --lat -24.6282 --lon 25.9231

@@ -7,12 +7,17 @@
 //   npm run cs -- gateway:list
 //   npm run cs -- meters:import secrets/meters.keys.csv [--dry-run]
 //   npm run cs -- meters:list
+//   npm run cs -- mdp:gateways               gateways on Milesight Development Platform + forwarder settings
+//   npm run cs -- mdp:forward [--device <id|sn|eui>] [--dry-run]
+//                                            point the UG67 packet forwarder at ChirpStack (Semtech UDP 1700)
+//                                            and register the gateway in ChirpStack
 
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { config } from './config.js';
 import { ChirpStackApi } from './chirpstack/api.js';
 import { codecSource } from './decode.js';
+import { FORWARDER_KEYS, MilesightApi, PKT_TYPE_NAMES, pick, semtechForwarderValues, type MdpDevice } from './milesight.js';
 
 const HEX = (n: number) => new RegExp(`^[0-9a-f]{${n}}$`);
 
@@ -117,6 +122,15 @@ function api(): ChirpStackApi {
   return new ChirpStackApi(config.chirpstack.url, config.chirpstack.apiToken);
 }
 
+function milesight(): MilesightApi {
+  return new MilesightApi(config.milesight.url, config.milesight.clientId, config.milesight.clientSecret);
+}
+
+async function mdpGateways(mdp: MilesightApi): Promise<MdpDevice[]> {
+  const all = await mdp.searchDevices({ deviceType: ['GATEWAY'] });
+  return all;
+}
+
 async function context(cs: ChirpStackApi) {
   const tenantId = await cs.resolveTenantId(config.chirpstack.tenantId);
   const applicationId = await cs.findApplication(tenantId, config.chirpstack.applicationName);
@@ -150,6 +164,9 @@ async function main(argv: string[]) {
       alt: { type: 'string' },
       'dry-run': { type: 'boolean', default: false },
       'public-url': { type: 'string' },
+      device: { type: 'string' },
+      host: { type: 'string' },
+      port: { type: 'string' },
     },
   });
 
@@ -284,8 +301,63 @@ async function main(argv: string[]) {
       return;
     }
 
+    case 'mdp:gateways': {
+      const mdp = milesight();
+      const gws = await mdpGateways(mdp);
+      if (!gws.length) console.log('No gateways found for this Development Platform Application.');
+      for (const g of gws) {
+        const cfg = await mdp.getConfig(g.deviceId).catch((e) => ({ error: (e as Error).message }));
+        const fw = 'values' in cfg ? pick(cfg.values, FORWARDER_KEYS) : {};
+        console.log(`${g.deviceId}  ${g.model ?? ''}  "${g.name ?? ''}"  SN ${g.sn ?? '-'}  EUI ${g.devEUI ?? '-'}  ${g.connectStatus ?? ''}`);
+        if ('error' in cfg) console.log(`  config: ${cfg.error}`);
+        else console.log(`  forwarder: type ${fw.pkt_type} (${PKT_TYPE_NAMES[Number(fw.pkt_type)] ?? '?'}), enabled ${fw.pkt_enable}, semtech ${fw.semtech_addr}:${fw.semtech_up_port}/${fw.semtech_down_port}`);
+      }
+      return;
+    }
+
+    case 'mdp:forward': {
+      const mdp = milesight();
+      const gws = await mdpGateways(mdp);
+      const sel = values.device?.toLowerCase();
+      const matches = sel
+        ? gws.filter((g) => [g.deviceId, g.sn, g.devEUI, g.name].some((v) => v && String(v).toLowerCase() === sel))
+        : gws;
+      if (matches.length !== 1) {
+        for (const g of gws) console.log(`  ${g.deviceId}  ${g.model ?? ''}  "${g.name ?? ''}"  SN ${g.sn ?? '-'}  EUI ${g.devEUI ?? '-'}`);
+        throw new Error(matches.length ? 'More than one gateway: pick one with --device <id|sn|eui>.' : 'No matching gateway on the Development Platform.');
+      }
+      const gw = matches[0];
+      const host = values.host ?? new URL(config.chirpstack.url).hostname;
+      const port = values.port ? Number(values.port) : 1700;
+      const before = pick((await mdp.getConfig(gw.deviceId)).values, FORWARDER_KEYS);
+      const next = semtechForwarderValues(host, port, port);
+      console.log(`Gateway ${gw.name ?? gw.deviceId} (${gw.model ?? '?'}, EUI ${gw.devEUI ?? '?'})`);
+      console.log(`  before: ${JSON.stringify(before)}`);
+      console.log(`  after:  ${JSON.stringify(Object.fromEntries(next.map((v) => [v.key, v.value])))}`);
+      if (values['dry-run']) return;
+
+      const task = await mdp.createProfileTask(gw.deviceId, next);
+      console.log(`Configuration task created: ${JSON.stringify(task.deviceTaskRelations)}`);
+
+      const eui = cleanHex(gw.devEUI);
+      if (HEX(16).test(eui)) {
+        const cs = api();
+        const tenantId = await cs.resolveTenantId(config.chirpstack.tenantId);
+        const res = await cs.upsertGateway(tenantId, {
+          gatewayId: eui,
+          name: values.name ?? gw.name ?? `UG67 ${eui.slice(-6)}`,
+          description: `Milesight ${gw.model ?? 'UG67'} SN ${gw.sn ?? '?'}, Semtech UDP via Milesight Development Platform`,
+          tags: { model: String(gw.model ?? 'UG67'), sn: String(gw.sn ?? '') },
+        });
+        console.log(`${res.created ? 'Registered' : 'Updated'} gateway ${eui} in ChirpStack`);
+      } else {
+        console.log('The Development Platform did not report a Gateway EUI; register it with gateway:add --eui ...');
+      }
+      return;
+    }
+
     default:
-      console.log(readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(2, 11).join('\n').replace(/^\/\/ ?/gm, ''));
+      console.log(readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(2, 15).join('\n').replace(/^\/\/ ?/gm, ''));
       if (cmd) process.exitCode = 1;
   }
 }

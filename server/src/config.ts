@@ -32,6 +32,13 @@ export const config = {
     uplinkIntervalS: int('METER_UPLINK_INTERVAL_S', 86400),
   },
 
+  /** Milesight Development Platform OpenAPI (Application > Authentication). */
+  milesight: {
+    url: env('MDP_URL', 'https://eu-openapi.milesight.com').replace(/\/$/, ''),
+    clientId: env('MDP_CLIENT_ID'),
+    clientSecret: env('MDP_CLIENT_SECRET'),
+  },
+
   /** Shared secret ChirpStack sends in the X-Integration-Token header of every HTTP integration call. */
   integrationToken: env('INTEGRATION_TOKEN'),
 
