@@ -1,0 +1,7 @@
+node_modules/
+dist/
+data/
+.env
+# Meter key files hold AppKeys: never commit them.
+secrets/
+*.keys.csv

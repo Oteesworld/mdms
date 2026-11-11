@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amplified IoT · Meter data</title>
+<link rel="icon" href="assets/at-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <img src="assets/at-mark.png" alt="Amplified Trends">
+      <span class="bar"></span>
+      <div class="word"><span>AMPLIFIED</span><span class="iot">IoT</span></div>
+    </div>
+    <nav>
+      <div class="group">Network</div>
+      <a class="item active" href="#"><svg viewBox="0 0 24 24"><path d="M4 13h4v7H4zM10 8h4v12h-4zM16 4h4v16h-4z"/></svg>Meter data</a>
+      <a class="item" href="#gateways"><svg viewBox="0 0 24 24"><path d="M12 20v-8M8.5 8.5a5 5 0 0 1 7 0M5.6 5.6a9 9 0 0 1 12.8 0M10 20h4"/></svg>Gateways</a>
+      <a class="item" href="#live"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Live uplinks</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="top">
+      <div class="titles"><div class="crumb">Network · ChirpStack</div><h1>Meter data</h1></div>
+      <label class="search"><svg viewBox="0 0 24 24"><path d="M11 4.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 1 0 0-13zM20 20l-4.4-4.4"/></svg><input id="q" placeholder="Search meter, serial or DevEUI" autocomplete="off"></label>
+      <div class="ns" id="ns"><span class="dot"></span><span id="ns-text">Connecting…</span></div>
+      <div class="clock" id="clock"></div>
+    </header>
+
+    <div class="content">
+      <section class="kpis" id="kpis"></section>
+
+      <div class="section-h"><span>LoRaWAN port traffic</span><i></i><em>uplinks, last 24 h</em></div>
+      <section class="ports" id="ports"></section>
+
+      <div class="grid2">
+        <section class="panel meters-panel">
+          <div class="panel-h">
+            <h2>Meters</h2>
+            <div class="chips" id="chips"></div>
+          </div>
+          <div class="table-wrap">
+            <table class="meters">
+              <thead><tr>
+                <th>Meter</th><th>Status</th><th>Last seen</th><th class="r">Register</th>
+                <th class="r">Credit</th><th class="r">Battery</th><th class="r">RSSI / SNR</th><th>Last message</th>
+              </tr></thead>
+              <tbody id="meter-rows"></tbody>
+            </table>
+            <div class="empty" id="meters-empty" hidden></div>
+          </div>
+        </section>
+
+        <div class="col">
+          <section class="panel" id="gateways">
+            <div class="panel-h"><h2>Gateways</h2></div>
+            <div id="gw-list"></div>
+          </section>
+          <section class="panel live" id="live">
+            <div class="panel-h"><h2>Live uplinks</h2><span class="live-dot" id="live-dot">live</span></div>
+            <div class="log" id="log"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Meter detail"></aside>
+<div class="tip" id="tip" hidden></div>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>
