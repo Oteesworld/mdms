@@ -5,3 +5,5 @@ data/
 # Meter key files hold AppKeys: never commit them.
 secrets/
 *.keys.csv
+# Local scratch scripts
+*.tmp.ts
