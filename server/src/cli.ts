@@ -104,7 +104,9 @@ export function parseMeterCsv(text: string): { rows: MeterRow[]; errors: string[
     if (!HEX(16).test(row.devEui)) problems.push('DevEUI must be 16 hex characters');
     if (!HEX(16).test(row.joinEui)) problems.push('AppEUI/JoinEUI must be 16 hex characters');
     if (!HEX(32).test(row.appKey)) problems.push('AppKey must be 32 hex characters');
-    if (row.devAddr && !HEX(8).test(row.devAddr)) problems.push('DevAddr must be 8 hex characters');
+    // The label "ADDR" is often the meter's own address (e.g. 10 digits), not a
+    // LoRaWAN DevAddr; OTAA assigns the DevAddr at join, so it is only kept as a tag.
+    if (row.devAddr && !/^[0-9a-f]{1,20}$/.test(row.devAddr)) problems.push('ADDR must be hex/decimal digits');
     if (row.latitude !== undefined && !(Math.abs(row.latitude) <= 90)) problems.push('bad latitude');
     if (row.longitude !== undefined && !(Math.abs(row.longitude) <= 180)) problems.push('bad longitude');
     if (seen.has(row.devEui)) problems.push(`duplicate DevEUI ${row.devEui}`);
@@ -267,7 +269,7 @@ async function main(argv: string[]) {
       for (const r of rows) {
         const tags: Record<string, string> = {};
         if (r.serial) tags.serial = r.serial;
-        if (r.devAddr) tags.label_dev_addr = r.devAddr;
+        if (r.devAddr) tags.meter_addr = r.devAddr;
         if (r.latitude !== undefined) tags.latitude = String(r.latitude);
         if (r.longitude !== undefined) tags.longitude = String(r.longitude);
         try {

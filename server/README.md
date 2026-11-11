@@ -124,7 +124,8 @@ npm run cs -- meters:import secrets/meters.keys.csv
 
 * Meters are registered for **OTAA**: AppEUI becomes the JoinEUI, and the AppKey
   is stored as the LoRaWAN 1.0.x root key. The network assigns the session DevAddr
-  when the meter joins; the `addr` column is kept as a tag for reference.
+  when the meter joins; the `addr` column (on SH meters the 10-digit meter address)
+  is kept as the `meter_addr` tag for reference.
 * Re-importing a DevEUI updates its name, tags and key.
 * Confirm `METER_MAC_VERSION` (default `1.0.3`) and `METER_REG_PARAMS_REVISION`
   (default `A`) against the meter datasheet, then run `setup` again if they change.

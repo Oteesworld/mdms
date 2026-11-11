@@ -109,7 +109,7 @@ function renderMeters(flashEui) {
   const q = state.q.toLowerCase();
   const rows = state.meters.filter((m) => {
     if (state.filter === 'low_battery' ? !m.lowBattery : state.filter && m.status !== state.filter) return false;
-    return !q || [m.name, m.serial, m.devEui, m.devAddr].some((v) => v && String(v).toLowerCase().includes(q));
+    return !q || [m.name, m.serial, m.devEui, m.devAddr, m.tags?.meter_addr].some((v) => v && String(v).toLowerCase().includes(q));
   });
   $('#meter-rows').innerHTML = rows
     .map((m) => `<tr data-eui="${esc(m.devEui)}" class="${m.devEui === flashEui ? 'flash' : ''}">
@@ -289,7 +289,9 @@ async function openMeter(devEui, refresh = false) {
       <button class="close" id="close" aria-label="Close">×</button></div>
     <section><div class="kv">
       <div><span>DevEUI</span><b class="mono">${esc(m.devEui)}</b></div>
-      <div><span>DevAddr (session)</span><b class="mono">${esc(m.devAddr || m.tags?.label_dev_addr || '–')}</b></div>
+      <div><span>DevAddr (session)</span><b class="mono">${esc(m.devAddr || '–')}</b></div>
+      <div><span>Meter address</span><b class="mono">${esc(m.tags?.meter_addr || '–')}</b></div>
+      <div><span>Serial</span><b class="mono">${esc(m.serial || m.tags?.serial || '–')}</b></div>
       <div><span>Register</span><b>${litres(m.registerL)}</b></div>
       <div><span>Credit</span><b>${litres(m.creditL)}</b></div>
       <div><span>Battery</span><b>${m.batteryPct == null ? (m.batteryV == null ? '–' : `${fmt(m.batteryV, 2)} V`) : `${fmt(m.batteryPct)}%`}</b></div>

@@ -1,6 +1,6 @@
 # Copy to secrets/meters.keys.csv (git-ignored) and replace the placeholders, one row per meter.
-# ADDR is optional for OTAA meters (the network assigns the session DevAddr at join);
-# it is kept as a tag for reference. Separators : - and spaces in hex values are ignored.
+# ADDR is optional: OTAA assigns the LoRaWAN DevAddr at join, so the label's ADDR
+# (e.g. the 10-digit SH meter address) is only kept as the meter_addr tag. Separators : - and spaces in hex values are ignored.
 # lat, lon and description are optional.
 serial,addr,deveui,appeui,appkey,lat,lon,description
-WM-000001,DEVADDR_8_HEX,DEVEUI_16_HEX,APPEUI_16_HEX,APPKEY_32_HEX,-24.6282,25.9231,Plot 1234 Block 8
+WM-000001,ADDR,DEVEUI_16_HEX,APPEUI_16_HEX,APPKEY_32_HEX,-24.6282,25.9231,Plot 1234 Block 8

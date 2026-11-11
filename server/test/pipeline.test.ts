@@ -77,7 +77,7 @@ test('codec applies a byte layout once one is filled in', () => {
 test('meter key CSV: aliases, cleaning, validation, no key echo', () => {
   const csv = [
     'Serial,ADDR,DEVEUI,APPEUI,APPKEY',
-    'WM-1,01:AB:23:CD,24E1 2413 6B50 2217,70B3D57ED0000000,2B7E151628AED2A6ABF7158809CF4F3C',
+    'WM-1,2606001521,24E1 2413 6B50 2217,70B3D57ED0000000,2B7E151628AED2A6ABF7158809CF4F3C',
     'WM-2,,24e124136b502218,70b3d57ed0000000,tooShort',
     'WM-3,,24e124136b502217,70b3d57ed0000000,2b7e151628aed2a6abf7158809cf4f3c',
   ].join('\n');
@@ -85,7 +85,7 @@ test('meter key CSV: aliases, cleaning, validation, no key echo', () => {
   assert.equal(rows.length, 1);
   assert.deepEqual(
     { serial: rows[0].serial, devAddr: rows[0].devAddr, devEui: rows[0].devEui, joinEui: rows[0].joinEui },
-    { serial: 'WM-1', devAddr: '01ab23cd', devEui: '24e124136b502217', joinEui: '70b3d57ed0000000' },
+    { serial: 'WM-1', devAddr: '2606001521', devEui: '24e124136b502217', joinEui: '70b3d57ed0000000' },
   );
   assert.equal(errors.length, 2);
   assert.match(errors[0], /AppKey must be 32 hex/);
