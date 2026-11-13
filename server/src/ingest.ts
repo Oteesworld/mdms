@@ -165,6 +165,25 @@ export class Ingestor extends EventEmitter {
         devEui,
       );
 
+      // SH meters pack older hourly records into one uplink: store each as a reading,
+      // back-dated by its hours_ago from the time the uplink was received.
+      const history = Array.isArray(object.history) ? (object.history as Record<string, unknown>[]) : [];
+      for (const rec of history) {
+        const h = normalise(rec);
+        const hoursAgo = typeof rec.hours_ago === 'number' ? rec.hours_ago : null;
+        if (hoursAgo == null || (h.registerL == null && h.flowLph == null && h.creditL == null)) continue;
+        s.run(
+          `INSERT INTO readings (dev_eui, read_at, register_l, flow_lph, credit_l, reading_type, uplink_f_cnt)
+           VALUES (?, ?, ?, ?, ?, 'history', ?) ON CONFLICT (dev_eui, read_at) DO NOTHING`,
+          devEui,
+          new Date(Date.parse(receivedAt) - hoursAgo * 3600_000).toISOString(),
+          h.registerL,
+          h.flowLph,
+          h.creditL,
+          ev.fCnt ?? null,
+        );
+      }
+
       if (n.registerL != null || n.flowLph != null || n.creditL != null) {
         s.run(
           `INSERT INTO readings (dev_eui, read_at, register_l, flow_lph, credit_l, reading_type, uplink_f_cnt)

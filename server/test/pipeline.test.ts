@@ -48,30 +48,97 @@ test('gRPC-web frames round-trip, trailers parsed', () => {
   assert.equal(trailers['grpc-status'], '5');
 });
 
-test('codec labels ports and returns raw bytes when no layout is defined', () => {
-  const out = decodeLocally(new Uint8Array([0xde, 0xad]), 65);
-  assert.equal(out.message, 'tamper_alarm');
-  assert.equal(out.alarm, 'tamper');
-  assert.equal(out.raw_hex, 'dead');
-  assert.equal(out.decoded, false);
-  assert.deepEqual(normalise(out).alarms, ['tamper']);
+// Real frames: an SH meter's C7 data reports (from the vendor's ChirpStack v3 export)
+// and the first uplink of meter 0288260615217 (address 2606001521) after joining.
+const C7_REPORT = '68240026230011c70126092520445783000000158400000085000000008722238903700a08400316';
+const C7_CREDIT = '68250026230011c70126092515584183000000168723688903690a4840a000000001a1000000324f16';
+const C2_STATUS = '68202606001521c2000000c2000000700365030010000000000000003001120501224416';
+const hex = (h: string) => new Uint8Array(Buffer.from(h, 'hex'));
+
+test('SH C7 data report decodes like the vendor decoder', () => {
+  const out = decodeLocally(hex(C7_REPORT), 2);
+  assert.equal(out.address, '0026230011');
+  assert.equal(out.function_code, '0xC7');
+  assert.equal(out.crc_ok, true);
+  assert.equal(out.meterTime, '2026-09-25 20:44:57');
+  assert.equal(out.totalFlow, 0.21);
+  assert.equal(out.register_l, 210);
+  assert.equal(out.waterTemperature, 22.23);
+  assert.equal(out.battery_v, 3.7);
+  assert.equal(out.decoded, true);
+  const n = normalise(out);
+  assert.equal(n.registerL, 210);
+  assert.equal(n.batteryV, 3.7);
+  assert.deepEqual(n.alarms, []);
+
+  const credit = decodeLocally(hex(C7_CREDIT), 2);
+  assert.equal(credit.totalPurchase, 0.5);
+  assert.equal(credit.totalConsumption, 0.01);
+  assert.equal(credit.credit_l, 490);
 });
 
-test('codec applies a byte layout once one is filled in', () => {
-  const src = codecSource().replace(
-    'var LAYOUTS = {};',
-    "var LAYOUTS = { 60: [['register_l','u32le',1], ['battery_v','u8',0.02], ['status','flags8',['valve_closed','tamper','leak']]] };",
-  );
-  const codec = loadCodec(src);
-  const res = codec.decodeUplink({ bytes: [0x10, 0x27, 0, 0, 0x96, 0b101], fPort: 60 });
-  assert.equal(res.data!.register_l, 10000);
-  assert.equal(res.data!.battery_v, 3);
-  assert.equal(res.data!.valve, 'closed');
-  assert.equal(res.data!.leak, true);
-  assert.equal(res.data!.tamper, false);
-  const n = normalise(res.data!);
-  assert.equal(n.registerL, 10000);
-  assert.deepEqual(n.alarms, ['leak']);
+test('SH C2 status frame passes through raw; fPort 223 link message is labelled', () => {
+  const out = decodeLocally(hex(C2_STATUS), 2);
+  assert.equal(out.address, '2606001521');
+  assert.equal(out.function_code, '0xC2');
+  assert.equal(out.crc_ok, true);
+  assert.equal(out.decoded, false);
+  assert.equal(out.register_l, undefined);
+  assert.equal(out.meterTime, '2022-01-05 12:01:30');
+  const link = decodeLocally(hex('ffffbb0800ff'), 223);
+  assert.equal(link.message_label, 'Link message');
+});
+
+test('SH multi-record report: alarms, valve and back-dated history', () => {
+  const codec = loadCodec(codecSource()) as unknown as { calculateCRC8(b: number[]): number };
+  // addr, C7, totalFlow(dot 2)=1.50, status: leak + magnetic, valve 0x7E, GAP 1h, totalFlow 1.40
+  const body = [0x26, 0x06, 0x00, 0x15, 0x21, 0xc7, 0x83, 0, 0, 0, 0x96, 0x0a, 0x01, 0x80, 0x27, 0x7e, 0x29, 0x01, 0x83, 0, 0, 0, 0x8c];
+  const frame = [0x68, body.length, ...body, codec.calculateCRC8(body), 0x16];
+  const out = decodeLocally(new Uint8Array(frame), 2);
+  assert.equal(out.crc_ok, true);
+  assert.equal(out.register_l, 1500);
+  assert.equal(out.valve, 'open');
+  assert.deepEqual(normalise(out).alarms.sort(), ['leak', 'magnetic']);
+  const history = out.history as Record<string, unknown>[];
+  assert.equal(history.length, 1);
+  assert.equal(history[0].hours_ago, 1);
+  assert.equal(history[0].register_l, 1400);
+
+  const bad = [...frame];
+  bad[frame.length - 2] ^= 0xff;
+  assert.equal(decodeLocally(new Uint8Array(bad), 2).crc_ok, false);
+});
+
+test('STS token downlink matches the vendor encoder', () => {
+  const codec = loadCodec(codecSource()) as unknown as {
+    encodeDownlink(i: { fPort?: number; data: unknown }): { bytes?: number[]; fPort?: number; errors?: string[] };
+  };
+  const res = codec.encodeDownlink({
+    fPort: 2,
+    data: { address: '2410000009', tokens: ['12345678901234567890', '98765432109876543210'] },
+  });
+  assert.equal(Buffer.from(res.bytes!).toString('hex'), '681b2410000009c87e12345678901234567890987654321098765432108e16');
+  assert.ok(codec.encodeDownlink({ data: { address: '2410000009', tokens: ['123'] } }).errors);
+});
+
+test('ingest stores SH history records as back-dated readings', async () => {
+  const { app, store } = await setup();
+  const codec = loadCodec(codecSource()) as unknown as { calculateCRC8(b: number[]): number };
+  const body = [0x26, 0x06, 0x00, 0x15, 0x21, 0xc7, 0x83, 0, 0, 0, 0x96, 0x29, 0x02, 0x83, 0, 0, 0, 0x8c];
+  const frame = Buffer.from([0x68, body.length, ...body, codec.calculateCRC8(body), 0x16]);
+  const time = new Date('2026-11-13T10:00:00Z');
+  await app.inject({
+    method: 'POST',
+    url: '/integrations/chirpstack?event=up',
+    payload: upEvent({ time: time.toISOString(), fPort: 2, data: frame.toString('base64') }),
+  });
+  const rows = store.all(`SELECT read_at, register_l, reading_type FROM readings ORDER BY read_at`);
+  assert.deepEqual(rows.map((r) => [r.read_at, r.register_l, r.reading_type]), [
+    ['2026-11-13T08:00:00.000Z', 1400, 'history'],
+    ['2026-11-13T10:00:00.000Z', 1500, 'live'],
+  ]);
+  await app.close();
+  store.close();
 });
 
 test('meter key CSV: aliases, cleaning, validation, no key echo', () => {

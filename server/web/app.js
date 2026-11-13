@@ -304,7 +304,8 @@ async function openMeter(devEui, refresh = false) {
     <section><h4>Register, last 31 days</h4>${usageChart(d.readings)}</section>
     <section><h4>Last message${last ? ` · ${esc(last.portLabel)} · ${dateTime(last.receivedAt)}` : ''}</h4>
       ${last ? decodedTable(last.object) : '<div class="muted">No uplinks received yet.</div>'}
-      ${notDecoded ? `<div class="note">This port has no byte layout yet, so only the raw bytes are shown. Add the vendor's field list for port ${last.fPort} to <code>server/codec/water-meter.js</code> and run <code>npm run cs -- codec:push</code>.</div>` : ''}
+      ${notDecoded ? `<div class="note">${last.object.function_code ? `Function ${esc(last.object.function_code)} is not part of the meter's data report, so only its raw bytes are shown.` : `This message carries no meter data, so only its raw bytes are shown.`}</div>` : ''}
+      ${last && last.object && last.object.crc_ok === false ? '<div class="note">The frame checksum did not match: treat these values with care.</div>' : ''}
     </section>
     ${d.alarms.length ? `<section><h4>Alarms</h4>${d.alarms
       .map((a) => `<div style="display:flex;gap:10px;align-items:center;padding:5px 0"><span class="sdot" style="background:${a.clearedAt ? 'var(--none)' : 'var(--bad)'}"></span>

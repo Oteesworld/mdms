@@ -143,27 +143,36 @@ npm run cs -- meters:import secrets/meters.keys.csv
 every uplink. The service uses ChirpStack's decoded `object`, and runs the same
 file itself as a fallback.
 
-The port meanings come from the existing system (5 ACK-ACK, 37 Installation,
-60 Midnight data, 61 Live data, 65 Tamper alarm, 66 Burst alarm, 210 Credit,
-225 Come back). Tamper and burst alarms work from the port alone. **The byte
-layout of each port is not filled in yet**, because it needs the meter vendor's
-payload specification. Until then, readings show the port meaning and the raw
-bytes. To add a layout, edit `LAYOUTS` in the codec, for example:
+**SH Meters STS ultrasonic meters (SH-L-EU868)** use the vendor's "C7" protocol on
+fPort 2, ported from SH Meters' own ChirpStack v3 decoder and encoder:
 
-```js
-var LAYOUTS = {
-  60: [
-    ['register_l', 'u32le', 1],      // cumulative litres
-    ['battery_v',  'u8',    0.02],
-    ['status',     'flags8', ['valve_closed', 'tamper', 'leak', 'low_battery']],
-  ],
-};
+```
+68 | LEN | meter address (5 bytes) | function | fields... | CRC-8 (poly 0xE5) | 16
 ```
 
-Then run `npm test` and `npm run cs -- codec:push`. Field names the dashboard
-understands: `register_l`, `flow_lph`, `credit_l`, `balance`, `battery_pct`,
-`battery_v`, `valve`, `valve_closed`, `tamper`, `burst`, `leak`,
-`reverse_flow`, `magnetic`, `low_battery`.
+* Function `C7` is the data report. Each field is a control byte (decimals in bits
+  7-6, command in bits 5-0) followed by a fixed-length value: total volume,
+  flow, reverse volume, water temperature, battery voltage, status and alarm
+  bits, consumption and purchase totals, valve state and more. Command 41 starts
+  an older hourly record, so one uplink can carry up to 24 hours of history;
+  the service stores each one as a reading back-dated by its offset.
+* Mapped to the dashboard: `totalFlow` m³ → `register_l`, `currentFlow` m³/h →
+  `flow_lph`, `voltageRtu` → `battery_v`, `waterTemperature` → `temperature_c`,
+  `totalPurchase − totalConsumption` → `credit_l` (remaining credit), valve byte
+  `0x7E`/`0x69` → `valve` open/closed, and the leak, burst, magnetic-attack and
+  low-voltage bits → alarms.
+* Other function codes (e.g. `C2`, sent after joining) and the fPort 223 link
+  message are shown raw: they are not part of the vendor decoder.
+* The meter's own clock (`meterTime`) is kept as a field; readings are timed by
+  when the network received them, since meter clocks are not reliably set.
+* Downlink: `encodeDownlink` builds the vendor's `C8` STS token frame from
+  `{"address": "2606001521", "tokens": ["<20 digits>"]}` (up to 4 tokens), so a
+  token can be queued to a meter from ChirpStack.
+
+Older LEEROY meters that send plain payloads on ports 5, 37, 60, 61, 65, 66, 210
+and 225 are labelled by port only.
+
+After changing the codec, run `npm test` and `npm run cs -- codec:push`.
 
 Battery percentage and link margin also arrive from ChirpStack's daily
 `DevStatusReq` (`status` events), whatever the payload layout.
