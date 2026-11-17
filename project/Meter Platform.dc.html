@@ -7,39 +7,39 @@
 </head>
 <body>
 <x-dc>
-<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#f5f7fa;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#101828;-webkit-font-smoothing:antialiased}a{color:#0b5fd0;text-decoration:none}a:hover{color:#08419a}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px}.leaflet-container{font-family:'IBM Plex Sans',sans-serif}.gwico{display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;color:#fff;background:#101828;border:2px solid #fff;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}</style></helmet>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>*{box-sizing:border-box}input,select,textarea,button{font-family:inherit}body{margin:0;background:#f5f7fa;font-family:'Roboto',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#101828;-webkit-font-smoothing:antialiased}a{color:#0b5fd0;text-decoration:none}a:hover{color:#08419a}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px}.leaflet-container{font-family:'Roboto',sans-serif}.gwico{display:flex;align-items:center;justify-content:center;font:600 9px 'Roboto',sans-serif;color:#fff;background:#101828;border:2px solid #fff;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}</style></helmet>
 <div style="display:flex;min-height:100vh;align-items:stretch">
 
 <aside style="width:236px;flex:none;background:#0c1424;color:#c7d0de;display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
 <div style="padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:10px;align-items:center">
-<div style="width:30px;height:30px;flex:none;border-radius:6px;background:linear-gradient(160deg,#1f7ae0,#0b3f8f);display:flex;align-items:center;justify-content:center;font:700 13px 'IBM Plex Mono',monospace;color:#fff">W</div>
-<div><div style="font-size:13px;font-weight:600;color:#fff;letter-spacing:-.1px">Wi360 Meter Ops</div><div style="font-size:10px;color:#7d8ba1;font-family:'IBM Plex Mono',monospace">LoRaWAN · Botswana</div></div>
+<div style="width:30px;height:30px;flex:none;border-radius:6px;background:linear-gradient(160deg,#1f7ae0,#0b3f8f);display:flex;align-items:center;justify-content:center;font:700 13px 'Roboto',sans-serif;color:#fff">W</div>
+<div><div style="font-size:13px;font-weight:600;color:#fff;letter-spacing:-.1px">Wi360 Meter Ops</div><div style="font-size:10px;color:#7d8ba1;font-family:'Roboto',sans-serif">LoRaWAN · Botswana</div></div>
 </div>
 <nav style="flex:1;overflow-y:auto;padding:10px 8px">
 <sc-for list="{{ nav }}" as="n" hint-placeholder-count="14">
 <sc-if value="{{ n.isGroup }}" hint-placeholder-val="{{ false }}">
-<div style="padding:14px 10px 6px;font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;color:#5d6a7e;text-transform:uppercase">{{ n.label }}</div>
+<div style="padding:14px 10px 6px;font:600 9.5px 'Roboto',sans-serif;letter-spacing:.09em;color:#5d6a7e;text-transform:uppercase">{{ n.label }}</div>
 </sc-if>
 <sc-if value="{{ n.isItem }}" hint-placeholder-val="{{ true }}">
 <div onClick="{{ n.go }}" style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:{{ n.weight }};color:{{ n.color }};background:{{ n.bg }};margin-bottom:1px" style-hover="background:rgba(255,255,255,.07);color:#fff">
 <span style="width:15px;flex:none;text-align:center;font-size:11px;opacity:.85">{{ n.icon }}</span><span style="flex:1">{{ n.label }}</span>
-<sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span style="font:600 9.5px 'IBM Plex Mono',monospace;background:#d92d20;color:#fff;padding:1px 5px;border-radius:9px">{{ n.badge }}</span></sc-if>
+<sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}"><span style="font:600 9.5px 'Roboto',sans-serif;background:#d92d20;color:#fff;padding:1px 5px;border-radius:9px">{{ n.badge }}</span></sc-if>
 </div>
 </sc-if>
 </sc-for>
 </nav>
 <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:9px;align-items:center">
-<div style="width:26px;height:26px;border-radius:50%;background:#22344f;display:flex;align-items:center;justify-content:center;font:600 10px 'IBM Plex Mono',monospace;color:#9fb4d0">LK</div>
+<div style="width:26px;height:26px;border-radius:50%;background:#22344f;display:flex;align-items:center;justify-content:center;font:600 10px 'Roboto',sans-serif;color:#9fb4d0">LK</div>
 <div style="flex:1;min-width:0"><div style="font-size:11.5px;color:#e6ecf5;font-weight:500">Leeroy Kgosi</div><div style="font-size:9.5px;color:#6d7b91">Network Administrator</div></div>
 </div>
 </aside>
 
 <main style="flex:1;min-width:0;display:flex;flex-direction:column">
 <header style="background:#fff;border-bottom:1px solid #e4e8ef;padding:0 22px;height:54px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:500">
-<div style="flex:1"><div style="font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;color:#8494a8;text-transform:uppercase">{{ crumb }}</div><div style="font-size:14.5px;font-weight:600;letter-spacing:-.2px">{{ title }}</div></div>
+<div style="flex:1"><div style="font:600 9.5px 'Roboto',sans-serif;letter-spacing:.09em;color:#8494a8;text-transform:uppercase">{{ crumb }}</div><div style="font-size:14.5px;font-weight:600;letter-spacing:-.2px">{{ title }}</div></div>
 <div style="display:flex;align-items:center;gap:7px;padding:5px 10px;border:1px solid #e4e8ef;border-radius:6px;background:#f8fafc;width:250px;color:#98a4b5;font-size:12px">⌕ <span>Search meter, client, token…</span></div>
-<div style="display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid #d3f0e2;border-radius:6px;background:#f0fbf6"><span style="width:6px;height:6px;border-radius:50%;background:#0e9a5a;display:block"></span><span style="font:500 11px 'IBM Plex Mono',monospace;color:#08794a">NS-CORE LIVE</span></div>
-<div style="font:500 11px 'IBM Plex Mono',monospace;color:#667488">19 Aug 2026 · 13:01</div>
+<div style="display:flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid #d3f0e2;border-radius:6px;background:#f0fbf6"><span style="width:6px;height:6px;border-radius:50%;background:#0e9a5a;display:block"></span><span style="font:500 11px 'Roboto',sans-serif;color:#08794a">NS-CORE LIVE</span></div>
+<div style="font:500 11px 'Roboto',sans-serif;color:#667488">19 Aug 2026 · 13:01</div>
 </header>
 
 <div style="flex:1;padding:20px 22px 40px">
@@ -47,7 +47,7 @@
 <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
 <div>
 <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:10px 12px;margin-bottom:14px">
-<span style="font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8">PERIOD</span>
+<span style="font:600 9.5px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8">PERIOD</span>
 <div style="display:flex;border:1px solid #e4e8ef;border-radius:6px;overflow:hidden">
 <sc-for list="{{ periods }}" as="p" hint-placeholder-count="4"><div onClick="{{ p.go }}" style="padding:5px 11px;font-size:11.5px;font-weight:{{ p.weight }};cursor:pointer;background:{{ p.bg }};color:{{ p.color }};border-right:1px solid #e4e8ef">{{ p.label }}</div></sc-for>
 </div>
@@ -59,39 +59,39 @@
 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:10px">
 <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
 <div style="background:#fff;border:1px solid #e4e8ef;border-top:2px solid {{ k.tone }};border-radius:8px;padding:12px 13px 11px">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:7px">{{ k.label }}</div>
-<div style="font:600 19px 'IBM Plex Mono',monospace;letter-spacing:-.6px;color:#101828">{{ k.value }}</div>
-<div style="display:flex;align-items:center;gap:6px;margin-top:7px"><span style="font-size:10.5px;color:#{{ k.deltaColor }};font-weight:600;font-family:'IBM Plex Mono',monospace">{{ k.delta }}</span><span style="font-size:10.5px;color:#8494a8">{{ k.sub }}</span></div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:7px">{{ k.label }}</div>
+<div style="font:600 19px 'Roboto',sans-serif;letter-spacing:-.6px;color:#101828">{{ k.value }}</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:7px"><span style="font-size:10.5px;color:#{{ k.deltaColor }};font-weight:600;font-family:'Roboto',sans-serif">{{ k.delta }}</span><span style="font-size:10.5px;color:#8494a8">{{ k.sub }}</span></div>
 </div>
 </sc-for>
 </div>
 
 <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:16px">
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:13px 15px">
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px"><div style="font-size:12.5px;font-weight:600">Daily Sales · August 2026</div><div style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">Pula, incl. VAT</div></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px"><div style="font-size:12.5px;font-weight:600">Daily Sales · August 2026</div><div style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">Pula, incl. VAT</div></div>
 <div style="display:flex;align-items:flex-end;gap:3px;height:132px">
 <sc-for list="{{ daily }}" as="d" hint-placeholder-count="19">
 <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%" title="{{ d.tip }}">
 <div style="width:100%;border-radius:2px 2px 0 0;background:{{ d.tone }};height:{{ d.h }}" style-hover="background:#0b3f8f"></div>
-<span style="font:500 8px 'IBM Plex Mono',monospace;color:#98a4b5">{{ d.label }}</span>
+<span style="font:500 8px 'Roboto',sans-serif;color:#98a4b5">{{ d.label }}</span>
 </div>
 </sc-for>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:13px 15px">
 <div style="font-size:12.5px;font-weight:600;margin-bottom:4px">Monthly Sales</div>
-<div style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8;margin-bottom:8px">Last 6 months</div>
+<div style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8;margin-bottom:8px">Last 6 months</div>
 <div>{{ monthChart }}</div>
 </div>
 </div>
 
-<div style="font-size:12px;font-weight:600;color:#475467;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>LoRaWAN Port Traffic</span><span style="flex:1;height:1px;background:#e4e8ef"></span><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">uplinks decoded, period</span></div>
+<div style="font-size:12px;font-weight:600;color:#475467;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>LoRaWAN Port Traffic</span><span style="flex:1;height:1px;background:#e4e8ef"></span><span style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">uplinks decoded, period</span></div>
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
 <sc-for list="{{ ports }}" as="p" hint-placeholder-count="8">
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:11px 13px">
-<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:10px">{{ p.icon }}</span><span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:{{ p.tone }};text-transform:uppercase">{{ p.label }}</span></div>
-<div style="font:600 17px 'IBM Plex Mono',monospace;letter-spacing:-.5px">{{ p.value }}</div>
-<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-size:10.5px;color:#8494a8">{{ p.kind }}</span><span style="font:600 10.5px 'IBM Plex Mono',monospace;color:{{ p.tone }}">{{ p.delta }}</span></div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:10px">{{ p.icon }}</span><span style="font:600 9px 'Roboto',sans-serif;letter-spacing:.06em;color:{{ p.tone }};text-transform:uppercase">{{ p.label }}</span></div>
+<div style="font:600 17px 'Roboto',sans-serif;letter-spacing:-.5px">{{ p.value }}</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-size:10.5px;color:#8494a8">{{ p.kind }}</span><span style="font:600 10.5px 'Roboto',sans-serif;color:{{ p.tone }}">{{ p.delta }}</span></div>
 <div style="height:3px;border-radius:3px;background:#eef1f6;margin-top:7px;overflow:hidden"><div style="height:100%;background:{{ p.tone }};width:{{ p.w }}"></div></div>
 </div>
 </sc-for>
@@ -100,13 +100,13 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-left:3px solid #d92d20;border-radius:8px;padding:13px 15px;margin-bottom:16px">
 <div style="display:flex;align-items:flex-start;gap:20px">
 <div style="min-width:200px">
-<div style="font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#d92d20;text-transform:uppercase;margin-bottom:6px">⚑ Suspected Bypass</div>
-<div style="display:flex;align-items:baseline;gap:7px"><span style="font:600 24px 'IBM Plex Mono',monospace;letter-spacing:-.8px">1,164</span><span style="font-size:11.5px;color:#667488">meters flagged</span></div>
+<div style="font:600 9.5px 'Roboto',sans-serif;letter-spacing:.08em;color:#d92d20;text-transform:uppercase;margin-bottom:6px">⚑ Suspected Bypass</div>
+<div style="display:flex;align-items:baseline;gap:7px"><span style="font:600 24px 'Roboto',sans-serif;letter-spacing:-.8px">1,164</span><span style="font-size:11.5px;color:#667488">meters flagged</span></div>
 <div style="font-size:10.5px;color:#8494a8;margin-top:4px">Detector run 19 Aug 2026, 03:20</div>
 </div>
 <div style="flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
 <sc-for list="{{ bypass }}" as="b" hint-placeholder-count="6">
-<div style="border:1px solid #eef1f6;border-radius:6px;padding:8px 10px;background:#fbfcfe"><div style="font-size:10px;color:#8494a8;margin-bottom:3px">{{ b.label }}</div><div style="font:600 15px 'IBM Plex Mono',monospace;color:{{ b.tone }}">{{ b.value }}</div></div>
+<div style="border:1px solid #eef1f6;border-radius:6px;padding:8px 10px;background:#fbfcfe"><div style="font-size:10px;color:#8494a8;margin-bottom:3px">{{ b.label }}</div><div style="font:600 15px 'Roboto',sans-serif;color:{{ b.tone }}">{{ b.value }}</div></div>
 </sc-for>
 </div>
 <div style="padding:7px 13px;border:1px solid #fbc9c4;color:#d92d20;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;flex:none;align-self:center" style-hover="background:#fef3f2">Open Review Board</div>
@@ -121,29 +121,29 @@
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 14px">
 <sc-for list="{{ shareBar }}" as="s" hint-placeholder-count="8">
-<div style="display:flex;align-items:center;gap:7px;font-size:11px;padding:2px 0"><span style="width:8px;height:8px;border-radius:2px;background:{{ s.tone }};flex:none"></span><span style="flex:1;color:#475467">{{ s.name }}</span><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#101828">{{ s.pct }}</span></div>
+<div style="display:flex;align-items:center;gap:7px;font-size:11px;padding:2px 0"><span style="width:8px;height:8px;border-radius:2px;background:{{ s.tone }};flex:none"></span><span style="flex:1;color:#475467">{{ s.name }}</span><span style="font:500 10.5px 'Roboto',sans-serif;color:#101828">{{ s.pct }}</span></div>
 </sc-for>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:13px 15px">
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px"><div style="font-size:12.5px;font-weight:600">Water Usage by Suburb</div><div style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">litres</div></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px"><div style="font-size:12.5px;font-weight:600">Water Usage by Suburb</div><div style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">litres</div></div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ usageBars }}" as="u" hint-placeholder-count="10">
-<div style="display:flex;align-items:center;gap:9px"><span style="width:112px;font-size:10.5px;color:#475467;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span><div style="flex:1;height:11px;background:#f2f5f9;border-radius:2px;overflow:hidden"><div style="height:100%;background:#0e9a8a;width:{{ u.w }}"></div></div><span style="width:88px;font:500 10px 'IBM Plex Mono',monospace;color:#667488">{{ u.value }}</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:112px;font-size:10.5px;color:#475467;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span><div style="flex:1;height:11px;background:#f2f5f9;border-radius:2px;overflow:hidden"><div style="height:100%;background:#0e9a8a;width:{{ u.w }}"></div></div><span style="width:88px;font:500 10px 'Roboto',sans-serif;color:#667488">{{ u.value }}</span></div>
 </sc-for>
 </div>
 </div>
 </div>
 
-<div style="font-size:12px;font-weight:600;color:#475467;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>Suburb Analysis</span><span style="flex:1;height:1px;background:#e4e8ef"></span><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">{{ suburbCount }} zones · sorted by tokens sold</span></div>
+<div style="font-size:12px;font-weight:600;color:#475467;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>Suburb Analysis</span><span style="flex:1;height:1px;background:#e4e8ef"></span><span style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">{{ suburbCount }} zones · sorted by tokens sold</span></div>
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
 <sc-for list="{{ suburbs }}" as="s" hint-placeholder-count="12">
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:11px 13px 10px" style-hover="border-color:#b9cbe6">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><span style="font-size:11.5px;font-weight:600;letter-spacing:.01em">{{ s.name }}</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;background:{{ s.tone }};color:#fff;padding:2px 6px;border-radius:4px">{{ s.tokens }} tokens</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><span style="font-size:11.5px;font-weight:600;letter-spacing:.01em">{{ s.name }}</span><span style="font:600 9.5px 'Roboto',sans-serif;background:{{ s.tone }};color:#fff;padding:2px 6px;border-radius:4px">{{ s.tokens }} tokens</span></div>
 <div style="display:flex;flex-direction:column;gap:7px">
-<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#8494a8">Total sales</span><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#101828">{{ s.sales }}</span></div><div style="height:3px;background:#f2f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;background:#0b5fd0;width:{{ s.salesW }}"></div></div></div>
-<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#8494a8">Total usage</span><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#0e7f72">{{ s.usage }}</span></div><div style="height:3px;background:#f2f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;background:#0e9a8a;width:{{ s.usageW }}"></div></div></div>
-<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#8494a8">Transactions</span><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#101828">{{ s.tx }}</span></div><div style="height:3px;background:#f2f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;background:#7a5af8;width:{{ s.txW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#8494a8">Total sales</span><span style="font:500 10.5px 'Roboto',sans-serif;color:#101828">{{ s.sales }}</span></div><div style="height:3px;background:#f2f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;background:#0b5fd0;width:{{ s.salesW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#8494a8">Total usage</span><span style="font:500 10.5px 'Roboto',sans-serif;color:#0e7f72">{{ s.usage }}</span></div><div style="height:3px;background:#f2f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;background:#0e9a8a;width:{{ s.usageW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#8494a8">Transactions</span><span style="font:500 10.5px 'Roboto',sans-serif;color:#101828">{{ s.tx }}</span></div><div style="height:3px;background:#f2f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;background:#7a5af8;width:{{ s.txW }}"></div></div></div>
 </div>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:8px;border-top:1px solid #f2f5f9"><span style="font-size:10px;color:#98a4b5">{{ s.meters }} meters</span><span style="font-size:10px;color:#0b5fd0;cursor:pointer;font-weight:500">History →</span></div>
 </div>
@@ -154,18 +154,18 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
 <div style="padding:12px 15px;border-bottom:1px solid #eef1f6;font-size:12.5px;font-weight:600">Online Payments by Provider</div>
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ provHead }}" as="h" hint-placeholder-count="4"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ provHead }}" as="h" hint-placeholder-count="4"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ providers }}" as="p" hint-placeholder-count="3">
-<tr style-hover="background:#fbfcfe"><td style="padding:9px 15px;font:500 11.5px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ p.id }}</td><td style="padding:9px 15px;text-align:right;font:500 11.5px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ p.tx }}</td><td style="padding:9px 15px;text-align:right;font:500 11.5px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ p.amount }}</td><td style="padding:9px 15px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 10.5px 'IBM Plex Mono',monospace;color:#0b5fd0">{{ p.share }}</span></td></tr>
+<tr style-hover="background:#fbfcfe"><td style="padding:9px 15px;font:500 11.5px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ p.id }}</td><td style="padding:9px 15px;text-align:right;font:500 11.5px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ p.tx }}</td><td style="padding:9px 15px;text-align:right;font:500 11.5px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ p.amount }}</td><td style="padding:9px 15px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 10.5px 'Roboto',sans-serif;color:#0b5fd0">{{ p.share }}</span></td></tr>
 </sc-for></tbody>
 </table>
 </div>
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
 <div style="padding:10px 15px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">Sales Ledger</span><sc-for list="{{ ledgerTabs }}" as="t" hint-placeholder-count="3"><span onClick="{{ t.go }}" style="font-size:11px;font-weight:{{ t.weight }};padding:4px 10px;border-radius:5px;cursor:pointer;background:{{ t.bg }};color:{{ t.color }}">{{ t.label }}</span></sc-for></div>
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ ledgerHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ ledgerHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ ledger }}" as="r" hint-placeholder-count="10">
-<tr style-hover="background:#fbfcfe"><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #f5f7fa;color:#475467">{{ r.date }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ r.total }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa;color:#475467">{{ r.excl }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa;color:#475467">{{ r.vat }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ r.tx }}</td></tr>
+<tr style-hover="background:#fbfcfe"><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #f5f7fa;color:#475467">{{ r.date }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ r.total }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa;color:#475467">{{ r.excl }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa;color:#475467">{{ r.vat }}</td><td style="padding:8px 15px;text-align:right;font:500 11.5px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ r.tx }}</td></tr>
 </sc-for></tbody>
 </table>
 </div>
@@ -191,7 +191,7 @@
 </div>
 </sc-for>
 <div style="background:#fff;border:1px solid #a9b4c2;border-radius:5px;box-shadow:0 1px 5px rgba(0,0,0,.22);width:236px;overflow:hidden;margin-top:2px">
-<div style="padding:6px 10px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:7px"><span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#5d6a7e;text-transform:uppercase;flex:1">Layers</span><span onClick="{{ resetLayers }}" style="font-size:10px;color:#0b5fd0;cursor:pointer;font-weight:600">Reset</span></div>
+<div style="padding:6px 10px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:7px"><span style="font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#5d6a7e;text-transform:uppercase;flex:1">Layers</span><span onClick="{{ resetLayers }}" style="font-size:10px;color:#0b5fd0;cursor:pointer;font-weight:600">Reset</span></div>
 <div style="max-height:392px;overflow-y:auto;padding:3px 0">
 <sc-for list="{{ layers }}" as="l" hint-placeholder-count="20">
 <div onClick="{{ l.go }}" style="display:flex;align-items:center;gap:7px;padding:3px 10px;cursor:pointer;background:{{ l.bg }}" style-hover="background:#eaf2fd">
@@ -207,7 +207,7 @@
 
 <sc-if value="{{ boxCount }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;left:52px;top:10px;z-index:600;background:#0c1424;border-radius:5px;padding:8px 12px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 6px rgba(0,0,0,.35)">
-<span style="font:600 11px 'IBM Plex Mono',monospace;color:#fff">{{ boxCount }} meters in selection</span>
+<span style="font:600 11px 'Roboto',sans-serif;color:#fff">{{ boxCount }} meters in selection</span>
 <span style="font-size:10.5px;color:#8ee0c8;cursor:pointer;font-weight:600">Queue downlink</span>
 <span style="font-size:10.5px;color:#9fb4d0;cursor:pointer;font-weight:600">Export</span>
 <span onClick="{{ clearBox }}" style="font-size:11px;color:#7d8ba1;cursor:pointer">✕</span>
@@ -216,30 +216,30 @@
 
 <sc-if value="{{ notifOn }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;left:52px;bottom:24px;z-index:600;width:300px;background:#fff;border:1px solid #a9b4c2;border-radius:5px;box-shadow:0 1px 6px rgba(0,0,0,.25);overflow:hidden">
-<div style="padding:7px 11px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:7px"><span style="width:6px;height:6px;border-radius:50%;background:#0e9a5a"></span><span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#5d6a7e;text-transform:uppercase;flex:1">Live notifications</span></div>
+<div style="padding:7px 11px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:7px"><span style="width:6px;height:6px;border-radius:50%;background:#0e9a5a"></span><span style="font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#5d6a7e;text-transform:uppercase;flex:1">Live notifications</span></div>
 <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="5">
-<div style="padding:6px 11px;border-bottom:1px solid #f5f7fa;display:flex;gap:8px;align-items:flex-start"><span style="width:6px;height:6px;border-radius:50%;background:{{ n.tone }};margin-top:4px;flex:none"></span><span style="flex:1;font-size:10.5px;color:#2c4257;line-height:1.4">{{ n.text }}</span><span style="font:500 9.5px 'IBM Plex Mono',monospace;color:#8494a8">{{ n.t }}</span></div>
+<div style="padding:6px 11px;border-bottom:1px solid #f5f7fa;display:flex;gap:8px;align-items:flex-start"><span style="width:6px;height:6px;border-radius:50%;background:{{ n.tone }};margin-top:4px;flex:none"></span><span style="flex:1;font-size:10.5px;color:#2c4257;line-height:1.4">{{ n.text }}</span><span style="font:500 9.5px 'Roboto',sans-serif;color:#8494a8">{{ n.t }}</span></div>
 </sc-for>
 </div>
 </sc-if>
 </div>
 
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:8px 11px">
-<span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase">Gateways</span>
+<span style="font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase">Gateways</span>
 <sc-for list="{{ gateways }}" as="g" hint-placeholder-count="6">
 <div onClick="{{ g.go }}" style="display:flex;align-items:center;gap:6px;border:1px solid #e4e8ef;border-radius:20px;padding:4px 10px;cursor:pointer" style-hover="border-color:#b9cbe6;background:#fbfcfe">
-<span style="width:7px;height:7px;border-radius:50%;background:{{ g.dot }};flex:none"></span><span style="font:600 10px 'IBM Plex Mono',monospace;color:#101828">{{ g.id }}</span><span style="font-size:10px;color:#8494a8">{{ g.meters }} nodes · {{ g.rssi }}</span>
+<span style="width:7px;height:7px;border-radius:50%;background:{{ g.dot }};flex:none"></span><span style="font:600 10px 'Roboto',sans-serif;color:#101828">{{ g.id }}</span><span style="font-size:10px;color:#8494a8">{{ g.meters }} nodes · {{ g.rssi }}</span>
 </div>
 </sc-for>
 <span style="flex:1"></span>
 <span onClick="{{ toggleRings }}" style="font-size:10.5px;color:#0b5fd0;cursor:pointer;font-weight:600">{{ ringLabel }}</span>
-<span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#475467">{{ plotted }} plotted · {{ zoomLabel }}</span>
+<span style="font:500 10.5px 'Roboto',sans-serif;color:#475467">{{ plotted }} plotted · {{ zoomLabel }}</span>
 </div>
 <sc-if value="{{ sel }}" hint-placeholder-val="{{ false }}">
 <div style="background:#fff;border:1px solid #e4e8ef;border-left:3px solid #0b5fd0;border-radius:8px;padding:13px 15px">
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span style="font:600 13px 'IBM Plex Mono',monospace">{{ sel.id }}</span><span style="font:600 9.5px 'IBM Plex Mono',monospace;background:{{ sel.tone }};color:#fff;padding:2px 7px;border-radius:4px;text-transform:uppercase">{{ sel.status }}</span><span style="flex:1"></span><span onClick="{{ clearSel }}" style="font-size:11px;color:#8494a8;cursor:pointer">Close ✕</span></div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span style="font:600 13px 'Roboto',sans-serif">{{ sel.id }}</span><span style="font:600 9.5px 'Roboto',sans-serif;background:{{ sel.tone }};color:#fff;padding:2px 7px;border-radius:4px;text-transform:uppercase">{{ sel.status }}</span><span style="flex:1"></span><span onClick="{{ clearSel }}" style="font-size:11px;color:#8494a8;cursor:pointer">Close ✕</span></div>
 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:9px">
-<sc-for list="{{ sel.fields }}" as="f" hint-placeholder-count="12"><div style="border:1px solid #eef1f6;border-radius:6px;padding:8px 10px;background:#fbfcfe"><div style="font-size:9.5px;color:#8494a8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace">{{ f.k }}</div><div style="font:500 11.5px 'IBM Plex Mono',monospace;color:#101828">{{ f.v }}</div></div></sc-for>
+<sc-for list="{{ sel.fields }}" as="f" hint-placeholder-count="12"><div style="border:1px solid #eef1f6;border-radius:6px;padding:8px 10px;background:#fbfcfe"><div style="font-size:9.5px;color:#8494a8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em;font-family:'Roboto',sans-serif">{{ f.k }}</div><div style="font:500 11.5px 'Roboto',sans-serif;color:#101828">{{ f.v }}</div></div></sc-for>
 </div>
 </div>
 </sc-if>
@@ -253,8 +253,8 @@
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
 <sc-for list="{{ tbl.stats }}" as="s" hint-placeholder-count="4">
 <div style="background:#fff;border:1px solid #e4e8ef;border-left:3px solid {{ s.tone }};border-radius:8px;padding:11px 13px">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:6px">{{ s.label }}</div>
-<div style="font:600 17px 'IBM Plex Mono',monospace;letter-spacing:-.5px">{{ s.value }}</div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:6px">{{ s.label }}</div>
+<div style="font:600 17px 'Roboto',sans-serif;letter-spacing:-.5px">{{ s.value }}</div>
 <div style="font-size:10.5px;color:#8494a8;margin-top:4px">{{ s.sub }}</div>
 </div>
 </sc-for>
@@ -270,7 +270,7 @@
 </div>
 <div style="overflow-x:auto">
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ tbl.head }}" as="h" hint-placeholder-count="8"><th style="text-align:{{ h.align }};padding:7px 13px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6;white-space:nowrap">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ tbl.head }}" as="h" hint-placeholder-count="8"><th style="text-align:{{ h.align }};padding:7px 13px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6;white-space:nowrap">{{ h.label }}</th></sc-for></tr></thead>
 <tbody>
 <sc-for list="{{ tbl.rows }}" as="r" hint-placeholder-count="12">
 <tr onClick="{{ r.go }}" style="cursor:pointer;background:{{ r.bg }}" style-hover="background:#f8fafc">
@@ -282,38 +282,38 @@
 </tbody>
 </table>
 </div>
-<div style="padding:9px 13px;display:flex;align-items:center;gap:8px;border-top:1px solid #eef1f6"><span style="font-size:10.5px;color:#8494a8;flex:1">{{ tbl.pageInfo }}</span><sc-for list="{{ pager }}" as="p" hint-placeholder-count="5"><span style="font:500 10.5px 'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;background:{{ p.bg }};color:{{ p.color }};cursor:pointer">{{ p.label }}</span></sc-for></div>
+<div style="padding:9px 13px;display:flex;align-items:center;gap:8px;border-top:1px solid #eef1f6"><span style="font-size:10.5px;color:#8494a8;flex:1">{{ tbl.pageInfo }}</span><sc-for list="{{ pager }}" as="p" hint-placeholder-count="5"><span style="font:500 10.5px 'Roboto',sans-serif;padding:3px 8px;border-radius:4px;background:{{ p.bg }};color:{{ p.color }};cursor:pointer">{{ p.label }}</span></sc-for></div>
 </div>
 <sc-if value="{{ kyc }}" hint-placeholder-val="{{ false }}">
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:hidden;position:sticky;top:66px">
 <div style="padding:12px 14px;border-bottom:1px solid #eef1f6;display:flex;align-items:flex-start;gap:10px">
-<div style="width:34px;height:34px;flex:none;border-radius:7px;background:#eaf2fd;display:flex;align-items:center;justify-content:center;font:600 12px 'IBM Plex Mono',monospace;color:#0b5fd0">{{ kyc.initials }}</div>
-<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;letter-spacing:-.1px">{{ kyc.name }}</div><div style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">{{ kyc.id }} · {{ kyc.kind }}</div></div>
+<div style="width:34px;height:34px;flex:none;border-radius:7px;background:#eaf2fd;display:flex;align-items:center;justify-content:center;font:600 12px 'Roboto',sans-serif;color:#0b5fd0">{{ kyc.initials }}</div>
+<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;letter-spacing:-.1px">{{ kyc.name }}</div><div style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">{{ kyc.id }} · {{ kyc.kind }}</div></div>
 <span onClick="{{ closeKyc }}" style="font-size:11px;color:#8494a8;cursor:pointer">✕</span>
 </div>
 <div style="padding:11px 14px;border-bottom:1px solid #eef1f6">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:8px">KYC Verification</div>
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="flex:1;height:5px;background:#f2f5f9;border-radius:5px;overflow:hidden"><div style="height:100%;background:{{ kyc.tone }};width:{{ kyc.pctW }}"></div></div><span style="font:600 10.5px 'IBM Plex Mono',monospace;color:{{ kyc.tone }}">{{ kyc.pct }}</span></div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:8px">KYC Verification</div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="flex:1;height:5px;background:#f2f5f9;border-radius:5px;overflow:hidden"><div style="height:100%;background:{{ kyc.tone }};width:{{ kyc.pctW }}"></div></div><span style="font:600 10.5px 'Roboto',sans-serif;color:{{ kyc.tone }}">{{ kyc.pct }}</span></div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ kyc.docs }}" as="d" hint-placeholder-count="5">
-<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span style="width:14px;height:14px;border-radius:3px;background:{{ d.tone }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex:none">{{ d.mark }}</span><span style="flex:1;color:#475467">{{ d.label }}</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#8494a8">{{ d.meta }}</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span style="width:14px;height:14px;border-radius:3px;background:{{ d.tone }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex:none">{{ d.mark }}</span><span style="flex:1;color:#475467">{{ d.label }}</span><span style="font:500 10px 'Roboto',sans-serif;color:#8494a8">{{ d.meta }}</span></div>
 </sc-for>
 </div>
 </div>
 <div style="padding:11px 14px;border-bottom:1px solid #eef1f6">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:8px">Account</div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:8px">Account</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<sc-for list="{{ kyc.fields }}" as="f" hint-placeholder-count="8"><div><div style="font-size:9.5px;color:#98a4b5;margin-bottom:2px">{{ f.k }}</div><div style="font:500 11px 'IBM Plex Mono',monospace;color:{{ f.tone }}">{{ f.v }}</div></div></sc-for>
+<sc-for list="{{ kyc.fields }}" as="f" hint-placeholder-count="8"><div><div style="font-size:9.5px;color:#98a4b5;margin-bottom:2px">{{ f.k }}</div><div style="font:500 11px 'Roboto',sans-serif;color:{{ f.tone }}">{{ f.v }}</div></div></sc-for>
 </div>
 </div>
 <sc-if value="{{ kyc.props }}" hint-placeholder-val="{{ false }}">
 <div style="padding:11px 14px;border-bottom:1px solid #eef1f6">
-<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:8px"><span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;flex:1">Properties & meters</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#475467">{{ kyc.propCount }}</span></div>
+<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:8px"><span style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;flex:1">Properties & meters</span><span style="font:500 10px 'Roboto',sans-serif;color:#475467">{{ kyc.propCount }}</span></div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <sc-for list="{{ kyc.props }}" as="p" hint-placeholder-count="4">
 <div style="border:1px solid #eef1f6;border-radius:6px;padding:8px 9px;background:#fbfcfe">
-<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#0b5fd0">{{ p.meter }}</span><span style="flex:1;font-size:10.5px;color:#475467;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.plot }}</span></div>
-<div style="display:flex;align-items:center;gap:7px"><span style="font-size:10.5px;color:#101828;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.tenant }}</span><span style="font:600 9px 'IBM Plex Mono',monospace;color:{{ p.tone }};background:#fff;border:1px solid #e4e8ef;padding:1px 5px;border-radius:3px">{{ p.vends }}</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#475467">{{ p.bal }}</span></div>
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span style="font:500 10.5px 'Roboto',sans-serif;color:#0b5fd0">{{ p.meter }}</span><span style="flex:1;font-size:10.5px;color:#475467;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.plot }}</span></div>
+<div style="display:flex;align-items:center;gap:7px"><span style="font-size:10.5px;color:#101828;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.tenant }}</span><span style="font:600 9px 'Roboto',sans-serif;color:{{ p.tone }};background:#fff;border:1px solid #e4e8ef;padding:1px 5px;border-radius:3px">{{ p.vends }}</span><span style="font:500 10px 'Roboto',sans-serif;color:#475467">{{ p.bal }}</span></div>
 </div>
 </sc-for>
 </div>
@@ -321,9 +321,9 @@
 </div>
 </sc-if>
 <div style="padding:11px 14px">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:8px">Recent purchases</div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:8px">Recent purchases</div>
 <sc-for list="{{ kyc.purchases }}" as="p" hint-placeholder-count="4">
-<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f7fa;font-size:11px"><span style="flex:1;color:#475467">{{ p.date }}</span><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">{{ p.channel }}</span><span style="font:600 11px 'IBM Plex Mono',monospace">{{ p.amount }}</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f7fa;font-size:11px"><span style="flex:1;color:#475467">{{ p.date }}</span><span style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">{{ p.channel }}</span><span style="font:600 11px 'Roboto',sans-serif">{{ p.amount }}</span></div>
 </sc-for>
 <div style="display:flex;gap:7px;margin-top:11px"><div style="flex:1;padding:7px;border-radius:6px;background:#0b5fd0;color:#fff;font-size:11px;font-weight:600;text-align:center;cursor:pointer">Open full profile</div><div style="padding:7px 11px;border-radius:6px;border:1px solid #e4e8ef;color:#475467;font-size:11px;font-weight:600;cursor:pointer">Meters</div></div>
 </div>
@@ -340,7 +340,7 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:13px 14px;cursor:pointer;display:flex;flex-direction:column;gap:7px" style-hover="border-color:#b9cbe6">
 <div style="display:flex;align-items:center;gap:8px"><span style="width:24px;height:24px;border-radius:6px;background:{{ c.bg }};color:{{ c.tone }};display:flex;align-items:center;justify-content:center;font-size:11px;flex:none">{{ c.icon }}</span><span style="font-size:12.5px;font-weight:600;flex:1">{{ c.name }}</span></div>
 <div style="font-size:11px;color:#667488;line-height:1.45;min-height:32px">{{ c.desc }}</div>
-<div style="display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid #f5f7fa"><sc-for list="{{ c.formats }}" as="f" hint-placeholder-count="3"><span style="font:500 9.5px 'IBM Plex Mono',monospace;color:#475467;background:#f2f5f9;padding:2px 6px;border-radius:3px">{{ f }}</span></sc-for><span style="flex:1"></span><span style="font-size:10.5px;color:#0b5fd0;font-weight:600">Generate →</span></div>
+<div style="display:flex;align-items:center;gap:6px;padding-top:8px;border-top:1px solid #f5f7fa"><sc-for list="{{ c.formats }}" as="f" hint-placeholder-count="3"><span style="font:500 9.5px 'Roboto',sans-serif;color:#475467;background:#f2f5f9;padding:2px 6px;border-radius:3px">{{ f }}</span></sc-for><span style="flex:1"></span><span style="font-size:10.5px;color:#0b5fd0;font-weight:600">Generate →</span></div>
 </div>
 </sc-for>
 </div>
@@ -348,9 +348,9 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
 <div style="padding:11px 14px;border-bottom:1px solid #eef1f6;font-size:12.5px;font-weight:600">Recently generated</div>
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ genHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 14px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ genHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 14px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ generated }}" as="g" hint-placeholder-count="8">
-<tr style-hover="background:#fbfcfe"><td style="padding:8px 14px;font-size:11.5px;border-bottom:1px solid #f5f7fa;font-weight:500">{{ g.name }}</td><td style="padding:8px 14px;font-size:11px;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.range }}</td><td style="padding:8px 14px;font:500 10.5px 'IBM Plex Mono',monospace;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.by }}</td><td style="padding:8px 14px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'IBM Plex Mono',monospace;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.status }}</span></td><td style="padding:8px 14px;text-align:right;font-size:11px;border-bottom:1px solid #f5f7fa"><span style="color:#0b5fd0;font-weight:600;cursor:pointer">{{ g.action }}</span></td></tr>
+<tr style-hover="background:#fbfcfe"><td style="padding:8px 14px;font-size:11.5px;border-bottom:1px solid #f5f7fa;font-weight:500">{{ g.name }}</td><td style="padding:8px 14px;font-size:11px;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.range }}</td><td style="padding:8px 14px;font:500 10.5px 'Roboto',sans-serif;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.by }}</td><td style="padding:8px 14px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'Roboto',sans-serif;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.status }}</span></td><td style="padding:8px 14px;text-align:right;font-size:11px;border-bottom:1px solid #f5f7fa"><span style="color:#0b5fd0;font-weight:600;cursor:pointer">{{ g.action }}</span></td></tr>
 </sc-for></tbody>
 </table>
 </div>
@@ -359,7 +359,7 @@
 <sc-for list="{{ schedules }}" as="s" hint-placeholder-count="5">
 <div style="padding:10px 14px;border-bottom:1px solid #f5f7fa">
 <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11.5px;font-weight:600;flex:1">{{ s.name }}</span><span style="width:26px;height:14px;border-radius:9px;background:{{ s.sw }};position:relative;flex:none"><span style="position:absolute;top:2px;left:{{ s.knob }};width:10px;height:10px;border-radius:50%;background:#fff"></span></span></div>
-<div style="font-size:10.5px;color:#8494a8;margin-top:3px;font-family:'IBM Plex Mono',monospace">{{ s.cron }} · {{ s.to }}</div>
+<div style="font-size:10.5px;color:#8494a8;margin-top:3px;font-family:'Roboto',sans-serif">{{ s.cron }} · {{ s.to }}</div>
 </div>
 </sc-for>
 </div>
@@ -372,8 +372,8 @@
 <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px">
 <sc-for list="{{ netKpis }}" as="k" hint-placeholder-count="5">
 <div style="background:#fff;border:1px solid #e4e8ef;border-top:2px solid {{ k.tone }};border-radius:8px;padding:12px 13px">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:7px">{{ k.label }}</div>
-<div style="font:600 19px 'IBM Plex Mono',monospace;letter-spacing:-.6px">{{ k.value }}</div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:7px">{{ k.label }}</div>
+<div style="font:600 19px 'Roboto',sans-serif;letter-spacing:-.6px">{{ k.value }}</div>
 <div style="font-size:10.5px;color:#8494a8;margin-top:6px">{{ k.sub }}</div>
 </div>
 </sc-for>
@@ -383,7 +383,7 @@
 <div style="font-size:12.5px;font-weight:600;margin-bottom:11px">Spreading factor distribution</div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <sc-for list="{{ sfBars }}" as="s" hint-placeholder-count="6">
-<div style="display:flex;align-items:center;gap:9px"><span style="width:34px;font:600 10.5px 'IBM Plex Mono',monospace;color:#475467">{{ s.sf }}</span><div style="flex:1;height:13px;background:#f2f5f9;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ s.tone }};width:{{ s.w }}"></div></div><span style="width:96px;font:500 10px 'IBM Plex Mono',monospace;color:#667488;text-align:right">{{ s.value }}</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:34px;font:600 10.5px 'Roboto',sans-serif;color:#475467">{{ s.sf }}</span><div style="flex:1;height:13px;background:#f2f5f9;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ s.tone }};width:{{ s.w }}"></div></div><span style="width:96px;font:500 10px 'Roboto',sans-serif;color:#667488;text-align:right">{{ s.value }}</span></div>
 </sc-for>
 </div>
 <div style="font-size:10.5px;color:#8494a8;margin-top:11px;line-height:1.5">Higher spreading factors reach further but consume more airtime. SF12 nodes above 8% of the fleet usually indicate a coverage gap.</div>
@@ -392,7 +392,7 @@
 <div style="font-size:12.5px;font-weight:600;margin-bottom:11px">Packet loss by gateway · last 24h</div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <sc-for list="{{ lossBars }}" as="g" hint-placeholder-count="6">
-<div style="display:flex;align-items:center;gap:9px"><span style="width:84px;font:600 10.5px 'IBM Plex Mono',monospace;color:#475467">{{ g.id }}</span><div style="flex:1;height:13px;background:#f2f5f9;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ g.tone }};width:{{ g.w }}"></div></div><span style="width:52px;font:500 10px 'IBM Plex Mono',monospace;color:#667488;text-align:right">{{ g.value }}</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:84px;font:600 10.5px 'Roboto',sans-serif;color:#475467">{{ g.id }}</span><div style="flex:1;height:13px;background:#f2f5f9;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ g.tone }};width:{{ g.w }}"></div></div><span style="width:52px;font:500 10px 'Roboto',sans-serif;color:#667488;text-align:right">{{ g.value }}</span></div>
 </sc-for>
 </div>
 </div>
@@ -401,17 +401,17 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
 <div style="padding:11px 14px;border-bottom:1px solid #eef1f6;font-size:12.5px;font-weight:600">Gateway fleet</div>
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ gwHead }}" as="h" hint-placeholder-count="7"><th style="text-align:{{ h.align }};padding:7px 14px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ gwHead }}" as="h" hint-placeholder-count="7"><th style="text-align:{{ h.align }};padding:7px 14px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ gwRows }}" as="g" hint-placeholder-count="6">
-<tr style-hover="background:#fbfcfe"><td style="padding:9px 14px;font:600 11px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ g.id }}</td><td style="padding:9px 14px;font-size:11px;color:#475467;border-bottom:1px solid #f5f7fa">{{ g.site }}</td><td style="padding:9px 14px;text-align:right;font:500 11px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ g.nodes }}</td><td style="padding:9px 14px;text-align:right;font:500 11px 'IBM Plex Mono',monospace;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.rssi }}</td><td style="padding:9px 14px;text-align:right;font:500 11px 'IBM Plex Mono',monospace;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.up }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'IBM Plex Mono',monospace;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.state }}</span></td></tr>
+<tr style-hover="background:#fbfcfe"><td style="padding:9px 14px;font:600 11px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ g.id }}</td><td style="padding:9px 14px;font-size:11px;color:#475467;border-bottom:1px solid #f5f7fa">{{ g.site }}</td><td style="padding:9px 14px;text-align:right;font:500 11px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ g.nodes }}</td><td style="padding:9px 14px;text-align:right;font:500 11px 'Roboto',sans-serif;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.rssi }}</td><td style="padding:9px 14px;text-align:right;font:500 11px 'Roboto',sans-serif;color:#667488;border-bottom:1px solid #f5f7fa">{{ g.up }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'Roboto',sans-serif;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.state }}</span></td></tr>
 </sc-for></tbody>
 </table>
 </div>
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
-<div style="padding:11px 14px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">Uplink log</span><span style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#0e9a5a"></span><span style="font:500 10px 'IBM Plex Mono',monospace;color:#08794a">streaming</span></span></div>
+<div style="padding:11px 14px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">Uplink log</span><span style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#0e9a5a"></span><span style="font:500 10px 'Roboto',sans-serif;color:#08794a">streaming</span></span></div>
 <div style="max-height:328px;overflow-y:auto;background:#0c1424">
 <sc-for list="{{ uplinks }}" as="u" hint-placeholder-count="14">
-<div style="display:flex;gap:9px;padding:6px 13px;border-bottom:1px solid rgba(255,255,255,.05);font:500 10.5px 'IBM Plex Mono',monospace;white-space:nowrap">
+<div style="display:flex;gap:9px;padding:6px 13px;border-bottom:1px solid rgba(255,255,255,.05);font:500 10.5px 'Roboto',sans-serif;white-space:nowrap">
 <span style="color:#5d6a7e">{{ u.t }}</span><span style="color:#7fb0f0">{{ u.dev }}</span><span style="color:{{ u.tone }}">{{ u.port }}</span><span style="color:#9aa8bd;flex:1;overflow:hidden;text-overflow:ellipsis">{{ u.payload }}</span><span style="color:#5d6a7e">{{ u.rssi }}</span>
 </div>
 </sc-for>
@@ -430,9 +430,9 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
 <div style="padding:11px 14px;border-bottom:1px solid #eef1f6;display:flex;align-items:center"><span style="font-size:12.5px;font-weight:600;flex:1">Users · 34 accounts</span><span style="padding:6px 12px;border-radius:6px;background:#0b5fd0;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer">+ Invite user</span></div>
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ userHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 14px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ userHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 14px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ users }}" as="u" hint-placeholder-count="8">
-<tr style-hover="background:#fbfcfe"><td style="padding:9px 14px;border-bottom:1px solid #f5f7fa"><div style="display:flex;align-items:center;gap:9px"><span style="width:24px;height:24px;border-radius:50%;background:#eef1f6;display:flex;align-items:center;justify-content:center;font:600 9.5px 'IBM Plex Mono',monospace;color:#475467">{{ u.ini }}</span><div><div style="font-size:11.5px;font-weight:600">{{ u.name }}</div><div style="font-size:10px;color:#8494a8">{{ u.email }}</div></div></div></td><td style="padding:9px 14px;font-size:11.5px;border-bottom:1px solid #f5f7fa">{{ u.role }}</td><td style="padding:9px 14px;font-size:11px;color:#667488;border-bottom:1px solid #f5f7fa">{{ u.scope }}</td><td style="padding:9px 14px;font:500 10.5px 'IBM Plex Mono',monospace;color:#667488;border-bottom:1px solid #f5f7fa">{{ u.seen }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'IBM Plex Mono',monospace;background:{{ u.bg }};color:{{ u.tone }};padding:2px 7px;border-radius:4px">{{ u.status }}</span></td><td style="padding:9px 14px;text-align:right;font-size:11px;border-bottom:1px solid #f5f7fa"><span style="color:#0b5fd0;font-weight:600;cursor:pointer">Edit</span></td></tr>
+<tr style-hover="background:#fbfcfe"><td style="padding:9px 14px;border-bottom:1px solid #f5f7fa"><div style="display:flex;align-items:center;gap:9px"><span style="width:24px;height:24px;border-radius:50%;background:#eef1f6;display:flex;align-items:center;justify-content:center;font:600 9.5px 'Roboto',sans-serif;color:#475467">{{ u.ini }}</span><div><div style="font-size:11.5px;font-weight:600">{{ u.name }}</div><div style="font-size:10px;color:#8494a8">{{ u.email }}</div></div></div></td><td style="padding:9px 14px;font-size:11.5px;border-bottom:1px solid #f5f7fa">{{ u.role }}</td><td style="padding:9px 14px;font-size:11px;color:#667488;border-bottom:1px solid #f5f7fa">{{ u.scope }}</td><td style="padding:9px 14px;font:500 10.5px 'Roboto',sans-serif;color:#667488;border-bottom:1px solid #f5f7fa">{{ u.seen }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'Roboto',sans-serif;background:{{ u.bg }};color:{{ u.tone }};padding:2px 7px;border-radius:4px">{{ u.status }}</span></td><td style="padding:9px 14px;text-align:right;font-size:11px;border-bottom:1px solid #f5f7fa"><span style="color:#0b5fd0;font-weight:600;cursor:pointer">Edit</span></td></tr>
 </sc-for></tbody>
 </table>
 </div>
@@ -440,7 +440,7 @@
 <sc-if value="{{ setIsRoles }}" hint-placeholder-val="{{ false }}">
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;overflow:auto">
 <table style="width:100%;border-collapse:collapse;min-width:760px">
-<thead><tr><th style="text-align:left;padding:9px 14px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">Capability</th><sc-for list="{{ roleCols }}" as="c" hint-placeholder-count="5"><th style="text-align:center;padding:9px 14px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ c }}</th></sc-for></tr></thead>
+<thead><tr><th style="text-align:left;padding:9px 14px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">Capability</th><sc-for list="{{ roleCols }}" as="c" hint-placeholder-count="5"><th style="text-align:center;padding:9px 14px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ c }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ roleRows }}" as="r" hint-placeholder-count="9">
 <tr style-hover="background:#fbfcfe"><td style="padding:9px 14px;font-size:11.5px;border-bottom:1px solid #f5f7fa;color:#101828">{{ r.cap }}</td><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5"><td style="padding:9px 14px;text-align:center;border-bottom:1px solid #f5f7fa"><span style="font-size:11px;color:{{ c.color }};font-weight:600">{{ c.mark }}</span></td></sc-for></tr>
 </sc-for></tbody>
@@ -453,7 +453,7 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:8px;padding:13px 14px">
 <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><span style="font-size:12.5px;font-weight:600;flex:1">{{ m.name }}</span><span onClick="{{ m.go }}" style="width:30px;height:16px;border-radius:9px;background:{{ m.sw }};position:relative;cursor:pointer;flex:none"><span style="position:absolute;top:2px;left:{{ m.knob }};width:12px;height:12px;border-radius:50%;background:#fff"></span></span></div>
 <div style="font-size:11px;color:#667488;line-height:1.45">{{ m.desc }}</div>
-<div style="margin-top:9px;padding-top:8px;border-top:1px solid #f5f7fa;display:flex;align-items:center;gap:7px"><span style="font:500 9.5px 'IBM Plex Mono',monospace;color:#8494a8">{{ m.meta }}</span></div>
+<div style="margin-top:9px;padding-top:8px;border-top:1px solid #f5f7fa;display:flex;align-items:center;gap:7px"><span style="font:500 9.5px 'Roboto',sans-serif;color:#8494a8">{{ m.meta }}</span></div>
 </div>
 </sc-for>
 </div>
@@ -466,17 +466,17 @@
 <div style="background:#fff;border:1px solid #e4e8ef;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.05)">
 <div style="height:34px;background:#f2f5f9;border-bottom:1px solid #e4e8ef;display:flex;align-items:center;gap:8px;padding:0 12px">
 <span style="display:flex;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#d3d9e2"></span><span style="width:8px;height:8px;border-radius:50%;background:#d3d9e2"></span><span style="width:8px;height:8px;border-radius:50%;background:#d3d9e2"></span></span>
-<div style="flex:1;max-width:340px;background:#fff;border:1px solid #e4e8ef;border-radius:5px;padding:3px 9px;font:500 10.5px 'IBM Plex Mono',monospace;color:#667488">myaccount.wi360.co.bw/usage</div>
+<div style="flex:1;max-width:340px;background:#fff;border:1px solid #e4e8ef;border-radius:5px;padding:3px 9px;font:500 10.5px 'Roboto',sans-serif;color:#667488">myaccount.wi360.co.bw/usage</div>
 </div>
 <div style="padding:16px 22px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:14px">
-<div style="width:28px;height:28px;border-radius:6px;background:linear-gradient(160deg,#1f7ae0,#0b3f8f);display:flex;align-items:center;justify-content:center;font:700 12px 'IBM Plex Mono',monospace;color:#fff">W</div>
+<div style="width:28px;height:28px;border-radius:6px;background:linear-gradient(160deg,#1f7ae0,#0b3f8f);display:flex;align-items:center;justify-content:center;font:700 12px 'Roboto',sans-serif;color:#fff">W</div>
 <div style="flex:1"><div style="font-size:14px;font-weight:600;letter-spacing:-.2px">My Water Account</div><div style="font-size:11px;color:#8494a8">Meter WM-104882 · Plot 21455, Block 8, Gaborone</div></div>
 <sc-for list="{{ portalNav }}" as="p" hint-placeholder-count="4"><span style="font-size:11.5px;font-weight:{{ p.weight }};color:{{ p.color }};border-bottom:2px solid {{ p.border }};padding-bottom:3px;cursor:pointer">{{ p.label }}</span></sc-for>
 </div>
 <div style="padding:10px 22px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:12px;background:#fbfcfe">
-<span style="font:600 9.5px 'IBM Plex Mono',monospace;background:{{ portalRoleBg }};color:{{ portalRoleTone }};padding:3px 8px;border-radius:4px;text-transform:uppercase">{{ portalRole }}</span>
+<span style="font:600 9.5px 'Roboto',sans-serif;background:{{ portalRoleBg }};color:{{ portalRoleTone }};padding:3px 8px;border-radius:4px;text-transform:uppercase">{{ portalRole }}</span>
 <span style="flex:1;font-size:11.5px;color:#475467">{{ portalRelation }}</span>
-<span style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase">Signed in as</span>
+<span style="font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase">Signed in as</span>
 <div style="display:flex;border:1px solid #e4e8ef;border-radius:6px;overflow:hidden;background:#fff">
 <sc-for list="{{ portalViews }}" as="v" hint-placeholder-count="2"><div onClick="{{ v.go }}" style="padding:5px 11px;font-size:11px;font-weight:{{ v.weight }};cursor:pointer;background:{{ v.bg }};color:{{ v.color }};border-right:1px solid #e4e8ef">{{ v.label }}</div></sc-for>
 </div>
@@ -486,13 +486,13 @@
 <div style="border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
 <div style="padding:11px 15px;border-bottom:1px solid #eef1f6;display:flex;align-items:center;gap:10px">
 <span style="font-size:12.5px;font-weight:600;flex:1">My properties · {{ portfolioCount }}</span>
-<span style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">{{ portfolioSummary }}</span>
+<span style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">{{ portfolioSummary }}</span>
 <span style="font-size:11px;color:#0b5fd0;font-weight:600;cursor:pointer">Statement</span>
 </div>
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ portfolioHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ portfolioHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ portfolio }}" as="p" hint-placeholder-count="6">
-<tr style-hover="background:#fbfcfe"><td style="padding:8px 15px;font:500 11px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa;color:#0b5fd0">{{ p.meter }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #f5f7fa">{{ p.plot }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #f5f7fa;color:#475467">{{ p.tenant }}</td><td style="padding:8px 15px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'IBM Plex Mono',monospace;color:{{ p.tone }};border:1px solid #e4e8ef;padding:2px 6px;border-radius:3px">{{ p.vends }}</span></td><td style="padding:8px 15px;text-align:right;font:500 11px 'IBM Plex Mono',monospace;color:#0e7f72;border-bottom:1px solid #f5f7fa">{{ p.usage }}</td><td style="padding:8px 15px;text-align:right;font:500 11px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa;color:{{ p.balTone }}">{{ p.bal }}</td></tr>
+<tr style-hover="background:#fbfcfe"><td style="padding:8px 15px;font:500 11px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa;color:#0b5fd0">{{ p.meter }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #f5f7fa">{{ p.plot }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #f5f7fa;color:#475467">{{ p.tenant }}</td><td style="padding:8px 15px;text-align:right;border-bottom:1px solid #f5f7fa"><span style="font:600 9.5px 'Roboto',sans-serif;color:{{ p.tone }};border:1px solid #e4e8ef;padding:2px 6px;border-radius:3px">{{ p.vends }}</span></td><td style="padding:8px 15px;text-align:right;font:500 11px 'Roboto',sans-serif;color:#0e7f72;border-bottom:1px solid #f5f7fa">{{ p.usage }}</td><td style="padding:8px 15px;text-align:right;font:500 11px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa;color:{{ p.balTone }}">{{ p.bal }}</td></tr>
 </sc-for></tbody>
 </table>
 <div style="padding:9px 15px;border-top:1px solid #eef1f6;font-size:10.5px;color:#8494a8;line-height:1.5">Tenants buy water in their own names against these meters. You keep ownership, see every meter's usage and balance, and are billed directly only for vacant units.</div>
@@ -504,20 +504,20 @@
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
 <sc-for list="{{ portalStats }}" as="s" hint-placeholder-count="3">
 <div style="border:1px solid #e4e8ef;border-radius:8px;padding:13px 14px;background:{{ s.card }}">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:7px">{{ s.label }}</div>
-<div style="font:600 20px 'IBM Plex Mono',monospace;letter-spacing:-.6px;color:{{ s.tone }}">{{ s.value }}</div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#8494a8;text-transform:uppercase;margin-bottom:7px">{{ s.label }}</div>
+<div style="font:600 20px 'Roboto',sans-serif;letter-spacing:-.6px;color:{{ s.tone }}">{{ s.value }}</div>
 <div style="font-size:10.5px;color:#8494a8;margin-top:5px">{{ s.sub }}</div>
 </div>
 </sc-for>
 </div>
 <div style="border:1px solid #e4e8ef;border-radius:8px;padding:14px 16px">
-<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><div style="font-size:12.5px;font-weight:600">Usage history</div><div style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8494a8">litres per month · 12 months</div></div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><div style="font-size:12.5px;font-weight:600">Usage history</div><div style="font:500 10.5px 'Roboto',sans-serif;color:#8494a8">litres per month · 12 months</div></div>
 <div style="display:flex;align-items:flex-end;gap:5px;height:140px">
 <sc-for list="{{ portalUsage }}" as="u" hint-placeholder-count="12">
 <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%" title="{{ u.tip }}">
-<span style="font:500 9px 'IBM Plex Mono',monospace;color:#667488">{{ u.value }}</span>
+<span style="font:500 9px 'Roboto',sans-serif;color:#667488">{{ u.value }}</span>
 <div style="width:100%;border-radius:3px 3px 0 0;background:{{ u.tone }};height:{{ u.h }}"></div>
-<span style="font:500 9px 'IBM Plex Mono',monospace;color:#98a4b5">{{ u.label }}</span>
+<span style="font:500 9px 'Roboto',sans-serif;color:#98a4b5">{{ u.label }}</span>
 </div>
 </sc-for>
 </div>
@@ -525,31 +525,31 @@
 <div style="border:1px solid #e4e8ef;border-radius:8px;overflow:hidden">
 <div style="padding:11px 15px;border-bottom:1px solid #eef1f6;font-size:12.5px;font-weight:600">Purchase history</div>
 <table style="width:100%;border-collapse:collapse">
-<thead><tr><sc-for list="{{ purchHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
+<thead><tr><sc-for list="{{ purchHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font:600 9px 'Roboto',sans-serif;letter-spacing:.07em;color:#8494a8;text-transform:uppercase;background:#fbfcfe;border-bottom:1px solid #eef1f6">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ purchases }}" as="p" hint-placeholder-count="7">
-<tr style-hover="background:#fbfcfe"><td style="padding:8px 15px;font-size:11.5px;color:#475467;border-bottom:1px solid #f5f7fa">{{ p.date }}</td><td style="padding:8px 15px;font:500 11px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ p.token }}</td><td style="padding:8px 15px;font-size:11.5px;color:#667488;border-bottom:1px solid #f5f7fa">{{ p.channel }}</td><td style="padding:8px 15px;text-align:right;font:500 11px 'IBM Plex Mono',monospace;color:#0e7f72;border-bottom:1px solid #f5f7fa">{{ p.units }}</td><td style="padding:8px 15px;text-align:right;font:600 11px 'IBM Plex Mono',monospace;border-bottom:1px solid #f5f7fa">{{ p.amount }}</td></tr>
+<tr style-hover="background:#fbfcfe"><td style="padding:8px 15px;font-size:11.5px;color:#475467;border-bottom:1px solid #f5f7fa">{{ p.date }}</td><td style="padding:8px 15px;font:500 11px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ p.token }}</td><td style="padding:8px 15px;font-size:11.5px;color:#667488;border-bottom:1px solid #f5f7fa">{{ p.channel }}</td><td style="padding:8px 15px;text-align:right;font:500 11px 'Roboto',sans-serif;color:#0e7f72;border-bottom:1px solid #f5f7fa">{{ p.units }}</td><td style="padding:8px 15px;text-align:right;font:600 11px 'Roboto',sans-serif;border-bottom:1px solid #f5f7fa">{{ p.amount }}</td></tr>
 </sc-for></tbody>
 </table>
 </div>
 </div>
 <div style="display:flex;flex-direction:column;gap:14px">
 <div style="border:1px solid #cfe0f7;border-radius:8px;padding:15px 16px;background:linear-gradient(165deg,#f4f9ff,#eaf2fd)">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#0b5fd0;text-transform:uppercase;margin-bottom:8px">Current balance</div>
-<div style="font:600 30px 'IBM Plex Mono',monospace;letter-spacing:-1.2px;color:#08306b">P 142.60</div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#0b5fd0;text-transform:uppercase;margin-bottom:8px">Current balance</div>
+<div style="font:600 30px 'Roboto',sans-serif;letter-spacing:-1.2px;color:#08306b">P 142.60</div>
 <div style="font-size:11px;color:#3f628f;margin-top:6px">≈ 14,260 L at current tariff · about 19 days left</div>
 <div style="margin-top:13px;padding:9px;border-radius:7px;background:#0b5fd0;color:#fff;font-size:12px;font-weight:600;text-align:center;cursor:pointer" style-hover="background:#08419a">Buy water</div>
-<div style="display:flex;gap:6px;margin-top:7px"><sc-for list="{{ quickBuy }}" as="q" hint-placeholder-count="3"><span style="flex:1;text-align:center;padding:6px;border-radius:6px;border:1px solid #b9cbe6;background:#fff;font:600 10.5px 'IBM Plex Mono',monospace;color:#0b5fd0;cursor:pointer">{{ q }}</span></sc-for></div>
+<div style="display:flex;gap:6px;margin-top:7px"><sc-for list="{{ quickBuy }}" as="q" hint-placeholder-count="3"><span style="flex:1;text-align:center;padding:6px;border-radius:6px;border:1px solid #b9cbe6;background:#fff;font:600 10.5px 'Roboto',sans-serif;color:#0b5fd0;cursor:pointer">{{ q }}</span></sc-for></div>
 </div>
 <div style="border:1px solid #e4e8ef;border-radius:8px;padding:14px 15px">
 <div style="font-size:12.5px;font-weight:600;margin-bottom:10px">Meter data</div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ meterData }}" as="m" hint-placeholder-count="7">
-<div style="display:flex;align-items:center;gap:8px;font-size:11px;padding-bottom:8px;border-bottom:1px solid #f5f7fa"><span style="flex:1;color:#8494a8">{{ m.k }}</span><span style="font:500 11px 'IBM Plex Mono',monospace;color:{{ m.tone }}">{{ m.v }}</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:11px;padding-bottom:8px;border-bottom:1px solid #f5f7fa"><span style="flex:1;color:#8494a8">{{ m.k }}</span><span style="font:500 11px 'Roboto',sans-serif;color:{{ m.tone }}">{{ m.v }}</span></div>
 </sc-for>
 </div>
 </div>
 <div style="border:1px solid #ffe0b8;border-radius:8px;padding:13px 15px;background:#fffaf3">
-<div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#b25a00;text-transform:uppercase;margin-bottom:6px">⚑ Leak advisory</div>
+<div style="font:600 9px 'Roboto',sans-serif;letter-spacing:.08em;color:#b25a00;text-transform:uppercase;margin-bottom:6px">⚑ Leak advisory</div>
 <div style="font-size:11.5px;color:#7a4400;line-height:1.5">Continuous flow of 42 L/h detected between 01:00 and 05:00 on 17 Aug. Check internal plumbing or log a technician visit.</div>
 <div style="margin-top:10px;font-size:11px;font-weight:600;color:#b25a00;cursor:pointer">Report a problem →</div>
 </div>
@@ -799,7 +799,7 @@ class Component extends DCLogic {
       React.createElement('path', {d: path + ' L' + (mw - 14) + ' ' + (mh - 18) + ' L14 ' + (mh - 18) + ' Z', fill: '#0b5fd0', fillOpacity: .07}),
       React.createElement('path', {d: path, fill: 'none', stroke: '#0b5fd0', strokeWidth: 2, strokeLinejoin: 'round'}),
       monthPts.map((v, i) => React.createElement('circle', {key: 'c' + i, cx: 14 + i * ((mw - 28) / 5), cy: mh - 18 - (v / mmax) * (mh - 34), r: 3, fill: '#fff', stroke: '#0b5fd0', strokeWidth: 2})),
-      ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((m, i) => React.createElement('text', {key: 't' + i, x: 14 + i * ((mw - 28) / 5), y: mh - 4, fill: '#98a4b5', fontSize: 8.5, textAnchor: 'middle', fontFamily: 'IBM Plex Mono, monospace'}, m))
+      ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((m, i) => React.createElement('text', {key: 't' + i, x: 14 + i * ((mw - 28) / 5), y: mh - 4, fill: '#98a4b5', fontSize: 8.5, textAnchor: 'middle', fontFamily: 'Roboto,sans-serif'}, m))
     );
 
     const sel = st.sel && {
@@ -909,8 +909,8 @@ class Component extends DCLogic {
 
   screenVals() {
     const st = this.state, s = st.screen;
-    const badge = (v, tone, bg) => ({v, color: tone, bg, pad: '2px 7px', font: "600 9.5px 'IBM Plex Mono',monospace", align: 'right'});
-    const txt = (v, o) => ({v, color: (o && o.color) || '#101828', bg: 'transparent', pad: '0', font: (o && o.mono) ? "500 11px 'IBM Plex Mono',monospace" : ((o && o.bold) ? "600 11.5px 'IBM Plex Sans',sans-serif" : "400 11.5px 'IBM Plex Sans',sans-serif"), align: (o && o.align) || 'left'});
+    const badge = (v, tone, bg) => ({v, color: tone, bg, pad: '2px 7px', font: "600 9.5px 'Roboto',sans-serif", align: 'right'});
+    const txt = (v, o) => ({v, color: (o && o.color) || '#101828', bg: 'transparent', pad: '0', font: (o && o.mono) ? "500 11px 'Roboto',sans-serif" : ((o && o.bold) ? "600 11.5px 'Roboto',sans-serif" : "400 11.5px 'Roboto',sans-serif"), align: (o && o.align) || 'left'});
     const ST = {Active: ['#08794a', '#e9f9f1'], Arrears: ['#b42318', '#fef3f2'], Suspended: ['#475467', '#f2f5f9'], Verified: ['#08794a', '#e9f9f1'], Pending: ['#b25a00', '#fff7ed'], Expired: ['#b42318', '#fef3f2'], Online: ['#08794a', '#e9f9f1'], Offline: ['#b42318', '#fef3f2'], 'Low batt': ['#b25a00', '#fff7ed'], Ready: ['#08794a', '#e9f9f1'], Queued: ['#b25a00', '#fff7ed'], Failed: ['#b42318', '#fef3f2']};
     const b = k => badge(k, ST[k][0], ST[k][1]);
     const out = {isTable: false, isReports: s === 'reports', isNetwork: s === 'network', isPortal: s === 'portal', isSettings: s === 'settings', kyc: null, tbl: null, pager: [], closeKyc: () => this.setState({rowSel: null})};
@@ -1047,7 +1047,7 @@ Component.prototype.drawNew = function () {
       const bg = off > .22 ? '#c9302c' : amb > .34 ? '#e08e0b' : '#3a9d4e';
       const d = Math.min(54, 26 + Math.round(Math.sqrt(g.length) * 2.6));
       L.marker([lat, lng], {icon: L.divIcon({className: '', iconSize: [d, d], iconAnchor: [d / 2, d / 2],
-        html: '<div style="width:' + d + 'px;height:' + d + 'px;border-radius:50%;background:' + bg + ';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font:600 ' + (d > 42 ? 13 : 11) + "px 'IBM Plex Mono',monospace\">" + g.length + '</div>'})})
+        html: '<div style="width:' + d + 'px;height:' + d + 'px;border-radius:50%;background:' + bg + ';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font:600 ' + (d > 42 ? 13 : 11) + "px 'Roboto',sans-serif\">" + g.length + '</div>'})})
         .bindTooltip(N(g.length) + ' meters · ' + Math.round((1 - off - amb) * 100) + '% online', {direction: 'top'})
         .on('click', () => this.map.flyTo([lat, lng], Math.min(18, z + 3))).addTo(lg);
     });

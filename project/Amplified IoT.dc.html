@@ -7,7 +7,7 @@
 </head>
 <body>
 <x-dc>
-<helmet><title>Leeroy MDMS</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#F4F5F7;font-family:'Public Sans',system-ui,sans-serif;font-size:13px;color:#181D23;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}a{color:#00468C;text-decoration:none}a:hover{color:#003A75}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px}[data-lm-shell] [data-lm-aside]{transition:margin-left .2s ease,transform .2s ease}[data-lm-shell][data-collapsed=y] [data-lm-aside]{margin-left:-232px}[data-lm-backdrop]{display:none}@media (max-width:900px){[data-lm-shell] [data-lm-aside]{position:fixed!important;left:0;top:0;margin-left:0!important;transform:translateX(-100%);box-shadow:0 8px 28px rgba(16,24,40,.18)}[data-lm-shell][data-mobile=y] [data-lm-aside]{transform:none}[data-lm-shell][data-mobile=y] [data-lm-backdrop]{display:block}[data-lm-hide-sm]{display:none!important}[data-lm-shell] header{padding:0 14px!important}}.leaflet-container{font-family:'Public Sans',sans-serif}.leaflet-tooltip{font-family:'Public Sans',sans-serif;font-size:11.5px;line-height:1.45;color:#181D23;border:1px solid #D2D6DC;border-radius:4px;box-shadow:0 2px 8px rgba(16,24,40,.12);padding:6px 9px}</style></helmet>
+<helmet><title>Leeroy MDMS</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>*{box-sizing:border-box}input,select,textarea,button{font-family:inherit}body{margin:0;background:#F4F5F7;font-family:'Roboto',system-ui,sans-serif;font-size:13px;color:#181D23;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}a{color:#00468C;text-decoration:none}a:hover{color:#003A75}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px}[data-lm-shell] [data-lm-aside]{transition:margin-left .2s ease,transform .2s ease}[data-lm-shell][data-collapsed=y] [data-lm-aside]{margin-left:-232px}[data-lm-backdrop]{display:none}@media (max-width:900px){[data-lm-shell] [data-lm-aside]{position:fixed!important;left:0;top:0;margin-left:0!important;transform:translateX(-100%);box-shadow:0 8px 28px rgba(16,24,40,.18)}[data-lm-shell][data-mobile=y] [data-lm-aside]{transform:none}[data-lm-shell][data-mobile=y] [data-lm-backdrop]{display:block}[data-lm-hide-sm]{display:none!important}[data-lm-shell] header{padding:0 14px!important}}.leaflet-container{font-family:'Roboto',sans-serif}.leaflet-tooltip{font-family:'Roboto',sans-serif;font-size:11.5px;line-height:1.45;color:#181D23;border:1px solid #D2D6DC;border-radius:4px;box-shadow:0 2px 8px rgba(16,24,40,.12);padding:6px 9px}</style></helmet>
 <div data-lm-shell="1" data-collapsed="{{ navCollapsed }}" data-mobile="{{ navMobile }}" style="display:flex;min-height:100vh;align-items:stretch">
 <div data-lm-backdrop="1" onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(16,24,40,.35);z-index:1150"></div>
 
@@ -62,14 +62,14 @@
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:12px 13px 11px">
 <div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:7px">{{ k.label }}</div>
 <div style="font-weight:600;font-size:19px;letter-spacing:-.6px;color:#181D23">{{ k.value }}</div>
-<div style="display:flex;align-items:center;gap:6px;margin-top:7px"><span style="font-size:10.5px;color:#{{ k.deltaColor }};font-weight:600;font-family:'IBM Plex Mono',monospace">{{ k.delta }}</span><span style="font-size:10.5px;color:#767E89">{{ k.sub }}</span></div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:7px"><span style="font-size:10.5px;color:#{{ k.deltaColor }};font-weight:600;font-family:'Roboto',sans-serif">{{ k.delta }}</span><span style="font-size:10.5px;color:#767E89">{{ k.sub }}</span></div>
 </div>
 </sc-for>
 </div>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:10px;margin-bottom:16px">
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px"><div style="font-size:12.5px;font-weight:600">Daily Sales · August 2026</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">Pula, incl. VAT</div></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px"><div style="font-size:12.5px;font-weight:600">Daily Sales · August 2026</div><div style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">Pula, incl. VAT</div></div>
 <div style="display:flex;align-items:flex-end;gap:3px;height:132px">
 <sc-for list="{{ daily }}" as="d" hint-placeholder-count="19">
 <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%" title="{{ d.tip }}">
@@ -81,18 +81,18 @@
 </div>
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
 <div style="font-size:12.5px;font-weight:600;margin-bottom:4px">Monthly Sales</div>
-<div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89;margin-bottom:8px">Last 6 months</div>
+<div style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89;margin-bottom:8px">Last 6 months</div>
 <div>{{ monthChart }}</div>
 </div>
 </div>
 
-<div style="font-size:12px;font-weight:600;color:#49515C;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>LoRaWAN Port Traffic</span><span style="flex:1;height:1px;background:#E0E3E7"></span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">uplinks decoded, period</span></div>
+<div style="font-size:12px;font-weight:600;color:#49515C;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>LoRaWAN Port Traffic</span><span style="flex:1;height:1px;background:#E0E3E7"></span><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">uplinks decoded, period</span></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px">
 <sc-for list="{{ ports }}" as="p" hint-placeholder-count="8">
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:11px 13px">
 <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="font-size:11.5px;font-weight:600;color:{{ p.tone }}">{{ p.label }}</span></div>
 <div style="font-weight:600;font-size:17px;letter-spacing:-.5px">{{ p.value }}</div>
-<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-size:10.5px;color:#767E89">{{ p.kind }}</span><span style="font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:{{ p.tone }}">{{ p.delta }}</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-size:10.5px;color:#767E89">{{ p.kind }}</span><span style="font-weight:600;font-size:10.5px;font-family:'Roboto',sans-serif;color:{{ p.tone }}">{{ p.delta }}</span></div>
 <div style="height:3px;border-radius:3px;background:#ECEEF1;margin-top:7px;overflow:hidden"><div style="height:100%;background:{{ p.tone }};width:{{ p.w }}"></div></div>
 </div>
 </sc-for>
@@ -122,29 +122,29 @@
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 14px">
 <sc-for list="{{ shareBar }}" as="s" hint-placeholder-count="8">
-<div style="display:flex;align-items:center;gap:7px;font-size:11px;padding:2px 0"><span style="width:8px;height:8px;border-radius:2px;background:{{ s.tone }};flex:none"></span><span style="flex:1;color:#49515C">{{ s.name }}</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ s.pct }}</span></div>
+<div style="display:flex;align-items:center;gap:7px;font-size:11px;padding:2px 0"><span style="width:8px;height:8px;border-radius:2px;background:{{ s.tone }};flex:none"></span><span style="flex:1;color:#49515C">{{ s.name }}</span><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#181D23">{{ s.pct }}</span></div>
 </sc-for>
 </div>
 </div>
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px"><div style="font-size:12.5px;font-weight:600">Water Usage by Suburb</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">litres</div></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px"><div style="font-size:12.5px;font-weight:600">Water Usage by Suburb</div><div style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">litres</div></div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ usageBars }}" as="u" hint-placeholder-count="10">
-<div style="display:flex;align-items:center;gap:9px"><span style="width:112px;font-size:10.5px;color:#49515C;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span><div style="flex:1;height:11px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:#2A7A7E;width:{{ u.w }}"></div></div><span style="width:88px;font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ u.value }}</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:112px;font-size:10.5px;color:#49515C;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span><div style="flex:1;height:11px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:#2A7A7E;width:{{ u.w }}"></div></div><span style="width:88px;font-weight:500;font-size:10px;font-family:'Roboto',sans-serif;color:#767E89">{{ u.value }}</span></div>
 </sc-for>
 </div>
 </div>
 </div>
 
-<div style="font-size:12px;font-weight:600;color:#49515C;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>Suburb Analysis</span><span style="flex:1;height:1px;background:#E0E3E7"></span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ suburbCount }} zones · sorted by tokens sold</span></div>
+<div style="font-size:12px;font-weight:600;color:#49515C;margin:0 0 9px;display:flex;align-items:center;gap:8px"><span>Suburb Analysis</span><span style="flex:1;height:1px;background:#E0E3E7"></span><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">{{ suburbCount }} zones · sorted by tokens sold</span></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:16px">
 <sc-for list="{{ suburbs }}" as="s" hint-placeholder-count="12">
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:11px 13px 10px" style-hover="border-color:#B8CFE8">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px"><span style="font-size:12.5px;font-weight:600;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ s.name }}">{{ s.name }}</span><span style="font-size:11.5px;color:#767E89;flex:none;margin-left:8px">{{ s.tokens }} tokens</span></div>
 <div style="display:flex;flex-direction:column;gap:7px">
-<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Total sales</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ s.sales }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#00468C;width:{{ s.salesW }}"></div></div></div>
-<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Total usage</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#2A7A7E">{{ s.usage }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#2A7A7E;width:{{ s.usageW }}"></div></div></div>
-<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Transactions</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ s.tx }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#97B8DC;width:{{ s.txW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Total sales</span><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#181D23">{{ s.sales }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#00468C;width:{{ s.salesW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Total usage</span><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#2A7A7E">{{ s.usage }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#2A7A7E;width:{{ s.usageW }}"></div></div></div>
+<div><div style="display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:3px"><span style="color:#767E89">Transactions</span><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#181D23">{{ s.tx }}</span></div><div style="height:3px;background:#F0F2F4;border-radius:3px;overflow:hidden"><div style="height:100%;background:#97B8DC;width:{{ s.txW }}"></div></div></div>
 </div>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:8px;border-top:1px solid #F0F2F4"><span style="font-size:10px;color:#A1A8B2">{{ s.meters }} meters</span><span style="font-size:10px;color:#00468C;cursor:pointer;font-weight:500">View history</span></div>
 </div>
@@ -157,7 +157,7 @@
 <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
 <thead><tr><sc-for list="{{ provHead }}" as="h" hint-placeholder-count="4"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ providers }}" as="p" hint-placeholder-count="3">
-<tr style-hover="background:#FAFBFC"><td style="padding:9px 15px;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.id }}</td><td style="padding:9px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.tx }}</td><td style="padding:9px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.amount }}</td><td style="padding:9px 15px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#00468C">{{ p.share }}</span></td></tr>
+<tr style-hover="background:#FAFBFC"><td style="padding:9px 15px;font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ p.id }}</td><td style="padding:9px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ p.tx }}</td><td style="padding:9px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ p.amount }}</td><td style="padding:9px 15px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:10.5px;font-family:'Roboto',sans-serif;color:#00468C">{{ p.share }}</span></td></tr>
 </sc-for></tbody>
 </table></div>
 </div>
@@ -166,7 +166,7 @@
 <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
 <thead><tr><sc-for list="{{ ledgerHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ ledger }}" as="r" hint-placeholder-count="10">
-<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.date }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ r.total }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.excl }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.vat }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ r.tx }}</td></tr>
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.date }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ r.total }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.excl }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4;color:#49515C">{{ r.vat }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ r.tx }}</td></tr>
 </sc-for></tbody>
 </table></div>
 </div>
@@ -208,7 +208,7 @@
 
 <sc-if value="{{ boxCount }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;left:52px;top:10px;z-index:600;background:#181D23;border-radius:5px;padding:8px 12px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 6px rgba(0,0,0,.35)">
-<span style="font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#fff">{{ boxCount }} meters in selection</span>
+<span style="font-weight:600;font-size:11px;font-family:'Roboto',sans-serif;color:#fff">{{ boxCount }} meters in selection</span>
 <span style="font-size:10.5px;color:#8ee0c8;cursor:pointer;font-weight:600">Queue downlink</span>
 <span style="font-size:10.5px;color:#9fb4d0;cursor:pointer;font-weight:600">Export</span>
 <span onClick="{{ clearBox }}" style="font-size:11px;color:#7d8ba1;cursor:pointer">✕</span>
@@ -229,18 +229,18 @@
 <span style="font-size:11.5px;font-weight:600;color:#767E89">Gateways</span>
 <sc-for list="{{ gateways }}" as="g" hint-placeholder-count="6">
 <div onClick="{{ g.go }}" style="display:flex;align-items:center;gap:6px;border:1px solid #E0E3E7;border-radius:20px;padding:4px 10px;cursor:pointer" style-hover="border-color:#B8CFE8;background:#FAFBFC">
-<span style="width:7px;height:7px;border-radius:50%;background:{{ g.dot }};flex:none"></span><span style="font-weight:600;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ g.id }}</span><span style="font-size:10px;color:#767E89">{{ g.meters }} nodes · {{ g.rssi }}</span>
+<span style="width:7px;height:7px;border-radius:50%;background:{{ g.dot }};flex:none"></span><span style="font-weight:600;font-size:10px;font-family:'Roboto',sans-serif;color:#181D23">{{ g.id }}</span><span style="font-size:10px;color:#767E89">{{ g.meters }} nodes · {{ g.rssi }}</span>
 </div>
 </sc-for>
 <span style="flex:1"></span>
 <span onClick="{{ toggleRings }}" style="font-size:10.5px;color:#00468C;cursor:pointer;font-weight:600">{{ ringLabel }}</span>
-<span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ plotted }} plotted · {{ zoomLabel }}</span>
+<span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#49515C">{{ plotted }} plotted · {{ zoomLabel }}</span>
 </div>
 <sc-if value="{{ sel }}" hint-placeholder-val="{{ false }}">
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;padding:13px 15px">
 <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span style="font-weight:600;font-size:13px">{{ sel.id }}</span><span style="font-weight:600;font-size:11px;background:{{ sel.tone }};color:#fff;padding:2px 7px;border-radius:4px">{{ sel.status }}</span><span style="flex:1"></span><span onClick="{{ clearSel }}" style="font-size:11px;color:#767E89;cursor:pointer">Close ✕</span></div>
 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:9px">
-<sc-for list="{{ sel.fields }}" as="f" hint-placeholder-count="12"><div style="border:1px solid #ECEEF1;border-radius:6px;padding:8px 10px;background:#FAFBFC"><div style="font-size:9.5px;color:#767E89;margin-bottom:3px;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace">{{ f.k }}</div><div style="font-weight:500;font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:#181D23">{{ f.v }}</div></div></sc-for>
+<sc-for list="{{ sel.fields }}" as="f" hint-placeholder-count="12"><div style="border:1px solid #ECEEF1;border-radius:6px;padding:8px 10px;background:#FAFBFC"><div style="font-size:9.5px;color:#767E89;margin-bottom:3px;letter-spacing:.05em;font-family:'Roboto',sans-serif">{{ f.k }}</div><div style="font-weight:500;font-size:11.5px;font-family:'Roboto',sans-serif;color:#181D23">{{ f.v }}</div></div></sc-for>
 </div>
 </div>
 </sc-if>
@@ -283,7 +283,7 @@
 </tbody>
 </table>
 </div>
-<div style="padding:9px 13px;display:flex;align-items:center;gap:8px;border-top:1px solid #ECEEF1"><span style="font-size:10.5px;color:#767E89;flex:1">{{ tbl.pageInfo }}</span><sc-for list="{{ pager }}" as="p" hint-placeholder-count="5"><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:4px;background:{{ p.bg }};color:{{ p.color }};cursor:pointer">{{ p.label }}</span></sc-for></div>
+<div style="padding:9px 13px;display:flex;align-items:center;gap:8px;border-top:1px solid #ECEEF1"><span style="font-size:10.5px;color:#767E89;flex:1">{{ tbl.pageInfo }}</span><sc-for list="{{ pager }}" as="p" hint-placeholder-count="5"><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;padding:3px 8px;border-radius:4px;background:{{ p.bg }};color:{{ p.color }};cursor:pointer">{{ p.label }}</span></sc-for></div>
 </div>
 <sc-if value="{{ mf }}" hint-placeholder-val="{{ false }}">
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden;position:sticky;top:66px;max-height:calc(100vh - 96px);display:flex;flex-direction:column">
@@ -340,33 +340,33 @@
 <sc-if value="{{ kyc }}" hint-placeholder-val="{{ false }}">
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden;position:sticky;top:66px">
 <div style="padding:12px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:flex-start;gap:10px">
-<div style="width:34px;height:34px;flex:none;border-radius:7px;background:#EBF1F8;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;font-family:'IBM Plex Mono',monospace;color:#00468C">{{ kyc.initials }}</div>
-<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;letter-spacing:-.1px">{{ kyc.name }}</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ kyc.id }} · {{ kyc.kind }}</div></div>
+<div style="width:34px;height:34px;flex:none;border-radius:7px;background:#EBF1F8;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;font-family:'Roboto',sans-serif;color:#00468C">{{ kyc.initials }}</div>
+<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;letter-spacing:-.1px">{{ kyc.name }}</div><div style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">{{ kyc.id }} · {{ kyc.kind }}</div></div>
 <span onClick="{{ closeKyc }}" style="font-size:11px;color:#767E89;cursor:pointer">✕</span>
 </div>
 <div style="padding:11px 14px;border-bottom:1px solid #ECEEF1">
 <div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:8px">KYC Verification</div>
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="flex:1;height:5px;background:#F0F2F4;border-radius:5px;overflow:hidden"><div style="height:100%;background:{{ kyc.tone }};width:{{ kyc.pctW }}"></div></div><span style="font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:{{ kyc.tone }}">{{ kyc.pct }}</span></div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="flex:1;height:5px;background:#F0F2F4;border-radius:5px;overflow:hidden"><div style="height:100%;background:{{ kyc.tone }};width:{{ kyc.pctW }}"></div></div><span style="font-weight:600;font-size:10.5px;font-family:'Roboto',sans-serif;color:{{ kyc.tone }}">{{ kyc.pct }}</span></div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ kyc.docs }}" as="d" hint-placeholder-count="5">
-<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span style="width:14px;height:14px;border-radius:3px;background:{{ d.tone }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex:none">{{ d.mark }}</span><span style="flex:1;color:#49515C">{{ d.label }}</span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ d.meta }}</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span style="width:14px;height:14px;border-radius:3px;background:{{ d.tone }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex:none">{{ d.mark }}</span><span style="flex:1;color:#49515C">{{ d.label }}</span><span style="font-weight:500;font-size:10px;font-family:'Roboto',sans-serif;color:#767E89">{{ d.meta }}</span></div>
 </sc-for>
 </div>
 </div>
 <div style="padding:11px 14px;border-bottom:1px solid #ECEEF1">
 <div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:8px">Account</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<sc-for list="{{ kyc.fields }}" as="f" hint-placeholder-count="8"><div><div style="font-size:9.5px;color:#A1A8B2;margin-bottom:2px">{{ f.k }}</div><div style="font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:{{ f.tone }}">{{ f.v }}</div></div></sc-for>
+<sc-for list="{{ kyc.fields }}" as="f" hint-placeholder-count="8"><div><div style="font-size:9.5px;color:#A1A8B2;margin-bottom:2px">{{ f.k }}</div><div style="font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;color:{{ f.tone }}">{{ f.v }}</div></div></sc-for>
 </div>
 </div>
 <sc-if value="{{ kyc.props }}" hint-placeholder-val="{{ false }}">
 <div style="padding:11px 14px;border-bottom:1px solid #ECEEF1">
-<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:8px"><span style="font-size:11.5px;font-weight:600;color:#767E89;flex:1">Properties & meters</span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ kyc.propCount }}</span></div>
+<div style="display:flex;align-items:baseline;gap:7px;margin-bottom:8px"><span style="font-size:11.5px;font-weight:600;color:#767E89;flex:1">Properties & meters</span><span style="font-weight:500;font-size:10px;font-family:'Roboto',sans-serif;color:#49515C">{{ kyc.propCount }}</span></div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <sc-for list="{{ kyc.props }}" as="p" hint-placeholder-count="4">
 <div style="border:1px solid #ECEEF1;border-radius:6px;padding:8px 9px;background:#FAFBFC">
-<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#00468C">{{ p.meter }}</span><span style="flex:1;font-size:10.5px;color:#49515C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.plot }}</span></div>
-<div style="display:flex;align-items:center;gap:7px"><span style="font-size:10.5px;color:#181D23;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.tenant }}</span><span style="font-weight:600;font-size:11px;color:{{ p.tone }};background:#fff;border:1px solid #E0E3E7;padding:1px 5px;border-radius:3px">{{ p.vends }}</span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ p.bal }}</span></div>
+<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#00468C">{{ p.meter }}</span><span style="flex:1;font-size:10.5px;color:#49515C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.plot }}</span></div>
+<div style="display:flex;align-items:center;gap:7px"><span style="font-size:10.5px;color:#181D23;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.tenant }}</span><span style="font-weight:600;font-size:11px;color:{{ p.tone }};background:#fff;border:1px solid #E0E3E7;padding:1px 5px;border-radius:3px">{{ p.vends }}</span><span style="font-weight:500;font-size:10px;font-family:'Roboto',sans-serif;color:#49515C">{{ p.bal }}</span></div>
 </div>
 </sc-for>
 </div>
@@ -376,7 +376,7 @@
 <div style="padding:11px 14px">
 <div style="font-size:11.5px;font-weight:600;color:#767E89;margin-bottom:8px">Recent purchases</div>
 <sc-for list="{{ kyc.purchases }}" as="p" hint-placeholder-count="4">
-<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F0F2F4;font-size:11px"><span style="flex:1;color:#49515C">{{ p.date }}</span><span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ p.channel }}</span><span style="font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace">{{ p.amount }}</span></div>
+<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F0F2F4;font-size:11px"><span style="flex:1;color:#49515C">{{ p.date }}</span><span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">{{ p.channel }}</span><span style="font-weight:600;font-size:11px;font-family:'Roboto',sans-serif">{{ p.amount }}</span></div>
 </sc-for>
 <div style="display:flex;gap:7px;margin-top:11px"><div style="flex:1;padding:7px;border-radius:6px;background:#00468C;color:#fff;font-size:11px;font-weight:600;text-align:center;cursor:pointer">Open full profile</div><div style="padding:7px 11px;border-radius:6px;border:1px solid #E0E3E7;color:#49515C;font-size:11px;font-weight:600;cursor:pointer">Meters</div></div>
 </div>
@@ -407,7 +407,7 @@
 <table style="width:100%;border-collapse:collapse">
 <thead><tr><sc-for list="{{ genHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ generated }}" as="g" hint-placeholder-count="8">
-<tr style-hover="background:#FAFBFC"><td style="padding:8px 14px;font-size:11.5px;border-bottom:1px solid #F0F2F4;font-weight:500">{{ g.name }}</td><td style="padding:8px 14px;font-size:11px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.range }}</td><td style="padding:8px 14px;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.by }}</td><td style="padding:8px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.status }}</span></td><td style="padding:8px 14px;text-align:right;font-size:11px;border-bottom:1px solid #F0F2F4"><span style="color:#00468C;font-weight:600;cursor:pointer">{{ g.action }}</span></td></tr>
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 14px;font-size:11.5px;border-bottom:1px solid #F0F2F4;font-weight:500">{{ g.name }}</td><td style="padding:8px 14px;font-size:11px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.range }}</td><td style="padding:8px 14px;font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.by }}</td><td style="padding:8px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.status }}</span></td><td style="padding:8px 14px;text-align:right;font-size:11px;border-bottom:1px solid #F0F2F4"><span style="color:#00468C;font-weight:600;cursor:pointer">{{ g.action }}</span></td></tr>
 </sc-for></tbody>
 </table>
 </div>
@@ -416,7 +416,7 @@
 <sc-for list="{{ schedules }}" as="s" hint-placeholder-count="5">
 <div style="padding:10px 14px;border-bottom:1px solid #F0F2F4">
 <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11.5px;font-weight:600;flex:1">{{ s.name }}</span><span style="width:26px;height:14px;border-radius:9px;background:{{ s.sw }};position:relative;flex:none"><span style="position:absolute;top:2px;left:{{ s.knob }};width:10px;height:10px;border-radius:50%;background:#fff"></span></span></div>
-<div style="font-size:10.5px;color:#767E89;margin-top:3px;font-family:'IBM Plex Mono',monospace">{{ s.cron }} · {{ s.to }}</div>
+<div style="font-size:10.5px;color:#767E89;margin-top:3px;font-family:'Roboto',sans-serif">{{ s.cron }} · {{ s.to }}</div>
 </div>
 </sc-for>
 </div>
@@ -440,7 +440,7 @@
 <div style="font-size:12.5px;font-weight:600;margin-bottom:11px">Spreading factor distribution</div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <sc-for list="{{ sfBars }}" as="s" hint-placeholder-count="6">
-<div style="display:flex;align-items:center;gap:9px"><span style="width:34px;font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ s.sf }}</span><div style="flex:1;height:13px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ s.tone }};width:{{ s.w }}"></div></div><span style="width:96px;font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89;text-align:right">{{ s.value }}</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:34px;font-weight:600;font-size:10.5px;font-family:'Roboto',sans-serif;color:#49515C">{{ s.sf }}</span><div style="flex:1;height:13px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ s.tone }};width:{{ s.w }}"></div></div><span style="width:96px;font-weight:500;font-size:10px;font-family:'Roboto',sans-serif;color:#767E89;text-align:right">{{ s.value }}</span></div>
 </sc-for>
 </div>
 <div style="font-size:10.5px;color:#767E89;margin-top:11px;line-height:1.5">Higher spreading factors reach further but consume more airtime. SF12 nodes above 8% of the fleet usually indicate a coverage gap.</div>
@@ -449,7 +449,7 @@
 <div style="font-size:12.5px;font-weight:600;margin-bottom:11px">Packet loss by gateway · last 24h</div>
 <div style="display:flex;flex-direction:column;gap:7px">
 <sc-for list="{{ lossBars }}" as="g" hint-placeholder-count="6">
-<div style="display:flex;align-items:center;gap:9px"><span style="width:84px;font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#49515C">{{ g.id }}</span><div style="flex:1;height:13px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ g.tone }};width:{{ g.w }}"></div></div><span style="width:52px;font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#767E89;text-align:right">{{ g.value }}</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:84px;font-weight:600;font-size:10.5px;font-family:'Roboto',sans-serif;color:#49515C">{{ g.id }}</span><div style="flex:1;height:13px;background:#F0F2F4;border-radius:2px;overflow:hidden"><div style="height:100%;background:{{ g.tone }};width:{{ g.w }}"></div></div><span style="width:52px;font-weight:500;font-size:10px;font-family:'Roboto',sans-serif;color:#767E89;text-align:right">{{ g.value }}</span></div>
 </sc-for>
 </div>
 </div>
@@ -460,15 +460,15 @@
 <table style="width:100%;border-collapse:collapse">
 <thead><tr><sc-for list="{{ gwHead }}" as="h" hint-placeholder-count="7"><th style="text-align:{{ h.align }};padding:7px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ gwRows }}" as="g" hint-placeholder-count="6">
-<tr style-hover="background:#FAFBFC"><td style="padding:9px 14px;font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ g.id }}</td><td style="padding:9px 14px;font-size:11px;color:#49515C;border-bottom:1px solid #F0F2F4">{{ g.site }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ g.nodes }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.rssi }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.up }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.state }}</span></td></tr>
+<tr style-hover="background:#FAFBFC"><td style="padding:9px 14px;font-weight:600;font-size:11px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ g.id }}</td><td style="padding:9px 14px;font-size:11px;color:#49515C;border-bottom:1px solid #F0F2F4">{{ g.site }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ g.nodes }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.rssi }}</td><td style="padding:9px 14px;text-align:right;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;color:#767E89;border-bottom:1px solid #F0F2F4">{{ g.up }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ g.bg }};color:{{ g.tone }};padding:2px 7px;border-radius:4px">{{ g.state }}</span></td></tr>
 </sc-for></tbody>
 </table>
 </div>
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
-<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">Uplink log</span><span style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#2E9D5B"></span><span style="font-weight:500;font-size:10px;font-family:'IBM Plex Mono',monospace;color:#237A48">streaming</span></span></div>
+<div style="padding:11px 14px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;flex:1">Uplink log</span><span style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:#2E9D5B"></span><span style="font-weight:500;font-size:10px;font-family:'Roboto',sans-serif;color:#237A48">streaming</span></span></div>
 <div style="max-height:340px;overflow-y:auto;background:#FFFFFF">
 <sc-for list="{{ uplinks }}" as="u" hint-placeholder-count="14">
-<div style="display:flex;gap:9px;padding:6px 13px;border-bottom:1px solid #F0F2F4;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">
+<div style="display:flex;gap:9px;padding:6px 13px;border-bottom:1px solid #F0F2F4;font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;white-space:nowrap">
 <span style="color:#767E89">{{ u.t }}</span><span style="color:#00468C">{{ u.dev }}</span><span style="color:{{ u.tone }}">{{ u.port }}</span><span style="color:#49515C;flex:1;overflow:hidden;text-overflow:ellipsis">{{ u.payload }}</span><span style="color:#767E89">{{ u.rssi }}</span>
 </div>
 </sc-for>
@@ -489,7 +489,7 @@
 <table style="width:100%;border-collapse:collapse">
 <thead><tr><sc-for list="{{ userHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 14px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ users }}" as="u" hint-placeholder-count="8">
-<tr style-hover="background:#FAFBFC"><td style="padding:9px 14px;border-bottom:1px solid #F0F2F4"><div style="display:flex;align-items:center;gap:9px"><span style="width:24px;height:24px;border-radius:50%;background:#ECEEF1;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;color:#49515C">{{ u.ini }}</span><div><div style="font-size:11.5px;font-weight:600">{{ u.name }}</div><div style="font-size:10px;color:#767E89">{{ u.email }}</div></div></div></td><td style="padding:9px 14px;font-size:11.5px;border-bottom:1px solid #F0F2F4">{{ u.role }}</td><td style="padding:9px 14px;font-size:11px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ u.scope }}</td><td style="padding:9px 14px;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89;border-bottom:1px solid #F0F2F4">{{ u.seen }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ u.bg }};color:{{ u.tone }};padding:2px 7px;border-radius:4px">{{ u.status }}</span></td><td style="padding:9px 14px;text-align:right;font-size:11px;border-bottom:1px solid #F0F2F4"><span style="color:#00468C;font-weight:600;cursor:pointer">Edit</span></td></tr>
+<tr style-hover="background:#FAFBFC"><td style="padding:9px 14px;border-bottom:1px solid #F0F2F4"><div style="display:flex;align-items:center;gap:9px"><span style="width:24px;height:24px;border-radius:50%;background:#ECEEF1;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;color:#49515C">{{ u.ini }}</span><div><div style="font-size:11.5px;font-weight:600">{{ u.name }}</div><div style="font-size:10px;color:#767E89">{{ u.email }}</div></div></div></td><td style="padding:9px 14px;font-size:11.5px;border-bottom:1px solid #F0F2F4">{{ u.role }}</td><td style="padding:9px 14px;font-size:11px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ u.scope }}</td><td style="padding:9px 14px;font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89;border-bottom:1px solid #F0F2F4">{{ u.seen }}</td><td style="padding:9px 14px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;background:{{ u.bg }};color:{{ u.tone }};padding:2px 7px;border-radius:4px">{{ u.status }}</span></td><td style="padding:9px 14px;text-align:right;font-size:11px;border-bottom:1px solid #F0F2F4"><span style="color:#00468C;font-weight:600;cursor:pointer">Edit</span></td></tr>
 </sc-for></tbody>
 </table>
 </div>
@@ -523,7 +523,7 @@
 <div style="background:#fff;border:1px solid #E0E3E7;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.05)">
 <div style="height:34px;background:#F0F2F4;border-bottom:1px solid #E0E3E7;display:flex;align-items:center;gap:8px;padding:0 12px">
 <span style="font-size:12px;color:#767E89">Customer portal preview</span>
-<div style="flex:1;max-width:340px;background:#fff;border:1px solid #E0E3E7;border-radius:5px;padding:3px 9px;font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">myaccount.amplifiediot.co.bw/usage</div>
+<div style="flex:1;max-width:340px;background:#fff;border:1px solid #E0E3E7;border-radius:5px;padding:3px 9px;font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">myaccount.amplifiediot.co.bw/usage</div>
 </div>
 <div style="padding:16px 22px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:14px">
 <img src="assets/leeroy-logo.png" alt="Leeroy MDMS" style="height:34px;width:auto;display:block">
@@ -543,13 +543,13 @@
 <div style="border:1px solid #E0E3E7;border-radius:8px;overflow:hidden">
 <div style="padding:11px 15px;border-bottom:1px solid #ECEEF1;display:flex;align-items:center;gap:10px">
 <span style="font-size:12.5px;font-weight:600;flex:1">My properties · {{ portfolioCount }}</span>
-<span style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">{{ portfolioSummary }}</span>
+<span style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">{{ portfolioSummary }}</span>
 <span style="font-size:11px;color:#00468C;font-weight:600;cursor:pointer">Statement</span>
 </div>
 <table style="width:100%;border-collapse:collapse">
 <thead><tr><sc-for list="{{ portfolioHead }}" as="h" hint-placeholder-count="6"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ portfolio }}" as="p" hint-placeholder-count="6">
-<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:#00468C">{{ p.meter }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4">{{ p.plot }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4;color:#49515C">{{ p.tenant }}</td><td style="padding:8px 15px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;color:{{ p.tone }};border:1px solid #E0E3E7;padding:2px 6px;border-radius:3px">{{ p.vends }}</span></td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#2A7A7E;border-bottom:1px solid #F0F2F4">{{ p.usage }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4;color:{{ p.balTone }}">{{ p.bal }}</td></tr>
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4;color:#00468C">{{ p.meter }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4">{{ p.plot }}</td><td style="padding:8px 15px;font-size:11.5px;border-bottom:1px solid #F0F2F4;color:#49515C">{{ p.tenant }}</td><td style="padding:8px 15px;text-align:right;border-bottom:1px solid #F0F2F4"><span style="font-weight:600;font-size:11px;color:{{ p.tone }};border:1px solid #E0E3E7;padding:2px 6px;border-radius:3px">{{ p.vends }}</span></td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;color:#2A7A7E;border-bottom:1px solid #F0F2F4">{{ p.usage }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4;color:{{ p.balTone }}">{{ p.bal }}</td></tr>
 </sc-for></tbody>
 </table>
 <div style="padding:9px 15px;border-top:1px solid #ECEEF1;font-size:10.5px;color:#767E89;line-height:1.5">Tenants buy water in their own names against these meters. You keep ownership, see every meter's usage and balance, and are billed directly only for vacant units.</div>
@@ -568,7 +568,7 @@
 </sc-for>
 </div>
 <div style="border:1px solid #E0E3E7;border-radius:8px;padding:14px 16px">
-<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><div style="font-size:12.5px;font-weight:600">Usage history</div><div style="font-weight:500;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#767E89">litres per month · 12 months</div></div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><div style="font-size:12.5px;font-weight:600">Usage history</div><div style="font-weight:500;font-size:10.5px;font-family:'Roboto',sans-serif;color:#767E89">litres per month · 12 months</div></div>
 <div style="display:flex;align-items:flex-end;gap:5px;height:140px">
 <sc-for list="{{ portalUsage }}" as="u" hint-placeholder-count="12">
 <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%" title="{{ u.tip }}">
@@ -584,7 +584,7 @@
 <table style="width:100%;border-collapse:collapse">
 <thead><tr><sc-for list="{{ purchHead }}" as="h" hint-placeholder-count="5"><th style="text-align:{{ h.align }};padding:7px 15px;font-size:11.5px;font-weight:600;color:#767E89;background:#FAFBFC;border-bottom:1px solid #ECEEF1">{{ h.label }}</th></sc-for></tr></thead>
 <tbody><sc-for list="{{ purchases }}" as="p" hint-placeholder-count="7">
-<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-size:11.5px;color:#49515C;border-bottom:1px solid #F0F2F4">{{ p.date }}</td><td style="padding:8px 15px;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.token }}</td><td style="padding:8px 15px;font-size:11.5px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ p.channel }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:#2A7A7E;border-bottom:1px solid #F0F2F4">{{ p.units }}</td><td style="padding:8px 15px;text-align:right;font-weight:600;font-size:11px;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid #F0F2F4">{{ p.amount }}</td></tr>
+<tr style-hover="background:#FAFBFC"><td style="padding:8px 15px;font-size:11.5px;color:#49515C;border-bottom:1px solid #F0F2F4">{{ p.date }}</td><td style="padding:8px 15px;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ p.token }}</td><td style="padding:8px 15px;font-size:11.5px;color:#767E89;border-bottom:1px solid #F0F2F4">{{ p.channel }}</td><td style="padding:8px 15px;text-align:right;font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;color:#2A7A7E;border-bottom:1px solid #F0F2F4">{{ p.units }}</td><td style="padding:8px 15px;text-align:right;font-weight:600;font-size:11px;font-family:'Roboto',sans-serif;border-bottom:1px solid #F0F2F4">{{ p.amount }}</td></tr>
 </sc-for></tbody>
 </table>
 </div>
@@ -595,13 +595,13 @@
 <div style="font-weight:600;font-size:30px;letter-spacing:-1.2px;color:#00468C">P 142.60</div>
 <div style="font-size:11px;color:#49515C;margin-top:6px">≈ 14,260 L at current tariff · about 19 days left</div>
 <div style="margin-top:13px;padding:9px;border-radius:7px;background:#00468C;color:#fff;font-size:12px;font-weight:600;text-align:center;cursor:pointer" style-hover="background:#003A75">Buy water</div>
-<div style="display:flex;gap:6px;margin-top:7px"><sc-for list="{{ quickBuy }}" as="q" hint-placeholder-count="3"><span style="flex:1;text-align:center;padding:6px;border-radius:6px;border:1px solid #B8CFE8;background:#fff;font-weight:600;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#00468C;cursor:pointer">{{ q }}</span></sc-for></div>
+<div style="display:flex;gap:6px;margin-top:7px"><sc-for list="{{ quickBuy }}" as="q" hint-placeholder-count="3"><span style="flex:1;text-align:center;padding:6px;border-radius:6px;border:1px solid #B8CFE8;background:#fff;font-weight:600;font-size:10.5px;font-family:'Roboto',sans-serif;color:#00468C;cursor:pointer">{{ q }}</span></sc-for></div>
 </div>
 <div style="border:1px solid #E0E3E7;border-radius:8px;padding:14px 15px">
 <div style="font-size:12.5px;font-weight:600;margin-bottom:10px">Meter data</div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ meterData }}" as="m" hint-placeholder-count="7">
-<div style="display:flex;align-items:center;gap:8px;font-size:11px;padding-bottom:8px;border-bottom:1px solid #F0F2F4"><span style="flex:1;color:#767E89">{{ m.k }}</span><span style="font-weight:500;font-size:11px;font-family:'IBM Plex Mono',monospace;color:{{ m.tone }}">{{ m.v }}</span></div>
+<div style="display:flex;align-items:center;gap:8px;font-size:11px;padding-bottom:8px;border-bottom:1px solid #F0F2F4"><span style="flex:1;color:#767E89">{{ m.k }}</span><span style="font-weight:500;font-size:11px;font-family:'Roboto',sans-serif;color:{{ m.tone }}">{{ m.v }}</span></div>
 </sc-for>
 </div>
 </div>
@@ -872,7 +872,7 @@ class Component extends DCLogic {
       React.createElement('path', {d: path + ' L' + (mw - 14) + ' ' + (mh - 18) + ' L14 ' + (mh - 18) + ' Z', fill: '#00468C', fillOpacity: .07}),
       React.createElement('path', {d: path, fill: 'none', stroke: '#00468C', strokeWidth: 2, strokeLinejoin: 'round'}),
       monthPts.map((v, i) => React.createElement('circle', {key: 'c' + i, cx: 14 + i * ((mw - 28) / 5), cy: mh - 18 - (v / mmax) * (mh - 34), r: 3, fill: '#fff', stroke: '#00468C', strokeWidth: 2})),
-      ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((m, i) => React.createElement('text', {key: 't' + i, x: 14 + i * ((mw - 28) / 5), y: mh - 4, fill: '#A1A8B2', fontSize: 8.5, textAnchor: 'middle', fontFamily: 'IBM Plex Mono, monospace'}, m))
+      ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'].map((m, i) => React.createElement('text', {key: 't' + i, x: 14 + i * ((mw - 28) / 5), y: mh - 4, fill: '#A1A8B2', fontSize: 8.5, textAnchor: 'middle', fontFamily: 'Roboto,sans-serif'}, m))
     );
 
     const sel = st.sel && {
@@ -983,8 +983,8 @@ class Component extends DCLogic {
 
   screenVals() {
     const st = this.state, s = st.screen;
-    const badge = (v, tone, bg) => ({v, color: tone, bg, pad: '2px 7px', font: "600 9.5px 'IBM Plex Mono',monospace", align: 'right'});
-    const txt = (v, o) => ({v, color: (o && o.color) || '#181D23', bg: 'transparent', pad: '0', font: (o && o.mono) ? "500 11px 'IBM Plex Mono',monospace" : ((o && o.bold) ? "600 11.5px 'Public Sans',sans-serif" : "400 11.5px 'Public Sans',sans-serif"), align: (o && o.align) || 'left'});
+    const badge = (v, tone, bg) => ({v, color: tone, bg, pad: '2px 7px', font: "600 9.5px 'Roboto',sans-serif", align: 'right'});
+    const txt = (v, o) => ({v, color: (o && o.color) || '#181D23', bg: 'transparent', pad: '0', font: (o && o.mono) ? "500 11px 'Roboto',sans-serif" : ((o && o.bold) ? "600 11.5px 'Roboto',sans-serif" : "400 11.5px 'Roboto',sans-serif"), align: (o && o.align) || 'left'});
     const ST = {Active: ['#237A48', '#E6F2EA'], Arrears: ['#B3261E', '#FAE8E6'], Suspended: ['#49515C', '#F0F2F4'], Verified: ['#237A48', '#E6F2EA'], Pending: ['#965A00', '#FAF0DC'], Expired: ['#B3261E', '#FAE8E6'], Online: ['#237A48', '#E6F2EA'], Offline: ['#B3261E', '#FAE8E6'], 'Low batt': ['#965A00', '#FAF0DC'], Ready: ['#237A48', '#E6F2EA'], Queued: ['#965A00', '#FAF0DC'], Failed: ['#B3261E', '#FAE8E6']};
     const b = k => badge(k, ST[k][0], ST[k][1]);
     const out = {isTable: false, isReports: s === 'reports', isNetwork: s === 'network', isPortal: s === 'portal', isSettings: s === 'settings', kyc: null, mf: null, tbl: null, pager: [], closeKyc: () => this.setState({rowSel: null})};
@@ -1114,7 +1114,7 @@ class Component extends DCLogic {
         sections: MF_SECTIONS().map(sec => ({title: sec.title, fields: sec.fields.map(f => {
           const val = v[f.k] || '', err = tried && errs[f.k];
           return {label: f.label, star: f.req ? ' *' : '', span: f.span || 'auto', value: val, ph: f.ph || '', type: f.type || 'text',
-            ff: f.mono ? "'IBM Plex Mono',monospace" : 'inherit', isText: f.kind === 'text', isSelect: f.kind === 'select', isSeg: f.kind === 'seg',
+            ff: f.mono ? "'Roboto',sans-serif" : 'inherit', isText: f.kind === 'text', isSelect: f.kind === 'select', isSeg: f.kind === 'seg',
             border: err ? '#B3261E' : '#D2D6DC', opts: f.opts || [], onChange: e => set(f.k, e.target.value),
             segs: (f.opts || []).map(o => ({label: o, go: () => set(f.k, o), weight: val === o ? 600 : 500, bg: val === o ? '#00468C' : 'transparent', color: val === o ? '#fff' : '#49515C'})),
             info: err || f.hint || false, infoTone: err ? '#B3261E' : '#767E89'};
@@ -1160,7 +1160,7 @@ Component.prototype.drawNew = function () {
       const bg = 'conic-gradient(#2E9D5B 0 ' + okP + '%,#E0A00B ' + okP + '% ' + lateP + '%,#D6452E ' + lateP + '% 100%)';
       const d = Math.min(52, 28 + Math.round(Math.sqrt(g.length) * 2.2));
       L.marker([lat, lng], {icon: L.divIcon({className: '', iconSize: [d, d], iconAnchor: [d / 2, d / 2],
-        html: '<div style="width:' + d + 'px;height:' + d + 'px;border-radius:50%;background:' + bg + ';padding:3px;box-shadow:0 1px 3px rgba(0,0,0,.4)"><div style="width:100%;height:100%;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#181D23;font-family:Public Sans,sans-serif;font-weight:600;font-size:' + (d > 40 ? 12.5 : 11) + 'px">' + g.length + '</div></div>'})})
+        html: '<div style="width:' + d + 'px;height:' + d + 'px;border-radius:50%;background:' + bg + ';padding:3px;box-shadow:0 1px 3px rgba(0,0,0,.4)"><div style="width:100%;height:100%;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#181D23;font-family:Roboto,sans-serif;font-weight:600;font-size:' + (d > 40 ? 12.5 : 11) + 'px">' + g.length + '</div></div>'})})
         .bindTooltip(N(g.length) + ' meters · ' + Math.round((1 - off - amb) * 100) + '% online', {direction: 'top'})
         .on('click', () => this.map.flyTo([lat, lng], Math.min(18, z + 3))).addTo(lg);
     });
@@ -1174,7 +1174,7 @@ Component.prototype.drawNew = function () {
   }
 
   GW.forEach(g => L.marker([g.lat, g.lng], {icon: L.divIcon({className: '', iconSize: [96, 22], iconAnchor: [48, 11],
-    html: '<div style="width:96px;height:22px;display:flex;justify-content:center"><div style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px 0 7px;background:#181D23;color:#fff;border:1px solid rgba(255,255,255,.9);border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.4);font-family:Public Sans,sans-serif;font-weight:600;font-size:11px;white-space:nowrap"><span style="width:7px;height:7px;border-radius:50%;background:' + (g.state === 'OFFLINE' ? '#D6452E' : g.state === 'DEGRADED' ? '#E0A00B' : '#2E9D5B') + '"></span>' + g.id + '</div></div>'})})
+    html: '<div style="width:96px;height:22px;display:flex;justify-content:center"><div style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px 0 7px;background:#181D23;color:#fff;border:1px solid rgba(255,255,255,.9);border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.4);font-family:Roboto,sans-serif;font-weight:600;font-size:11px;white-space:nowrap"><span style="width:7px;height:7px;border-radius:50%;background:' + (g.state === 'OFFLINE' ? '#D6452E' : g.state === 'DEGRADED' ? '#E0A00B' : '#2E9D5B') + '"></span>' + g.id + '</div></div>'})})
     .bindTooltip('<b>' + g.id + '</b><br>' + g.site + '<br>' + N(g.meters) + ' nodes · ' + g.rssi, {direction: 'top'})
     .on('click', () => this.map.flyTo([g.lat, g.lng], 15)).addTo(lg));
 };
@@ -1315,7 +1315,7 @@ const MP_IC = {
 };
 const MPC = {blue: '#00468C', blueSoft: '#EBF1F8', teal: '#2A7A7E', ink: '#181D23', ink2: '#49515C', mute: '#767E89', faint: '#A1A8B2', line: '#E0E3E7', line2: '#ECEEF1', bg: '#FAFBFC',
   ok: '#2E9D5B', okText: '#237A48', okBg: '#E6F2EA', warn: '#D99A2B', warnText: '#965A00', warnBg: '#FAF0DC', bad: '#B3261E', badBg: '#FAE8E6', grey: '#49515C', greyBg: '#F0F2F4'};
-const MONO = "'IBM Plex Mono',monospace";
+const MONO = "'Roboto',sans-serif";
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const pad2 = n => String(n).padStart(2, '0');
 const kmBetween = (a, b, c, d) => { const R = 6371, r = x => x * Math.PI / 180, dl = r(c - a), dn = r(d - b); const h = Math.sin(dl / 2) ** 2 + Math.cos(r(a)) * Math.cos(r(c)) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
@@ -1567,11 +1567,11 @@ function renderMeterProfile(self, sel, added) {
     const pts = [[m.lat, m.lng]];
     m.links.forEach(l => {
       L.polyline([[m.lat, m.lng], [l.g.lat, l.g.lng]], {color: l.serving ? MPC.blue : '#8C949E', weight: l.serving ? 2.2 : 1.4, dashArray: l.serving ? null : '5 5', opacity: .9}).addTo(map);
-      L.marker([l.g.lat, l.g.lng], {icon: L.divIcon({className: '', html: '<div style="padding:2px 6px;background:' + (l.serving ? MPC.blue : '#fff') + ';color:' + (l.serving ? '#fff' : MPC.ink) + ';border:1px solid ' + (l.serving ? MPC.blue : '#C9CED6') + ';border-radius:4px;font:600 10px IBM Plex Mono,monospace;white-space:nowrap">' + l.g.id + '</div>', iconSize: [78, 18], iconAnchor: [39, 9]})})
+      L.marker([l.g.lat, l.g.lng], {icon: L.divIcon({className: '', html: '<div style="padding:2px 6px;background:' + (l.serving ? MPC.blue : '#fff') + ';color:' + (l.serving ? '#fff' : MPC.ink) + ';border:1px solid ' + (l.serving ? MPC.blue : '#C9CED6') + ';border-radius:4px;font:600 10px Roboto,sans-serif;white-space:nowrap">' + l.g.id + '</div>', iconSize: [78, 18], iconAnchor: [39, 9]})})
         .bindTooltip(l.g.site + '<br>' + l.rssi + ' dBm · ' + l.d.toFixed(1) + ' km', {direction: 'top'}).addTo(map);
       pts.push([l.g.lat, l.g.lng]);
     });
-    if (!m.links.length) { L.marker([m.gw.lat, m.gw.lng], {icon: L.divIcon({className: '', html: '<div style="padding:2px 6px;background:#fff;border:1px solid #C9CED6;border-radius:4px;font:600 10px IBM Plex Mono,monospace">' + m.gw.id + '</div>', iconSize: [78, 18], iconAnchor: [39, 9]})}).addTo(map); pts.push([m.gw.lat, m.gw.lng]); }
+    if (!m.links.length) { L.marker([m.gw.lat, m.gw.lng], {icon: L.divIcon({className: '', html: '<div style="padding:2px 6px;background:#fff;border:1px solid #C9CED6;border-radius:4px;font:600 10px Roboto,sans-serif">' + m.gw.id + '</div>', iconSize: [78, 18], iconAnchor: [39, 9]})}).addTo(map); pts.push([m.gw.lat, m.gw.lng]); }
     L.circleMarker([m.lat, m.lng], {radius: 8, color: '#fff', weight: 2.5, fillColor: m.statusTone, fillOpacity: 1}).bindTooltip('<b>' + m.serial + '</b><br>' + m.plot, {direction: 'top'}).addTo(map);
     map.fitBounds(pts, {padding: [30, 30], maxZoom: 15});
     self._pm = map;
