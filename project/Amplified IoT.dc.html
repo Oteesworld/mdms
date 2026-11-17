@@ -386,6 +386,10 @@
 </div>
 </sc-if>
 
+<sc-if value="{{ gwPage }}" hint-placeholder-val="{{ false }}">
+<div>{{ gwPage }}</div>
+</sc-if>
+
 <sc-if value="{{ mp }}" hint-placeholder-val="{{ false }}">
 <div>{{ mp }}</div>
 </sc-if>
@@ -753,7 +757,7 @@ class Component extends DCLogic {
   }
 
   renderVals() {
-    const st = this.state, go = s => () => this.setState({screen: s, sel: null, navMobile: false, meterSel: null});
+    const st = this.state, go = s => () => this.setState({screen: s, sel: null, navMobile: false, meterSel: null, gwSel: null});
     const refit = () => setTimeout(() => this.map && this.map.invalidateSize(), 230);
     const mx = {sales: Math.max(...SUB.map(s => s.salesN)), usage: Math.max(...SUB.map(s => s.usageN)), tx: Math.max(...SUB.map(s => s.txN))};
     const tone = t => '#EEF0F2';
@@ -982,6 +986,11 @@ class Component extends DCLogic {
       return out;
     }
 
+    if (s === 'gateways') {
+      out.gwPage = renderGatewaysPage(this);
+      if (st.gwSel) { out.crumb = 'Network · Gateways'; out.title = 'Gateway details'; }
+      return out;
+    }
     if (s === 'meters' && st.meterSel) {
       out.mp = renderMeterProfile(this, st.meterSel, st.newMeters || []);
       out.crumb = 'Assets · Meter register';
@@ -1747,6 +1756,195 @@ function renderCustomerPortal(self) {
         e('div', {style: {flex: 1, maxWidth: 340, background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 5, padding: '3px 9px', fontSize: 10.5, color: MPC.mute, display: 'flex', alignItems: 'center', gap: 5}}, ic(MP_IC.shield, 11), 'myaccount.amplifiediot.co.bw/' + ptab.toLowerCase())),
       topbar, roleStrip,
       e('div', {style: {padding: 16, background: '#F7F8FA'}}, body)));
+}
+
+// ---------- Gateways: live from ChirpStack via the MDMS API ----------
+const MDMS_API = (() => { try { const q = new URLSearchParams(location.search).get('api'); if (q) return q.replace(/\/$/, ''); } catch (x) {} return 'https://mdms-api.onrender.com'; })();
+const CS_CONSOLE = 'https://teemane.leeroysystems.co.bw';
+const GW_IC = {
+  refresh: 'M19.5 8.5A8 8 0 1 0 20 13M20 4v4.5h-4.5',
+  external: 'M14 4.5h5.5V10M19.5 4.5l-8 8M18 13.5v6H4.5V6h6',
+  rx: 'M12 4v12M7 11l5 5 5-5M5 20h14',
+  tx: 'M12 20V8M7 13l5-5 5 5M5 4h14',
+  wave: 'M3 12h3l2-6 4 12 3-9 2 3h4',
+  tag: 'M3.5 12.5V4h8.5l8.5 8.5-8 8zM8 8h.01',
+  cloud: 'M7 18.5h10.5a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 7 18.5z',
+  mountain: 'M3 19.5 9.5 8l4 7 2-3 5.5 7.5z'
+};
+const relTime = iso => { if (!iso) return 'never'; const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000)); return s < 60 ? s + ' s ago' : s < 3600 ? Math.round(s / 60) + ' min ago' : s < 86400 ? Math.round(s / 3600) + ' h ago' : Math.round(s / 86400) + ' d ago'; };
+const fmtDT = iso => { if (!iso) return '—'; const d = new Date(iso); return pad2(d.getDate()) + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() + ', ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); };
+const GW_STATE = {ONLINE: ['Online', MPC.okText, MPC.okBg, MPC.ok], OFFLINE: ['Offline', MPC.bad, MPC.badBg, MPC.bad], NEVER_SEEN: ['Never seen', MPC.grey, MPC.greyBg, '#A1A8B2']};
+const EU868_SF = {0: 'SF12', 1: 'SF11', 2: 'SF10', 3: 'SF9', 4: 'SF8', 5: 'SF7', 6: 'SF7 250k', 7: 'FSK'};
+
+function gwFetch(self, path, key, done) {
+  self._gwReq = self._gwReq || {};
+  if (self._gwReq[key]) return;
+  self._gwReq[key] = true;
+  fetch(MDMS_API + path, {headers: {accept: 'application/json'}})
+    .then(r => r.json().then(j => { if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; }))
+    .then(j => done(null, j), err => done(err.message === 'Failed to fetch' ? 'Could not reach the MDMS API (' + MDMS_API + '). It may be waking up; try again in a moment.' : err.message))
+    .then(() => { self._gwReq[key] = false; });
+}
+function gwLoadList(self, force) {
+  const st = self.state.gwList;
+  if (!force && st && (st.status === 'loading' || (st.at && Date.now() - st.at < 30000))) return;
+  self.setState(x => ({gwList: Object.assign({}, x.gwList || {}, {status: 'loading'})}));
+  gwFetch(self, '/api/gateways', 'list', (err, j) => self.setState(x => ({gwList: err ? Object.assign({}, x.gwList || {}, {status: 'error', error: err, at: Date.now()}) : {status: 'ok', data: j, at: Date.now()}})));
+}
+function gwLoadOne(self, id, force) {
+  const cur = (self.state.gwDet || {})[id];
+  if (!force && cur && (cur.status === 'loading' || (cur.at && Date.now() - cur.at < 30000))) return;
+  self.setState(x => ({gwDet: Object.assign({}, x.gwDet || {}, {[id]: Object.assign({}, (x.gwDet || {})[id] || {}, {status: 'loading'})})}));
+  gwFetch(self, '/api/gateways/' + id, 'gw:' + id, (err, j) => self.setState(x => ({gwDet: Object.assign({}, x.gwDet || {}, {[id]: err ? Object.assign({}, (x.gwDet || {})[id] || {}, {status: 'error', error: err, at: Date.now()}) : {status: 'ok', data: j, at: Date.now()}})})));
+}
+function gwMap(self, key, el, gws, zoom) {
+  if (!el || !window.L) return;
+  const slot = (self._gwMaps = self._gwMaps || {});
+  const sig = gws.map(g => g.id + g.state).join('|');
+  if (slot[key] && slot[key].el === el && slot[key].sig === sig) return;
+  if (slot[key]) { try { slot[key].map.remove(); } catch (x) {} }
+  const map = L.map(el, {scrollWheelZoom: false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom: 19, attribution: '© OpenStreetMap · © CARTO'}).addTo(map);
+  const pts = [];
+  gws.filter(g => g.location && (g.location.latitude || g.location.longitude)).forEach(g => {
+    const s = GW_STATE[g.state] || GW_STATE.NEVER_SEEN, ll = [g.location.latitude, g.location.longitude];
+    L.circle(ll, {radius: 3000, color: s[3], weight: 1, dashArray: '4 5', fillColor: s[3], fillOpacity: .05, interactive: false}).addTo(map);
+    L.marker(ll, {icon: L.divIcon({className: '', html: '<div style="display:flex;align-items:center;gap:5px;padding:3px 7px;background:#fff;border:1.5px solid ' + s[3] + ';border-radius:5px;font:600 11px Roboto,sans-serif;color:#181D23;white-space:nowrap;box-shadow:0 1px 4px rgba(16,24,40,.15)"><span style="width:8px;height:8px;border-radius:50%;background:' + s[3] + '"></span>' + g.name + '</div>', iconSize: null, iconAnchor: [12, 12]})})
+      .bindTooltip('<b>' + g.name + '</b><br>' + g.id + '<br>' + s[0] + ' · last seen ' + relTime(g.lastSeenAt), {direction: 'top', offset: [0, -10]})
+      .on('click', () => { self.setState({gwSel: g.id}); window.scrollTo(0, 0); }).addTo(map);
+    pts.push(ll);
+  });
+  if (pts.length > 1) map.fitBounds(pts, {padding: [40, 40], maxZoom: 14}); else map.setView(pts[0] || [-24.65, 25.91], zoom || 13);
+  slot[key] = {el, sig, map};
+  setTimeout(() => map.invalidateSize(), 80);
+}
+
+function renderGatewaysPage(self) {
+  const e = React.createElement, st = self.state;
+  const {ic, card, pill, kv, empty, th, td, table, bars} = mpKit();
+  const sel = st.gwSel;
+  if (!st.gwList) setTimeout(() => gwLoadList(self), 0);
+  if (sel && !(st.gwDet || {})[sel]) setTimeout(() => gwLoadOne(self, sel), 0);
+  const L0 = st.gwList || {status: 'loading'};
+  const statePill = s => { const x = GW_STATE[s] || GW_STATE.NEVER_SEEN; return pill(x[0], x[1], x[2], x[3]); };
+  const liveBar = (at, loading, onRefresh, err) => e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '9px 12px', marginBottom: 10}},
+    e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: err ? MPC.bad : MPC.okText}}, e('span', {style: {width: 8, height: 8, borderRadius: '50%', background: err ? MPC.bad : MPC.ok}}), err ? 'Live data unavailable' : 'Live from ChirpStack'),
+    e('span', {style: {fontSize: 11.5, color: MPC.mute}}, CS_CONSOLE.replace('https://', '')),
+    e('span', {style: {flex: 1}}),
+    e('span', {style: {fontSize: 11.5, color: MPC.mute}}, loading ? 'Refreshing…' : at ? 'Updated ' + new Date(at).toLocaleTimeString('en-GB') : ''),
+    e('div', {onClick: onRefresh, style: {height: 30, padding: '0 11px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: MPC.ink2}}, ic(GW_IC.refresh, 14), 'Refresh'));
+  const errBox = msg => e('div', {style: {background: MPC.badBg, border: '1px solid #F0C4C0', color: '#8E1F18', borderRadius: 8, padding: '12px 14px', fontSize: 12, marginBottom: 10}}, msg);
+  const tileRow = tiles => e('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 10, marginBottom: 10}}, tiles.map(t => e('div', {key: t[0], style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0}},
+    e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(t[1], 13, t[4] || MPC.blue), t[0]),
+    e('div', {style: {fontSize: 18, fontWeight: 600, letterSpacing: '-.4px', color: t[5] || MPC.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, t[2]),
+    e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, t[3]))));
+  const sum = m => m && m.datasets && m.datasets[0] ? m.datasets.reduce((a, d) => a + d.data.reduce((x, y) => x + y, 0), 0) : 0;
+  const totals = m => (m && m.datasets || []).map(d => [d.label, d.data.reduce((x, y) => x + y, 0)]).filter(x => x[1] > 0);
+  const hbars = (rows, fmt, color) => { const mx = Math.max(1, ...rows.map(r => r[1])), tot = rows.reduce((a, r) => a + r[1], 0) || 1;
+    return rows.length ? e('div', {style: {display: 'flex', flexDirection: 'column', gap: 9}}, rows.map(r => e('div', {key: r[0]},
+      e('div', {style: {display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4}}, e('span', {style: {fontWeight: 500}}, fmt(r[0])), e('span', {style: {color: MPC.ink2}}, N(Math.round(r[1])) + ' · ' + Math.round(r[1] / tot * 100) + '%')),
+      e('div', {style: {height: 8, background: MPC.line2, borderRadius: 4, overflow: 'hidden'}}, e('div', {style: {width: (r[1] / mx * 100) + '%', height: '100%', background: color, borderRadius: 4}}))))) : empty('No packets in this period.'); };
+
+  // ================= detail =================
+  if (sel) {
+    const D = (st.gwDet || {})[sel] || {status: 'loading'}, d = D.data, g = d && d.gateway;
+    const li = L0.data && L0.data.gateways.find(x => x.id === sel);
+    const back = e('div', {onClick: () => self.setState({gwSel: null}), style: {display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: MPC.blue, cursor: 'pointer', marginBottom: 10}}, ic(MP_IC.back, 14), 'All gateways');
+    const bar = liveBar(D.at, D.status === 'loading', () => { gwLoadOne(self, sel, true); gwLoadList(self, true); }, D.status === 'error');
+    if (!g) return e('div', null, back, bar, D.status === 'error' ? errBox(D.error) : e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8}}, empty('Loading gateway ' + sel + ' from ChirpStack…')));
+    const m24 = d.metrics24h || {}, m30 = d.metrics30d || {};
+    const tr = st.gwRange || '24h', tk = st.gwTraffic || 'Received';
+    const M = tr === '24h' ? m24 : m30;
+    const series = tk === 'Received' ? M.rxPackets : M.txPackets;
+    const vals = series && series.datasets[0] ? series.datasets[0].data : [];
+    const labs = series ? series.timestamps.map(t => { const x = new Date(t); return tr === '24h' ? pad2(x.getHours()) + ':00' : pad2(x.getDate()) + ' ' + MON[x.getMonth()]; }) : [];
+    const avg = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+    const txStat = totals(m30.txPerStatus), txOk = (txStat.find(x => x[0] === 'OK') || [0, 0])[1], txAll = txStat.reduce((a, b) => a + b[1], 0);
+    const s = GW_STATE[g.state] || GW_STATE.NEVER_SEEN;
+    const header = e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 10}},
+      e('div', {style: {width: 46, height: 46, borderRadius: 9, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(ICON.gateways, 24)),
+      e('div', {style: {flex: '1 1 300px', minWidth: 0}},
+        e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'}}, e('span', {style: {fontSize: 18, fontWeight: 600}}, g.name), statePill(g.state)),
+        e('div', {style: {fontSize: 11.5, color: MPC.mute, marginTop: 4, display: 'flex', gap: 14, flexWrap: 'wrap'}},
+          e('span', null, 'Gateway ID ' + g.id), e('span', null, (g.tags && g.tags.model) || g.description),
+          e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5, color: g.state === 'ONLINE' ? MPC.okText : MPC.mute, fontWeight: 600}}, ic(MP_IC.clock, 13), 'Last seen ' + relTime(g.lastSeenAt) + ' · ' + fmtDT(g.lastSeenAt)))),
+      e('a', {href: CS_CONSOLE + '/#/tenants/' + g.tenantId + '/gateways/' + g.id, target: '_blank', rel: 'noopener', style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', fontSize: 11.5, fontWeight: 600, color: MPC.ink2, textDecoration: 'none'}}, ic(GW_IC.external, 14), 'Open in ChirpStack'));
+    const tiles = tileRow([
+      ['Received · 24 h', GW_IC.rx, N(Math.round(sum(m24.rxPackets))), 'uplink packets', MPC.blue],
+      ['Transmitted · 24 h', GW_IC.tx, N(Math.round(sum(m24.txPackets))), 'downlink packets', MPC.teal],
+      ['Received · 30 days', MP_IC.chart, N(Math.round(sum(m30.rxPackets))), 'avg ' + N(Math.round(sum(m30.rxPackets) / 30)) + ' / day', MPC.blue],
+      ['Downlink success', MP_IC.check, txAll ? (Math.round(txOk / txAll * 1000) / 10) + '%' : '—', txAll ? N(txOk) + ' of ' + N(txAll) + ' OK · 30 days' : 'No downlinks', MPC.ok, txAll && txOk / txAll < .95 ? MPC.warnText : null],
+      ['Status', MP_IC.signal, s[0], 'Stats every ' + (g.statsInterval || '—') + ' s', s[3], s[1]],
+      ['Region', GW_IC.wave, (g.metadata && g.metadata.region_common_name) || '—', (g.metadata && g.metadata.region_config_id) || '', MPC.blue]]);
+    const seg = (opts, cur, keyName) => e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, opts.map(o => e('div', {key: o[0], onClick: () => self.setState({[keyName]: o[0]}), style: {padding: '4px 10px', fontSize: 11, fontWeight: cur === o[0] ? 600 : 500, cursor: 'pointer', background: cur === o[0] ? MPC.blue : '#fff', color: cur === o[0] ? '#fff' : MPC.mute}}, o[1])));
+    const traffic = card('Packet traffic', MP_IC.chart, e('div', {style: {display: 'flex', gap: 6, flexWrap: 'wrap'}}, seg([['Received', 'Received'], ['Transmitted', 'Transmitted']], tk, 'gwTraffic'), seg([['24h', '24 h'], ['30d', '30 days']], tr, 'gwRange')),
+      e('div', null,
+        e('div', {style: {display: 'flex', gap: 22, marginBottom: 12, flexWrap: 'wrap'}},
+          [['Total', N(Math.round(vals.reduce((a, b) => a + b, 0)))], ['Peak ' + (tr === '24h' ? 'hour' : 'day'), vals.length ? N(Math.max(...vals)) : '—'], ['Average', N(avg) + (tr === '24h' ? ' / hour' : ' / day')]].map(x => e('div', {key: x[0]}, e('div', {style: {fontSize: 10, color: MPC.faint}}, x[0]), e('div', {style: {fontSize: 13.5, fontWeight: 600, marginTop: 2}}, x[1])))),
+        M.error ? errBox(M.error) : bars(vals, labs, tr === '24h' ? 3 : 5, 'packets', true, avg),
+        e('div', {style: {display: 'flex', gap: 14, marginTop: 10, fontSize: 10.5, color: MPC.mute, flexWrap: 'wrap'}},
+          [[MPC.blue, tk + ' packets'], [MPC.teal, 'Peak'], ['#9DB9D6', 'Current ' + (tr === '24h' ? 'hour' : 'day') + ' (partial)']].map(l => e('span', {key: l[1], style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, e('span', {style: {width: 9, height: 9, borderRadius: 2, background: l[0]}}), l[1])),
+          e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, e('span', {style: {width: 14, borderTop: '1.5px dashed ' + MPC.warn}}), 'Average'))), {height: '100%'});
+    const info = card('Gateway information', MP_IC.chip, null, e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+      kv('Gateway ID (EUI)', g.id), kv('Name', g.name), e('div', {key: 'desc', style: {gridColumn: '1 / -1'}}, kv('Description', g.description || '—')),
+      kv('Model', (g.tags && g.tags.model) || '—'), kv('Region', ((g.metadata && g.metadata.region_common_name) || '—') + ' · ' + ((g.metadata && g.metadata.region_config_id) || '')),
+      kv('Stats interval', (g.statsInterval || '—') + ' s'), kv('State', s[0], {color: s[1]}),
+      kv('Last seen', fmtDT(g.lastSeenAt)), kv('Created', fmtDT(g.createdAt)), kv('Updated', fmtDT(g.updatedAt)), kv('Tenant', g.tenantId)), {height: '100%'});
+    const loc = g.location || {};
+    const mapCard = card('Location', MP_IC.pin, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, loc.source && loc.source !== 'UNKNOWN' ? 'Source: ' + loc.source : 'Configured'), e('div', {style: {margin: '-12px -14px'}},
+      e('div', {ref: el => gwMap(self, 'detail', el, [g], 14), style: {height: 300, background: '#EEF0F2'}}),
+      e('div', {style: {display: 'flex', gap: 16, padding: '9px 14px', fontSize: 11, color: MPC.mute, borderTop: '1px solid ' + MPC.line2, flexWrap: 'wrap'}},
+        e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, ic(MP_IC.pin, 13), (loc.latitude || 0).toFixed(5) + ', ' + (loc.longitude || 0).toFixed(5)),
+        e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, ic(GW_IC.mountain, 13), 'Altitude ' + N(Math.round(loc.altitude || 0)) + ' m'),
+        e('span', null, 'Dashed ring ≈ 3 km indicative coverage'))), {height: '100%', overflow: 'hidden'});
+    const MR = tr === '24h' ? m24 : m30, rangeTxt = tr === '24h' ? 'last 24 h' : 'last 30 days';
+    const freq = card('Received by channel', GW_IC.wave, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, rangeTxt), hbars(totals(MR.rxPerFreq).sort((a, b) => Number(a[0]) - Number(b[0])), f => (Number(f) / 1e6).toFixed(1) + ' MHz', MPC.blue), {height: '100%'});
+    const dr = card('Received by data rate', MP_IC.signal, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, rangeTxt), hbars(totals(MR.rxPerDr).sort((a, b) => Number(a[0]) - Number(b[0])), x => 'DR' + x + ' · ' + (EU868_SF[x] || ''), MPC.teal), {height: '100%'});
+    const txs = card('Downlinks', GW_IC.tx, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, rangeTxt), e('div', null,
+      hbars(totals(MR.txPerStatus), x => x === 'OK' ? 'Sent OK' : x.replace(/_/g, ' ').toLowerCase(), MPC.ok),
+      e('div', {style: {fontSize: 11, fontWeight: 600, color: MPC.mute, margin: '14px 0 8px'}}, 'By channel'),
+      hbars(totals(MR.txPerFreq).sort((a, b) => Number(a[0]) - Number(b[0])), f => (Number(f) / 1e6).toFixed(1) + ' MHz', '#9DB9D6')), {height: '100%'});
+    const chips = (obj, tone, bg) => Object.keys(obj || {}).length ? e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 6}}, Object.keys(obj).map(k => e('span', {key: k, style: {fontSize: 11, padding: '3px 8px', borderRadius: 5, background: bg, color: tone}}, e('b', {style: {fontWeight: 600}}, k), ' ' + obj[k]))) : e('span', {style: {fontSize: 11.5, color: MPC.mute}}, 'None');
+    const tagsCard = card('Tags & metadata', GW_IC.tag, null, e('div', null, e('div', {style: {fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, 'Tags'), chips(g.tags, MPC.blue, MPC.blueSoft), e('div', {style: {fontSize: 11, fontWeight: 600, color: MPC.mute, margin: '12px 0 6px'}}, 'Metadata (reported by gateway)'), chips(g.metadata, MPC.ink2, MPC.greyBg)), {height: '100%'});
+    const row = (kids, basis) => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || basis) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
+    return e('div', null, back, bar, D.status === 'error' ? errBox(D.error + ' Showing the last data received.') : null, header, tiles,
+      row([[traffic, 2, 520], [info, 1, 320]]),
+      row([[mapCard, 1, 380], [freq, 1, 280], [dr, 1, 280]]),
+      row([[txs, 1, 320], [tagsCard, 1, 320]]));
+  }
+
+  // ================= list =================
+  const data = L0.data, gws = data ? data.gateways : [];
+  const bar = liveBar(L0.at, L0.status === 'loading', () => gwLoadList(self, true), L0.status === 'error');
+  if (!data) return e('div', null, bar, L0.status === 'error' ? errBox(L0.error) : e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8}}, empty('Loading gateways from ChirpStack…')));
+  const cnt = k => gws.filter(g => g.state === k).length;
+  const tiles = tileRow([
+    ['Gateways', ICON.gateways, N(data.totalCount), 'registered in ChirpStack', MPC.blue],
+    ['Online', MP_IC.signal, N(cnt('ONLINE')), gws.length ? Math.round(cnt('ONLINE') / gws.length * 100) + '% of fleet' : '', MPC.ok, MPC.okText],
+    ['Offline', MP_IC.bell, N(cnt('OFFLINE')), 'not reporting', MPC.bad, cnt('OFFLINE') ? MPC.bad : null],
+    ['Never seen', MP_IC.clock, N(cnt('NEVER_SEEN')), 'registered, no traffic yet', MPC.mute]]);
+  const chip = st.gwChip || 'All';
+  const shown = gws.filter(g => chip === 'All' || (GW_STATE[g.state] || [])[0] === chip);
+  const head = e('div', {style: {padding: '9px 13px', borderBottom: '1px solid ' + MPC.line2, display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap'}},
+    e('span', {style: {fontSize: 12.5, fontWeight: 600, marginRight: 4}}, 'Gateway fleet'),
+    ['All', 'Online', 'Offline', 'Never seen'].map(c => e('span', {key: c, onClick: () => self.setState({gwChip: c}), style: {fontSize: 10.5, fontWeight: chip === c ? 600 : 500, padding: '4px 9px', borderRadius: 20, cursor: 'pointer', background: chip === c ? MPC.blueSoft : '#fff', color: chip === c ? MPC.blue : MPC.mute, border: '1px solid ' + (chip === c ? '#B8CFE8' : MPC.line)}}, c)),
+    e('span', {style: {flex: 1}}), e('span', {style: {fontSize: 11, color: MPC.mute}}, shown.length + ' of ' + gws.length));
+  const rows = shown.map(g => e('tr', {key: g.id, onClick: () => { self.setState({gwSel: g.id}); window.scrollTo(0, 0); }, style: {cursor: 'pointer'}, onMouseEnter: ev => { ev.currentTarget.style.background = '#F6F7F9'; }, onMouseLeave: ev => { ev.currentTarget.style.background = ''; }},
+    td(e('div', {style: {display: 'flex', alignItems: 'center', gap: 9}}, e('span', {style: {width: 30, height: 30, borderRadius: 7, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(ICON.gateways, 16)),
+      e('div', null, e('div', {style: {fontWeight: 600, fontSize: 12}}, g.name), e('div', {style: {fontSize: 10.5, color: MPC.mute}}, g.id)))),
+    td(g.description || '—', {color: MPC.ink2}),
+    td(((g.properties || {}).region_common_name) || '—'),
+    td(g.location ? g.location.latitude.toFixed(4) + ', ' + g.location.longitude.toFixed(4) : '—', {color: MPC.mute}),
+    td(e('div', null, e('div', null, relTime(g.lastSeenAt)), e('div', {style: {fontSize: 10.5, color: MPC.faint}}, fmtDT(g.lastSeenAt)))),
+    td(statePill(g.state), {align: 'right'}),
+    td(e('span', {style: {color: MPC.faint}}, ic(MP_IC.back.replace('M15 5l-7 7 7 7', 'M9 5l7 7-7 7'), 14)), {align: 'right'})));
+  const list = e('section', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, overflow: 'hidden', marginBottom: 10}}, head,
+    e('div', {style: {overflowX: 'auto'}}, e('table', {style: {width: '100%', borderCollapse: 'collapse'}},
+      e('thead', null, e('tr', null, th('Gateway'), th('Description'), th('Region'), th('Location'), th('Last seen'), th('State', 'right'), th(''))),
+      e('tbody', null, rows.length ? rows : e('tr', null, e('td', {colSpan: 7}, empty('No gateways match this filter.')))))),
+    e('div', {style: {padding: '9px 13px', borderTop: '1px solid ' + MPC.line2, fontSize: 10.5, color: MPC.mute}}, 'Click a gateway to see its details and traffic. Data refreshes when you press Refresh or reopen this screen.'));
+  const mapCard = card('Gateway locations', MP_IC.pin, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, gws.length + ' gateways'), e('div', {style: {margin: '-12px -14px'}}, e('div', {ref: el => gwMap(self, 'list', el, gws, 12), style: {height: 340, background: '#EEF0F2'}})), {overflow: 'hidden'});
+  return e('div', null, bar, L0.status === 'error' ? errBox(L0.error + ' Showing the last data received.') : null, tiles, list, mapCard);
 }
 
 const MF_RX = {serial: /^WM-\d{6}$/i, sts: /^\d{11}$/, hex16: /^[0-9a-fA-F]{16}$/, hex32: /^[0-9a-fA-F]{32}$/, lat: /^-?\d{1,2}\.\d{3,}$/, lng: /^-?\d{1,3}\.\d{3,}$/};
