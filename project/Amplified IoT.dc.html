@@ -7,10 +7,11 @@
 </head>
 <body>
 <x-dc>
-<helmet><title>Leeroy MDMS</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#F4F5F7;font-family:'Public Sans',system-ui,sans-serif;font-size:13px;color:#181D23;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}a{color:#00468C;text-decoration:none}a:hover{color:#003A75}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px}.leaflet-container{font-family:'Public Sans',sans-serif}.leaflet-tooltip{font-family:'Public Sans',sans-serif;font-size:11.5px;line-height:1.45;color:#181D23;border:1px solid #D2D6DC;border-radius:4px;box-shadow:0 2px 8px rgba(16,24,40,.12);padding:6px 9px}</style></helmet>
-<div style="display:flex;min-height:100vh;align-items:stretch">
+<helmet><title>Leeroy MDMS</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#F4F5F7;font-family:'Public Sans',system-ui,sans-serif;font-size:13px;color:#181D23;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}a{color:#00468C;text-decoration:none}a:hover{color:#003A75}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px}[data-lm-shell] [data-lm-aside]{transition:margin-left .2s ease,transform .2s ease}[data-lm-shell][data-collapsed=y] [data-lm-aside]{margin-left:-232px}[data-lm-backdrop]{display:none}@media (max-width:900px){[data-lm-shell] [data-lm-aside]{position:fixed!important;left:0;top:0;margin-left:0!important;transform:translateX(-100%);box-shadow:0 8px 28px rgba(16,24,40,.18)}[data-lm-shell][data-mobile=y] [data-lm-aside]{transform:none}[data-lm-shell][data-mobile=y] [data-lm-backdrop]{display:block}[data-lm-hide-sm]{display:none!important}[data-lm-shell] header{padding:0 14px!important}}.leaflet-container{font-family:'Public Sans',sans-serif}.leaflet-tooltip{font-family:'Public Sans',sans-serif;font-size:11.5px;line-height:1.45;color:#181D23;border:1px solid #D2D6DC;border-radius:4px;box-shadow:0 2px 8px rgba(16,24,40,.12);padding:6px 9px}</style></helmet>
+<div data-lm-shell="1" data-collapsed="{{ navCollapsed }}" data-mobile="{{ navMobile }}" style="display:flex;min-height:100vh;align-items:stretch">
+<div data-lm-backdrop="1" onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(16,24,40,.35);z-index:1150"></div>
 
-<aside style="width:232px;flex:none;background:#FFFFFF;border-right:1px solid #E0E3E7;color:#3A424C;z-index:1200;display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+<aside data-lm-aside="1" style="width:232px;flex:none;background:#FFFFFF;border-right:1px solid #E0E3E7;color:#3A424C;z-index:1200;display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
 <div style="height:60px;flex:none;padding:0 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #ECEEF1">
 <img src="assets/leeroy-logo.png" alt="Leeroy MDMS" style="height:46px;width:auto;display:block;flex:none">
 </div>
@@ -35,10 +36,11 @@
 
 <main style="flex:1;min-width:0;display:flex;flex-direction:column">
 <header style="background:#fff;border-bottom:1px solid #E0E3E7;padding:0 24px;height:60px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:1100">
-<div style="flex:1"><div style="font-size:11.5px;color:#767E89">{{ crumb }}</div><div style="font-size:16px;font-weight:600;letter-spacing:-.01em">{{ title }}</div></div>
-<div style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border:1px solid #E0E3E7;border-radius:6px;background:#FAFBFC;width:280px;color:#A1A8B2;font-size:12px"><svg viewBox="0 0 24 24" width="15" height="15" style="flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 1 0 0-13zM20 20l-4.4-4.4"></path></svg><span>Search meter, client or token</span></div>
-<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#49515C"><span style="width:7px;height:7px;border-radius:50%;background:#2E9D5B;display:block"></span>Network server online</div>
-<div style="font-size:12px;color:#767E89">19 Aug 2026, 13:01</div>
+<div onClick="{{ toggleNav }}" title="Menu" aria-label="Toggle menu" style="width:34px;height:34px;margin-right:-6px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:#3A424C" style-hover="background:#F1F3F6"><svg viewBox="0 0 24 24" width="20" height="20" style="display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
+<div style="flex:1;min-width:0"><div style="font-size:11.5px;color:#767E89">{{ crumb }}</div><div style="font-size:16px;font-weight:600;letter-spacing:-.01em">{{ title }}</div></div>
+<div data-lm-hide-sm="1" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 11px;border:1px solid #E0E3E7;border-radius:6px;background:#FAFBFC;width:280px;color:#A1A8B2;font-size:12px"><svg viewBox="0 0 24 24" width="15" height="15" style="flex:none;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 1 0 0-13zM20 20l-4.4-4.4"></path></svg><span>Search meter, client or token</span></div>
+<div data-lm-hide-sm="1" style="display:flex;align-items:center;gap:7px;font-size:12px;color:#49515C"><span style="width:7px;height:7px;border-radius:50%;background:#2E9D5B;display:block"></span>Network server online</div>
+<div data-lm-hide-sm="1" style="font-size:12px;color:#767E89">19 Aug 2026, 13:01</div>
 </header>
 
 <div style="flex:1;padding:20px 22px 40px">
@@ -842,7 +844,8 @@ class Component extends DCLogic {
   }
 
   renderVals() {
-    const st = this.state, go = s => () => this.setState({screen: s, sel: null});
+    const st = this.state, go = s => () => this.setState({screen: s, sel: null, navMobile: false});
+    const refit = () => setTimeout(() => this.map && this.map.invalidateSize(), 230);
     const mx = {sales: Math.max(...SUB.map(s => s.salesN)), usage: Math.max(...SUB.map(s => s.usageN)), tx: Math.max(...SUB.map(s => s.txN))};
     const tone = t => '#EEF0F2';
     const r = rnd(77), total = SUB.reduce((a, s) => a + s.salesN, 0);
@@ -884,6 +887,9 @@ class Component extends DCLogic {
         ? {isGroup: true, isItem: false, label: n[1]}
         : {isItem: true, isGroup: false, label: n[1], d: ICON[n[0]], badge: n[2] || false, go: go(n[0]),
            weight: st.screen === n[0] ? 600 : 500, color: st.screen === n[0] ? '#00468C' : '#3A424C', bg: st.screen === n[0] ? '#EBF1F8' : 'transparent'}),
+      navCollapsed: st.navCollapsed ? 'y' : 'n', navMobile: st.navMobile ? 'y' : 'n',
+      toggleNav: () => { if (window.innerWidth <= 900) this.setState(x => ({navMobile: !x.navMobile})); else { this.setState(x => ({navCollapsed: !x.navCollapsed})); refit(); } },
+      closeNav: () => this.setState({navMobile: false}),
       crumb: (TITLES[st.screen] || ['', ''])[0], title: (TITLES[st.screen] || ['', ''])[1],
       isDash: st.screen === 'dash', isMap: st.screen === 'map',
       isStub: ['dash', 'map'].indexOf(st.screen) < 0,
