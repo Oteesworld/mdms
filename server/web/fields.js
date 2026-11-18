@@ -59,10 +59,10 @@ export const FIELDS = {
   history: { label: 'Older hourly records' },
 
   // --- C2 status frame: provisional split, not confirmed by the vendor ---
-  c2_unconfirmed: { label: 'Status fields unconfirmed', flag: true },
-  c2_a: { label: 'Status field A (unconfirmed)', help: 'Rises slowly over days; may be the total reading in litres. Compare with display P-0.' },
+  c2_unconfirmed: { label: 'Some status fields unconfirmed', flag: true },
+  c2_a: { label: 'Total reading, raw (0.1 m³ units)', help: 'Confirmed against the display: 197 = P-0 19.7 m³.' },
   c2_b: { label: 'Status field B (unconfirmed)' },
-  c2_c_bcd: { label: 'Status field C (unconfirmed)', help: 'Looks like a voltage. Compare with display P-B.' },
+  c2_c_bcd: { label: 'Status field C (unconfirmed)', help: 'Looks like a voltage, but not the battery: display P-B read 3.70 V when this was 3.65.' },
   c2_d_bcd: { label: 'Status field D (unconfirmed)' },
   c2_flags: { label: 'Status flags (unconfirmed)' },
   c2_rest_hex: { label: 'Status bytes (unconfirmed)' },

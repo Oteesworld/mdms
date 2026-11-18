@@ -228,7 +228,7 @@ function decodeShFrame(bytes, warnings) {
     crc_ok: crcOk
   };
   if (body[5] !== 0xC7) {
-    out.message_label = body[5] === 0xC2 ? 'Status (C2)' : 'Function ' + out.function_code;
+    out.message_label = body[5] === 0xC2 ? 'Status' : 'Function ' + out.function_code;
     out.payload_hex = bytesToHex(arraySlice(body, 6, body.length)).toLowerCase();
     if (body[5] === 0xC2 && body.length >= 12) {
       // C2 ends with the meter clock as BCD ss mm hh DD MM YY (checked against network
@@ -237,12 +237,17 @@ function decodeShFrame(bytes, warnings) {
       var mt = parseMeterTime(t);
       if (mt) out.meterTime = mt;
       if (body.length === 32) {
-        // UNCONFIRMED split of the 20 bytes before the clock, inferred from this meter's
-        // frames (field A rises slowly, C looks like a BCD voltage). Not mapped to the
-        // dashboard's readings until checked against the meter display (P-0, P-B).
+        // The 20 bytes before the clock, inferred from meter 0288260615217's frames:
+        // field A is the total meter reading in 0.1 m3 (confirmed: A = 197 while the
+        // display showed P-0 = 19.7 m3). B, C, D and the flags are NOT confirmed (C read
+        // 3.65 while display P-B showed 3.70 V), so they are not used as readings.
         var p = arraySlice(body, 6, 26);
         out.c2_unconfirmed = true;
         out.c2_a = scaleDigits(bytesToHex(arraySlice(p, 0, 4)), 16, 0);
+        if (out.c2_a !== null) {
+          out.totalFlow = round(out.c2_a / 10, 1);
+          out.register_l = out.c2_a * 100;
+        }
         out.c2_b = scaleDigits(bytesToHex(arraySlice(p, 4, 8)), 16, 0);
         out.c2_c_bcd = isBcd(arraySlice(p, 8, 10)) ? scaleDigits(bcdDigits(arraySlice(p, 8, 10)), 10, 2) : null;
         out.c2_d_bcd = isBcd(arraySlice(p, 10, 12)) ? scaleDigits(bcdDigits(arraySlice(p, 10, 12)), 10, 2) : null;

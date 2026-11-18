@@ -100,6 +100,20 @@ CIU keypad: `00` + Confirm syncs data with the meter; Delete cycles the menu.
 | fPort | Message | Dashboard |
 |---|---|---|
 | 2 | `0xC7` data report | Fully decoded |
-| 2 | `0xC2` status frame (every few hours, also after joining) | Meter clock decoded; the other fields are shown as unconfirmed and not used as readings |
+| 2 | `0xC2` status frame (every 4 h, also after joining) | Total meter reading and meter clock decoded; other fields shown as unconfirmed, not used as readings |
 | 223 | Link message `ff ff .. .. 00 ff` | Labelled, no meter data |
 | 0 | LoRaWAN MAC commands | Labelled |
+
+### Status frame (`0xC2`) layout
+
+Not in the vendor decoder; worked out from meter 0288260615217's frames and its display.
+
+| Bytes after the type | Meaning | Status |
+|---|---|---|
+| 1-4 | Total meter reading, units of 0.1 m³ (197 = 19.7 m³) | Confirmed: display P-0 read 19.7 m³ when this was 197 |
+| 5-8 | Unknown (112) | Unconfirmed |
+| 9-10 | BCD 3.65 | Unconfirmed; not the battery (P-B read 3.70 V) |
+| 11-12 | BCD 3.40 (3.00 before 17 Nov) | Unconfirmed |
+| 13 | Flags (`10`, `50`, `08` seen) | Unconfirmed |
+| 14-20 | Zero so far | Unconfirmed |
+| 21-26 | Meter clock, BCD seconds, minutes, hours, day, month, year | Confirmed against network time |

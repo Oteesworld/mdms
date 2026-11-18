@@ -83,24 +83,26 @@ test('SH C2 status frame passes through raw; fPort 223 link message is labelled'
   assert.equal(out.function_code, '0xC2');
   assert.equal(out.crc_ok, true);
   assert.equal(out.decoded, false);
-  assert.equal(out.register_l, undefined);
+  assert.equal(out.register_l, 19400);
   assert.equal(out.meterTime, '2022-01-05 12:01:30');
   const link = decodeLocally(hex('ffffbb0800ff'), 223);
   assert.equal(link.message_label, 'Link message');
 });
 
-test('SH C2 frames: meter clock plus provisional (unconfirmed) fields, never mapped to readings', () => {
+test('SH C2 status frames: meter clock and total reading decoded; other fields stay unconfirmed', () => {
   const out = decodeLocally(hex('68202606001521c2000000c500000070036503400800000000000000130116100122c216'), 2);
   assert.equal(out.crc_ok, true);
   assert.equal(out.meterTime, '2022-01-10 16:01:13');
   assert.equal(out.c2_unconfirmed, true);
   assert.equal(out.c2_a, 197);
+  assert.equal(out.totalFlow, 19.7, 'confirmed against display P-0 = 19.7 m3');
+  assert.equal(out.register_l, 19700);
   assert.equal(out.c2_c_bcd, 3.65);
   assert.equal(out.c2_d_bcd, 3.4);
-  assert.equal(out.message_label, 'Status (C2)');
+  assert.equal(out.message_label, 'Status');
   const n = normalise(out);
-  assert.equal(n.registerL, null);
-  assert.equal(n.batteryV, null);
+  assert.equal(n.registerL, 19700);
+  assert.equal(n.batteryV, null, 'field C is not the battery (P-B read 3.70 V when C was 3.65)');
 });
 
 test('replayed status/join events are stored once', async () => {
