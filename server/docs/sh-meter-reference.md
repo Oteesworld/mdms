@@ -112,7 +112,7 @@ Not in the vendor decoder; worked out from meter 0288260615217's frames and its 
 |---|---|---|
 | 1-4 | Total meter reading, units of 0.1 m³ (197 = 19.7 m³) | Confirmed: display P-0 read 19.7 m³ when this was 197 |
 | 5-8 | Unknown (112) | Unconfirmed |
-| 9-10 | BCD 3.65 | Unconfirmed; not the battery (P-B read 3.70 V) |
+| 9-10 | Meter voltage, BCD 3.65 V: the manual's "Voltage" column. Display P-B (RTU battery, "Vol-RTU") read 3.70 V and comes in data reports | Matches the manual's sample |
 | 11-12 | BCD 3.40 (3.00 before 17 Nov) | Unconfirmed |
 | 13 | Flags (`10`, `50`, `08` seen) | Unconfirmed |
 | 14-20 | Zero so far | Unconfirmed |

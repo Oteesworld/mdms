@@ -102,7 +102,8 @@ test('SH C2 status frames: meter clock and total reading decoded; other fields s
   assert.equal(out.message_label, 'Status');
   const n = normalise(out);
   assert.equal(n.registerL, 19700);
-  assert.equal(n.batteryV, null, 'field C is not the battery (P-B read 3.70 V when C was 3.65)');
+  assert.equal(out.voltage, 3.65, 'meter Voltage, as in the manual\'s sample table');
+  assert.equal(n.batteryV, 3.65, 'shown as battery until a data report brings P-B (voltageRtu)');
 });
 
 test('replayed status/join events are stored once', async () => {

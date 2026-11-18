@@ -170,7 +170,7 @@ async function loadGateways() {
 // --- live uplinks ----------------------------------------------------------------
 
 // Short, readable summary of an uplink: key readings first, then any raised alarms.
-const LOG_KEYS = ['totalFlow', 'credit_l', 'currentFlow', 'voltageRtu', 'valve', 'meterTime'];
+const LOG_KEYS = ['totalFlow', 'credit_l', 'currentFlow', 'voltageRtu', 'voltage', 'valve', 'meterTime'];
 function logSummary(obj) {
   const parts = [];
   for (const k of LOG_KEYS) if (obj[k] !== undefined && obj[k] !== null) {

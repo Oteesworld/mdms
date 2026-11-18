@@ -196,7 +196,9 @@ function round(n, d) { var p = Math.pow(10, d); return Math.round(n * p) / p; }
 function normaliseRecord(rec) {
   if (typeof rec.totalFlow === 'number') rec.register_l = round(rec.totalFlow * 1000, 3);
   if (typeof rec.currentFlow === 'number') rec.flow_lph = round(rec.currentFlow * 1000, 3);
+  // P-B on the display is the RTU battery voltage; fall back to the meter's other voltage.
   if (typeof rec.voltageRtu === 'number') rec.battery_v = rec.voltageRtu;
+  else if (typeof rec.voltage === 'number') rec.battery_v = rec.voltage;
   if (typeof rec.waterTemperature === 'number') rec.temperature_c = rec.waterTemperature;
   if (typeof rec.totalPurchase === 'number' && typeof rec.totalConsumption === 'number') {
     rec.credit_l = round((rec.totalPurchase - rec.totalConsumption) * 1000, 3);
@@ -249,7 +251,11 @@ function decodeShFrame(bytes, warnings) {
           out.register_l = out.c2_a * 100;
         }
         out.c2_b = scaleDigits(bytesToHex(arraySlice(p, 4, 8)), 16, 0);
+        // Field C is the meter "Voltage" (3.65 V, the same as the manual's sample Voltage
+        // column); display P-B shows the separate RTU battery voltage (3.70 V).
         out.c2_c_bcd = isBcd(arraySlice(p, 8, 10)) ? scaleDigits(bcdDigits(arraySlice(p, 8, 10)), 10, 2) : null;
+        if (out.c2_c_bcd !== null) out.voltage = out.c2_c_bcd;
+        if (out.c2_c_bcd !== null) out.battery_v = out.c2_c_bcd;
         out.c2_d_bcd = isBcd(arraySlice(p, 10, 12)) ? scaleDigits(bcdDigits(arraySlice(p, 10, 12)), 10, 2) : null;
         out.c2_flags = toHex2(p[12]);
         out.c2_rest_hex = bytesToHex(arraySlice(p, 13, 20)).toLowerCase();
