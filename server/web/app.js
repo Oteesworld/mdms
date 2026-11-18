@@ -1,5 +1,7 @@
 // Amplified IoT live meter dashboard. Plain JS, no build step.
 
+import { DUPLICATES, FIELDS, describe } from './fields.js';
+
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const fmt = (n, d = 0) => (n == null ? '–' : Number(n).toLocaleString('en-BW', { maximumFractionDigits: d, minimumFractionDigits: d }));
@@ -122,7 +124,7 @@ function renderMeters(flashEui) {
       <td title="${esc(m.lastSeenAt ?? '')}">${ago(m.lastSeenAt)}</td>
       <td class="r">${litres(m.registerL)}</td>
       <td class="r">${litres(m.creditL)}</td>
-      <td class="r" style="${m.lowBattery ? 'color:var(--warn);font-weight:600' : ''}">${m.batteryPct == null ? '–' : `${fmt(m.batteryPct)}%`}</td>
+      <td class="r" style="${m.lowBattery ? 'color:var(--warn);font-weight:600' : ''}">${m.batteryPct != null ? `${fmt(m.batteryPct)}%` : m.batteryV != null ? `${fmt(m.batteryV, 2)} V` : '–'}</td>
       <td class="r mono">${m.lastRssi == null ? '–' : `${m.lastRssi} / ${fmt(m.lastSnr, 1)}`}</td>
       <td>${m.lastFPort == null ? '<span class="muted">–</span>' : esc(m.lastPortLabel)}</td>
     </tr>`)
@@ -167,12 +169,25 @@ async function loadGateways() {
 
 // --- live uplinks ----------------------------------------------------------------
 
-function logRow(u, isNew) {
-  const alarm = ALARM_PORTS.has(u.fPort);
-  const decoded = Object.entries(u.object || {})
+// Short, readable summary of an uplink: key readings first, then any raised alarms.
+const LOG_KEYS = ['totalFlow', 'credit_l', 'currentFlow', 'voltageRtu', 'valve', 'meterTime', 'c2_a'];
+function logSummary(obj) {
+  const parts = [];
+  for (const k of LOG_KEYS) if (obj[k] !== undefined && obj[k] !== null) {
+    const d = describe(k, obj[k]);
+    parts.push(`${d.label.replace(/ \(unconfirmed\)$/, '?')}: ${d.value}`);
+  }
+  for (const [k, v] of Object.entries(obj)) if (FIELDS[k]?.alarm && (v === 1 || v === true)) parts.push(`⚠ ${FIELDS[k].label}`);
+  if (parts.length) return parts.join(' · ');
+  return Object.entries(obj)
     .filter(([k]) => !LOG_SKIP.has(k) && !k.startsWith('_'))
     .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`)
     .join(' ');
+}
+
+function logRow(u, isNew) {
+  const alarm = ALARM_PORTS.has(u.fPort);
+  const decoded = logSummary(u.object || {});
   return `<div class="row ${isNew ? 'new' : ''}" data-eui="${esc(u.devEui)}">
     <span class="t">${time(u.receivedAt)}</span><span class="dev">${esc(u.name || u.devEui)}</span><span class="rs">${u.rssi ?? '–'} dBm${u.sf ? ` · SF${u.sf}` : ''}</span>
     <span class="p"><span class="port-l ${alarm ? 'alarm' : ''}">${esc(u.portLabel || `Port ${u.fPort}`)}</span>${esc(decoded || u.payloadHex || '(empty)')}</span></div>`;
@@ -222,10 +237,17 @@ const HIDDEN_KEYS = new Set(['port', 'message', 'message_label', 'length', 'prot
 const LOG_SKIP = new Set(['port', 'message', 'message_label', 'raw_hex', 'payload_hex', 'length', 'decoded', 'protocol', 'function_code', 'crc_ok', 'address', 'c2_unconfirmed', 'c2_rest_hex']);
 
 function decodedTable(obj) {
-  const rows = Object.entries(obj || {}).filter(([k]) => !HIDDEN_KEYS.has(k));
+  const rows = Object.entries(obj || {}).filter(([k]) => !HIDDEN_KEYS.has(k) && !DUPLICATES.has(k) && !k.startsWith('_'));
   if (!rows.length) return '<div class="muted">Nothing decoded.</div>';
+  // Known fields first, in the order of the field dictionary (readings, valve, alarms, config, frame).
+  const order = Object.keys(FIELDS);
+  rows.sort((a, b) => (order.indexOf(a[0]) + 1 || 999) - (order.indexOf(b[0]) + 1 || 999));
   return `<table class="decoded">${rows
-    .map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</td></tr>`)
+    .map(([k, v]) => {
+      const d = describe(k, v);
+      return `<tr title="${esc(d.help)}"><td><div class="fl">${esc(d.label)}${d.page ? ` <span class="pg">${esc(d.page)}</span>` : ''}</div><div class="fk">${esc(k)}</div></td>
+        <td class="${d.alarm ? 'al' : ''}">${esc(d.value)}${d.help ? `<div class="fh">${esc(d.help)}</div>` : ''}</td></tr>`;
+    })
     .join('')}</table>`;
 }
 

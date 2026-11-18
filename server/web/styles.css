@@ -125,7 +125,7 @@ table.meters { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .kv div b { font-weight: 500; overflow-wrap: anywhere; }
 .decoded { width: 100%; border-collapse: collapse; font-size: 12px; }
 .decoded td { padding: 5px 0; border-bottom: 1px solid var(--line-2); vertical-align: top; }
-.decoded td:first-child { color: var(--muted); width: 40%; padding-right: 12px; word-break: break-all; font-family: var(--mono); font-size: 11.5px; }
+.decoded td:first-child { width: 42%; padding-right: 12px; word-break: break-word; }
 .note { font-size: 11.5px; color: #965A00; background: #FFF8E6; border: 1px solid #F3DFAE; border-radius: 6px; padding: 8px 10px; margin-top: 10px; line-height: 1.5; }
 .btn { border: 1px solid #D2D6DC; background: var(--surface); border-radius: 6px; padding: 3px 9px; font: inherit; font-size: 11.5px; cursor: pointer; }
 .chart { position: relative; }
@@ -139,3 +139,9 @@ table.meters { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   .search, .clock { display: none; }
   .content { padding: 16px; }
 }
+
+.decoded .fl { font-family: 'Public Sans', sans-serif; font-size: 12px; color: var(--ink-2); }
+.decoded .fk { font-family: var(--mono); font-size: 10.5px; color: var(--faint); margin-top: 1px; }
+.decoded .pg { font-family: var(--mono); font-size: 10px; color: var(--navy); background: #EAF1F8; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+.decoded .fh { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+.decoded td.al { color: var(--bad); font-weight: 600; }

@@ -151,7 +151,7 @@ npm run cs -- meters:import secrets/meters.keys.csv
 every uplink. The service uses ChirpStack's decoded `object`, and runs the same
 file itself as a fallback.
 
-**SH Meters STS ultrasonic meters (SH-L-EU868)** use the vendor's "C7" protocol on
+[`docs/sh-meter-reference.md`](docs/sh-meter-reference.md) explains every SH meter value, display page, alarm, token message and key code. **SH Meters STS ultrasonic meters (SH-L-EU868)** use the vendor's "C7" protocol on
 fPort 2, ported from SH Meters' own ChirpStack v3 decoder and encoder:
 
 ```
