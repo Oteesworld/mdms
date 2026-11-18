@@ -9,6 +9,7 @@ import type { Config } from './config.js';
 import type { Row, Store } from './db.js';
 import { portLabel } from './decode.js';
 import { BadEvent, EVENT_TYPES, type Ingestor } from './ingest.js';
+import { usageBuckets, type Interval } from './usage.js';
 
 const WEB_DIR = fileURLToPath(new URL('../web/', import.meta.url));
 
@@ -221,6 +222,29 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
       ),
     };
   });
+
+  // Water usage per local hour or day, from register differences.
+  app.get<{ Params: { devEui: string }; Querystring: { interval?: string; days?: string } }>(
+    '/api/meters/:devEui/usage',
+    async (req, reply) => {
+      const devEui = req.params.devEui.toLowerCase();
+      if (!store.get(`SELECT 1 FROM meters WHERE dev_eui = ?`, devEui)) return reply.code(404).send({ error: 'meter not found' });
+      const interval: Interval = req.query.interval === 'hour' ? 'hour' : 'day';
+      const days = Math.min(Math.max(Number(req.query.days) || (interval === 'hour' ? 2 : 30), 1), interval === 'hour' ? 14 : 366);
+      const to = new Date();
+      const from = new Date(to.getTime() - days * 86400_000);
+      // Include the last reading before the window as the baseline for the first bucket.
+      const rows = store.all(
+        `SELECT read_at AS readAt, register_l AS registerL FROM readings
+         WHERE dev_eui = ? AND register_l IS NOT NULL
+           AND read_at >= COALESCE((SELECT MAX(read_at) FROM readings WHERE dev_eui = ?1 AND register_l IS NOT NULL AND read_at < ?2), ?2)
+         ORDER BY read_at`,
+        devEui,
+        from.toISOString(),
+      ) as { readAt: string; registerL: number }[];
+      return usageBuckets(rows, interval, config.timeZone, from, to);
+    },
+  );
 
   app.get<{ Querystring: { limit?: string } }>('/api/uplinks', async (req) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);

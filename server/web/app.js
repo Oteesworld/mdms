@@ -275,6 +275,91 @@ function usageChart(readings) {
     </svg></div>`;
 }
 
+// ---- usage bar chart (daily / hourly) ----
+
+const usageState = { interval: 'day' };
+
+function usageBars(u) {
+  const bars = u.buckets;
+  if (!bars.some((b) => b.readings > 0)) return '<div class="muted">No readings in this period yet.</div>';
+  const W = 520, H = 180, L = 52, R = 8, T = 12, B = 26;
+  const max = Math.max(1, ...bars.map((b) => b.usageL));
+  // Round the axis top up to a tidy number of litres.
+  const mag = Math.pow(10, Math.floor(Math.log10(max)));
+  const top = Math.ceil(max / mag) * mag;
+  const slot = (W - L - R) / bars.length;
+  const gap = Math.max(2, slot * 0.25);
+  const bw = Math.max(1, slot - gap);
+  const y = (v) => T + (1 - v / top) * (H - T - B);
+  const ticks = [0, top / 2, top];
+  const grid = ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#ECEEF1"/><text x="${L - 6}" y="${y(v) + 3.5}" text-anchor="end">${esc(litres(v))}</text>`).join('');
+  // Rounded top corners (4px), flat on the baseline.
+  const bar = (x, h, i) => {
+    if (h <= 0) return '';
+    const r = Math.min(4, bw / 2, h);
+    const yb = H - B, yt = yb - h;
+    return `<path data-i="${i}" d="M${x},${yb} V${yt + r} Q${x},${yt} ${x + r},${yt} H${x + bw - r} Q${x + bw},${yt} ${x + bw},${yt + r} V${yb} Z" fill="#00468C"/>`;
+  };
+  const labelEvery = u.interval === 'day' ? Math.ceil(bars.length / 6) : 6;
+  const labels = bars.map((b, i) => {
+    if (u.interval === 'hour') {
+      const h = Number(b.key.slice(11, 13));
+      if (h % 6) return '';
+      const txt = h === 0 ? new Date(b.key.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : `${b.key.slice(11, 13)}:00`;
+      return `<text x="${L + i * slot + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(txt)}</text>`;
+    }
+    if ((bars.length - 1 - i) % labelEvery) return '';
+    return `<text x="${L + i * slot + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(new Date(b.key + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</text>`;
+  }).join('');
+  const marks = bars.map((b, i) => bar(L + i * slot + gap / 2, (b.usageL / top) * (H - T - B), i)).join('');
+  // Invisible full-height hit areas, so every bar (even 0) has a tooltip.
+  const hits = bars.map((b, i) => `<rect data-i="${i}" x="${L + i * slot}" y="${T}" width="${slot}" height="${H - T - B}" fill="transparent"/>`).join('');
+  return `<div class="bars" data-bars='${esc(JSON.stringify(bars))}' data-interval="${u.interval}">
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Water usage per ${u.interval}, ${esc(litres(u.totalL))} in total">
+      ${grid}${marks}<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="#D2D6DC"/>${labels}${hits}
+    </svg></div>`;
+}
+
+function wireBars(root) {
+  const el = root.querySelector('.bars');
+  if (!el) return;
+  const bars = JSON.parse(el.dataset.bars);
+  const hourly = el.dataset.interval === 'hour';
+  const tip = $('#tip');
+  const svg = el.querySelector('svg');
+  svg.addEventListener('mousemove', (e) => {
+    const i = e.target.dataset?.i;
+    if (i === undefined) { tip.hidden = true; return; }
+    const b = bars[Number(i)];
+    svg.querySelectorAll('path[data-i]').forEach((p) => p.setAttribute('fill', p.dataset.i === i ? '#003A75' : '#00468C'));
+    const when = hourly
+      ? `${new Date(b.key.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}, ${b.key.slice(11, 13)}:00–${String((Number(b.key.slice(11, 13)) + 1) % 24).padStart(2, '0')}:00`
+      : new Date(b.key + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    tip.hidden = false;
+    tip.innerHTML = `<div class="muted">${esc(when)}</div><b>${esc(fmt(b.usageL))} L</b> used<div class="muted">${b.readings ? `${b.readings} reading${b.readings > 1 ? 's' : ''}` : 'no reading'}</div>`;
+    tip.style.left = `${Math.min(e.clientX + 12, innerWidth - 200)}px`;
+    tip.style.top = `${e.clientY + 12}px`;
+  });
+  svg.addEventListener('mouseleave', () => {
+    tip.hidden = true;
+    svg.querySelectorAll('path[data-i]').forEach((p) => p.setAttribute('fill', '#00468C'));
+  });
+}
+
+async function loadUsage(devEui) {
+  const box = $('#usage');
+  if (!box) return;
+  const interval = usageState.interval;
+  const u = await api(`/api/meters/${encodeURIComponent(devEui)}/usage?interval=${interval}&days=${interval === 'hour' ? 2 : 30}`);
+  if (state.open !== devEui || !$('#usage')) return;
+  const period = interval === 'hour' ? 'last 48 hours' : 'last 30 days';
+  const note = interval === 'hour' && u.readingSpacingH && u.readingSpacingH > 1.5
+    ? `<div class="note">This meter reports about every ${fmt(u.readingSpacingH, 0)} h, so each bar holds the water used since its previous report, and the hours between show 0. Hourly bars become exact once the meter sends data reports (key code 11111).</div>`
+    : '';
+  box.innerHTML = `<div class="usage-sum"><b>${esc(litres(u.totalL))}</b> used, ${period} <span class="muted">· ${esc(u.timeZone.replace('_', ' '))} time</span></div>${usageBars(u)}${note}`;
+  wireBars(box);
+}
+
 function wireChart(root) {
   const el = root.querySelector('.chart');
   if (!el) return;
@@ -329,6 +414,9 @@ async function openMeter(devEui, refresh = false) {
       <div><span>Joined network</span><b>${dateTime(m.joinedAt)}</b></div>
       <div><span>Frame counter</span><b>${m.lastFCnt ?? '–'}</b></div>
     </div></section>
+    <section><div class="h4row"><h4>Water usage</h4>
+      <div class="chips seg" id="usage-seg">${[['day', 'Daily'], ['hour', 'Hourly']].map(([v, l]) => `<button class="chip ${usageState.interval === v ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div></div>
+      <div id="usage"><div class="muted">Loading…</div></div></section>
     <section><h4>Register, last 31 days</h4>${usageChart(d.readings)}</section>
     <section><h4>Last message${last ? ` · ${esc(last.portLabel)} · ${dateTime(last.receivedAt)}` : ''}</h4>
       ${last ? decodedTable(last.object) : '<div class="muted">No uplinks received yet.</div>'}
@@ -342,6 +430,14 @@ async function openMeter(devEui, refresh = false) {
       .join('')}</section>` : ''}
     <section><h4>Recent uplinks</h4><div class="log" style="max-height:none;margin:0 -18px">${d.uplinks.map((u) => logRow(u)).join('') || '<div class="empty">None yet.</div>'}</div></section>`;
   wireChart(drawer);
+  loadUsage(devEui).catch(console.error);
+  $('#usage-seg').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip');
+    if (!b || b.dataset.v === usageState.interval) return;
+    usageState.interval = b.dataset.v;
+    $('#usage-seg').querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c.dataset.v === usageState.interval));
+    loadUsage(devEui).catch(console.error);
+  });
   if (refresh) drawer.scrollTop = scroll;
   drawer.hidden = false;
   $('#scrim').hidden = false;

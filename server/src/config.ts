@@ -56,6 +56,8 @@ export const config = {
   offlineAfterS: int('METER_OFFLINE_AFTER_S', 26 * 3600),
   /** Battery percentage at or below which a meter is flagged low battery. */
   lowBatteryPct: int('METER_LOW_BATTERY_PCT', 20),
+  /** Local time zone for daily/hourly usage buckets. */
+  timeZone: env('TIME_ZONE', 'Africa/Gaborone'),
 };
 
 export type Config = typeof config;

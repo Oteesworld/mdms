@@ -275,3 +275,48 @@ test('webhook rejects bad token, unknown events and malformed bodies', async () 
   await app.close();
   store.close();
 });
+
+test('usage buckets: register differences per local day and hour, resets skipped', async () => {
+  const { usageBuckets } = await import('../src/usage.ts');
+  const r = (t: string, v: number) => ({ readAt: t, registerL: v });
+  // Botswana is UTC+2: 22:30Z on the 17th is 00:30 local on the 18th.
+  const readings = [
+    r('2026-11-17T06:00:00Z', 19400),
+    r('2026-11-17T10:00:00Z', 19500), // +100 on local 17 Nov, 12:00
+    r('2026-11-17T22:30:00Z', 19600), // +100 on local 18 Nov, 00:00
+    r('2026-11-18T10:00:00Z', 19650), // +50  on local 18 Nov, 12:00
+    r('2026-11-18T11:00:00Z', 100), //   meter replaced: drop skipped
+    r('2026-11-18T12:00:00Z', 130), //   +30  on local 18 Nov, 14:00
+  ];
+  const from = new Date('2026-11-16T22:00:00Z');
+  const to = new Date('2026-11-18T21:59:00Z');
+  const day = usageBuckets(readings, 'day', 'Africa/Gaborone', from, to);
+  assert.deepEqual(day.buckets.map((b) => [b.key, b.usageL]), [['2026-11-17', 100], ['2026-11-18', 180]]);
+  assert.equal(day.totalL, 280);
+
+  const hour = usageBuckets(readings, 'hour', 'Africa/Gaborone', from, to);
+  assert.equal(hour.buckets.length, 48);
+  const used = hour.buckets.filter((b) => b.usageL > 0).map((b) => [b.key, b.usageL]);
+  assert.deepEqual(used, [['2026-11-17 12', 100], ['2026-11-18 00', 100], ['2026-11-18 12', 50], ['2026-11-18 14', 30]]);
+  assert.ok(hour.readingSpacingH! >= 1);
+});
+
+test('usage API returns daily buckets for a meter', async () => {
+  const { app, store } = await setup();
+  const now = Date.now();
+  for (const [h, v] of [[30, 1000], [5, 1250], [1, 1300]] as const) {
+    await app.inject({
+      method: 'POST',
+      url: '/integrations/chirpstack?event=up',
+      payload: upEvent({ time: new Date(now - h * 3600_000).toISOString(), fCnt: 100 - h, object: { register_l: v, decoded: true } }),
+    });
+  }
+  const res = await app.inject({ url: `/api/meters/${DEV}/usage?interval=day&days=7` });
+  assert.equal(res.statusCode, 200);
+  const u = res.json();
+  assert.equal(u.timeZone, 'Africa/Gaborone');
+  assert.equal(u.totalL, 300);
+  assert.equal((await app.inject({ url: '/api/meters/0000000000000000/usage' })).statusCode, 404);
+  await app.close();
+  store.close();
+});

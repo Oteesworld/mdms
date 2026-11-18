@@ -145,3 +145,10 @@ table.meters { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .decoded .pg { font-family: var(--mono); font-size: 10px; color: var(--navy); background: #EAF1F8; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
 .decoded .fh { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
 .decoded td.al { color: var(--bad); font-weight: 600; }
+
+.h4row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.h4row h4 { margin: 0; flex: 1; }
+.seg .chip { padding: 3px 10px; }
+.usage-sum { font-size: 12.5px; margin-bottom: 6px; }
+.bars svg text { fill: var(--muted); stroke: none; font-size: 10.5px; font-family: 'Public Sans', sans-serif; }
+.bars svg path, .bars svg rect { stroke: none; }

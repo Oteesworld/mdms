@@ -193,6 +193,7 @@ Battery percentage and link margin also arrive from ChirpStack's daily
 | GET | `/api/summary` | KPI counts, port traffic (24 h), alarms, gateway states |
 | GET | `/api/meters?status=online\|offline\|never_seen\|low_battery&q=` | meters with latest values |
 | GET | `/api/meters/:devEui` | meter detail, last 50 uplinks, 31-day readings, alarms, events |
+| GET | `/api/meters/:devEui/usage?interval=day\|hour&days=` | water used per local day (default 30 days) or hour (default 48 h), from register differences; `TIME_ZONE` (default Africa/Gaborone) |
 | GET | `/api/uplinks?limit=50` | recent uplinks, all meters |
 | GET | `/api/gateways` | gateways synced from ChirpStack |
 | POST | `/api/alarms/:id/clear` | clear an open alarm |
