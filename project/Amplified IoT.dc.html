@@ -992,7 +992,7 @@ class Component extends DCLogic {
       return out;
     }
     if (s === 'meters' && st.meterSel) {
-      out.mp = renderMeterProfile(this, st.meterSel, st.newMeters || []);
+      out.mp = st.meterSel.kind === 'live' ? renderLiveMeter(this) : renderMeterProfile(this, st.meterSel, st.newMeters || []);
       out.crumb = 'Assets · Meter register';
       out.title = 'Meter profile';
       return out;
@@ -1008,6 +1008,10 @@ class Component extends DCLogic {
         txt(m.client), txt(m.suburb, {color: '#767E89'}), txt(m.gw, {mono: true}), txt('— / —', {mono: true, align: 'right', color: '#A1A8B2'}),
         txt('100%', {mono: true, align: 'right'}), txt('awaiting join', {mono: true, align: 'right', color: '#767E89'}), b('Pending')]).concat(rows);
     }
+    if (isM) {
+      if (!st.liveDev) setTimeout(() => liveLoad(this), 0);
+      rows = [liveRowCells(this, b, txt)].concat(rows);
+    }
     out.tbl = {
       name: cfg.name, stats: cfg.stats, cols: mfOpen ? '1fr 370px' : cfg.kyc && sel ? '1fr 340px' : '1fr',
       add: isM ? () => this.setState({addMeter: true, mfDone: null}) : false,
@@ -1016,7 +1020,7 @@ class Component extends DCLogic {
         return {label: c, go: () => this.setState(x => ({chip: {...(x.chip || {}), [s]: i}})), weight: on ? 600 : 500, bg: on ? '#EBF1F8' : '#fff', color: on ? '#00468C' : '#767E89', border: on ? '#B8CFE8' : '#E0E3E7'};
       }),
       head: cfg.head.map(h => ({label: h[0], align: h[1] || 'left'})),
-      rows: rows.map((r, i) => ({cells: r, bg: sel === i ? '#F3F7FC' : 'transparent', go: isM ? () => { this.setState({meterSel: i < added.length ? {kind: 'new', serial: added[i].serial} : {kind: 'base', i: i - added.length}, addMeter: false}); window.scrollTo(0, 0); } : cfg.kyc ? () => this.setState({rowSel: i}) : () => {}})),
+      rows: rows.map((r, i) => ({cells: r, bg: sel === i ? '#F3F7FC' : r.live ? '#F5F9FD' : 'transparent', go: isM ? () => { this.setState({meterSel: i === 0 ? {kind: 'live'} : i - 1 < added.length ? {kind: 'new', serial: added[i - 1].serial} : {kind: 'base', i: i - 1 - added.length}, addMeter: false}); if (i === 0) liveLoad(this); window.scrollTo(0, 0); } : cfg.kyc ? () => this.setState({rowSel: i}) : () => {}})),
       count: isM && added.length ? N(50412 + added.length) + ' meters' : cfg.count, pageInfo: cfg.pageInfo
     };
     if (mfOpen) {
@@ -1353,7 +1357,7 @@ function mpKit() {
   // bar chart
   const bars = (vals, labels, every, unit, hiLast, avg) => {
     if (!vals.length) return empty('No consumption recorded yet. Data appears after the first uplink.');
-    const mx = Math.max(...vals), top = Math.ceil(mx / (mx > 2000 ? 1000 : 100)) * (mx > 2000 ? 1000 : 100);
+    const mx = Math.max(...vals, 1), stp = mx > 2000 ? 1000 : mx > 200 ? 100 : mx > 20 ? 10 : mx > 4 ? 2 : 1, top = Math.ceil(mx / stp) * stp;
     return e('div', {style: {display: 'flex', gap: 8}},
       e('div', {style: {display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 170, fontSize: 9.5, fontFamily: MONO, color: MPC.faint, textAlign: 'right', width: 40, paddingBottom: 18}},
         [top, top / 2, 0].map(v => e('span', {key: v}, N(v)))),
@@ -1810,7 +1814,7 @@ function gwMap(self, key, el, gws, zoom) {
     const s = GW_STATE[g.state] || GW_STATE.NEVER_SEEN, ll = [g.location.latitude, g.location.longitude];
     L.circle(ll, {radius: 3000, color: s[3], weight: 1, dashArray: '4 5', fillColor: s[3], fillOpacity: .05, interactive: false}).addTo(map);
     L.marker(ll, {icon: L.divIcon({className: '', html: '<div style="display:flex;align-items:center;gap:5px;padding:3px 7px;background:#fff;border:1.5px solid ' + s[3] + ';border-radius:5px;font:600 11px Roboto,sans-serif;color:#181D23;white-space:nowrap;box-shadow:0 1px 4px rgba(16,24,40,.15)"><span style="width:8px;height:8px;border-radius:50%;background:' + s[3] + '"></span>' + g.name + '</div>', iconSize: null, iconAnchor: [12, 12]})})
-      .bindTooltip('<b>' + g.name + '</b><br>' + g.id + '<br>' + s[0] + ' · last seen ' + relTime(g.lastSeenAt), {direction: 'top', offset: [0, -10]})
+      .bindTooltip('<b>' + g.name + '</b><br>' + g.id + '<br>' + s[0] + (g.lastSeenAt ? ' · last seen ' + relTime(g.lastSeenAt) : ''), {direction: 'top', offset: [0, -10]})
       .on('click', () => { self.setState({gwSel: g.id}); window.scrollTo(0, 0); }).addTo(map);
     pts.push(ll);
   });
@@ -1945,6 +1949,166 @@ function renderGatewaysPage(self) {
     e('div', {style: {padding: '9px 13px', borderTop: '1px solid ' + MPC.line2, fontSize: 10.5, color: MPC.mute}}, 'Click a gateway to see its details and traffic. Data refreshes when you press Refresh or reopen this screen.'));
   const mapCard = card('Gateway locations', MP_IC.pin, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, gws.length + ' gateways'), e('div', {style: {margin: '-12px -14px'}}, e('div', {ref: el => gwMap(self, 'list', el, gws, 12), style: {height: 340, background: '#EEF0F2'}})), {overflow: 'hidden'});
   return e('div', null, bar, L0.status === 'error' ? errBox(L0.error + ' Showing the last data received.') : null, tiles, list, mapCard);
+}
+
+// ---------- Live meter from ChirpStack (shown above the demo meters) ----------
+const LIVE_EUI = '004a7701240c1fc9';
+const LIVE_ONLINE_HOURS = 6; // the meter reports about every 4 hours
+function liveLoad(self, force) {
+  const cur = self.state.liveDev;
+  if (!force && cur && (cur.status === 'loading' || (cur.at && Date.now() - cur.at < 30000))) return;
+  self.setState(x => ({liveDev: Object.assign({}, x.liveDev || {}, {status: 'loading'})}));
+  gwFetch(self, '/api/devices/' + LIVE_EUI, 'dev:' + LIVE_EUI, (err, j) => self.setState(x => ({liveDev: err ? Object.assign({}, x.liveDev || {}, {status: 'error', error: err, at: Date.now()}) : {status: 'ok', data: j, at: Date.now()}})));
+}
+const liveUps = d => (d.events || []).filter(e => e.type === 'up');
+const liveOnline = d => d.device.lastSeenAt && (Date.now() - new Date(d.device.lastSeenAt).getTime()) < LIVE_ONLINE_HOURS * 3600e3;
+// C2 status frame (SH Meters): layout not in the vendor spec; split into the same raw fields as the ChirpStack codec.
+const c2Fields = hex => { if (!hex || hex.length < 24) return null; const bcd = s => /^[0-9]+$/.test(s) ? parseInt(s, 10) / 100 : null;
+  return {a: parseInt(hex.slice(0, 8), 16), b: parseInt(hex.slice(8, 16), 16), c: bcd(hex.slice(16, 20)), d: bcd(hex.slice(20, 24)), flags: hex.slice(24, 26)}; };
+
+function liveRowCells(self, b, txt) {
+  const L = self.state.liveDev, d = L && L.data;
+  if (!d) {
+    const msg = L && L.status === 'error' ? 'Live data unavailable' : 'Loading from ChirpStack…';
+    const r = [txt('Live meter', {mono: true, bold: true, color: '#00468C'}), txt(LIVE_EUI.toUpperCase(), {mono: true, color: '#767E89'}), txt(msg, {color: '#767E89'}), txt('—'), txt('—'), txt('—'), txt('—', {align: 'right'}), txt('—', {align: 'right'}), txt('—', {align: 'right', color: '#767E89'}), b('Pending')];
+    r.live = true; return r;
+  }
+  const up = liveUps(d)[0], rx = up && up.rx && up.rx[0], gw = rx && d.gateways[rx.gatewayId];
+  const on = liveOnline(d);
+  const r = [txt((d.device.tags.serial || d.device.name), {mono: true, bold: true, color: '#00468C'}), txt(d.device.devEui.toUpperCase(), {mono: true, color: '#767E89'}),
+    txt('SH ultrasonic STS · live', {color: '#00468C', bold: true}), txt(d.device.name + ' (unassigned)'), txt('—', {color: '#767E89'}),
+    txt(gw ? gw.name : (rx ? rx.gatewayId : '—'), {mono: true}),
+    txt(rx ? rx.rssi + ' / SF' + (up.sf || '') : '—', {mono: true, align: 'right', color: rx && rx.rssi < -105 ? '#965A00' : '#181D23'}),
+    txt(d.device.deviceStatus && d.device.deviceStatus.batteryLevel >= 0 ? Math.round(d.device.deviceStatus.batteryLevel) + '%' : 'n/a', {mono: true, align: 'right', color: '#767E89'}),
+    txt(relTime(d.device.lastSeenAt), {mono: true, align: 'right', color: '#767E89'}), b(on ? 'Online' : 'Offline')];
+  r.live = true; return r;
+}
+
+function renderLiveMeter(self) {
+  const e = React.createElement, st = self.state;
+  const {ic, card, pill, kv, empty, th, td, table, bars, line, sigBars} = mpKit();
+  const L = st.liveDev || {status: 'loading'}, d = L.data;
+  if (!st.liveDev) setTimeout(() => liveLoad(self), 0);
+  const back = e('div', {onClick: () => self.setState({meterSel: null}), style: {display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: MPC.blue, cursor: 'pointer', marginBottom: 10}}, ic(MP_IC.back, 14), 'Meter register');
+  const errBox = msg => e('div', {style: {background: MPC.badBg, border: '1px solid #F0C4C0', color: '#8E1F18', borderRadius: 8, padding: '12px 14px', fontSize: 12, marginBottom: 10}}, msg);
+  const bar = e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '9px 12px', marginBottom: 10}},
+    e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: L.status === 'error' ? MPC.bad : MPC.okText}}, e('span', {style: {width: 8, height: 8, borderRadius: '50%', background: L.status === 'error' ? MPC.bad : MPC.ok}}), L.status === 'error' ? 'Live data unavailable' : 'Live from ChirpStack'),
+    e('span', {style: {fontSize: 11.5, color: MPC.mute}}, 'Device ' + LIVE_EUI.toUpperCase()), e('span', {style: {flex: 1}}),
+    e('span', {style: {fontSize: 11.5, color: MPC.mute}}, L.status === 'loading' ? 'Refreshing…' : L.at ? 'Updated ' + new Date(L.at).toLocaleTimeString('en-GB') : ''),
+    e('div', {onClick: () => liveLoad(self, true), style: {height: 30, padding: '0 11px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: MPC.ink2}}, ic(GW_IC.refresh, 14), 'Refresh'));
+  if (!d) return e('div', null, back, bar, L.status === 'error' ? errBox(L.error) : e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8}}, empty('Loading meter ' + LIVE_EUI.toUpperCase() + ' from ChirpStack…')));
+
+  const dev = d.device, ups = liveUps(d), last = ups[0], rx0 = last && last.rx && last.rx[0];
+  const on = liveOnline(d), gwName = id => (d.gateways[id] && d.gateways[id].name) || id;
+  const lastStatus = ups.find(u => u.fPort === 2 && u.object && u.object.payload_hex);
+  const c2 = lastStatus ? c2Fields(lastStatus.object.payload_hex) : null;
+  const sum = m => m && m.datasets && m.datasets[0] ? m.datasets[0].data.reduce((a, b) => a + b, 0) : 0;
+  const ds = st.lvTab || 'Uplinks', rg = st.lvRange || '24h', LM = rg === '24h' ? d.link24h : d.link30d;
+  const lab = t => { const x = new Date(t); return rg === '24h' ? pad2(x.getHours()) + ':00' : pad2(x.getDate()) + ' ' + MON[x.getMonth()]; };
+
+  // header
+  const header = e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 10}},
+    e('div', {style: {width: 46, height: 46, borderRadius: 9, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(MP_IC.gauge, 24)),
+    e('div', {style: {flex: '1 1 300px', minWidth: 0}},
+      e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'}},
+        e('span', {style: {fontSize: 18, fontWeight: 600}}, dev.tags.serial || dev.devEui), pill(on ? 'Online' : 'Offline', on ? MPC.okText : MPC.bad, on ? MPC.okBg : MPC.badBg, on ? MPC.ok : MPC.bad), pill('Live', MPC.blue, MPC.blueSoft)),
+      e('div', {style: {fontSize: 11.5, color: MPC.mute, marginTop: 4, display: 'flex', gap: 14, flexWrap: 'wrap'}},
+        e('span', null, dev.name + ' · ' + dev.description), e('span', null, 'DevEUI ' + dev.devEui.toUpperCase()),
+        e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5, color: on ? MPC.okText : MPC.mute, fontWeight: 600}}, ic(MP_IC.clock, 13), 'Last reading ' + fmtDT(dev.lastSeenAt) + ' · ' + relTime(dev.lastSeenAt)))),
+    e('a', {href: CS_CONSOLE + '/#/tenants/6c5d8987-2305-4194-b4ac-44b5501af209/applications/' + dev.applicationId + '/devices/' + dev.devEui, target: '_blank', rel: 'noopener', style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', fontSize: 11.5, fontWeight: 600, color: MPC.ink2, textDecoration: 'none'}}, ic(GW_IC.external, 14), 'Open in ChirpStack'));
+
+  // tiles
+  const batt = dev.deviceStatus && dev.deviceStatus.batteryLevel >= 0 ? Math.round(dev.deviceStatus.batteryLevel) + '%' : 'Not reported';
+  const tiles = e('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(165px,1fr))', gap: 10, marginBottom: 10}}, [
+    ['Last uplink', MP_IC.clock, relTime(dev.lastSeenAt), last ? 'fPort ' + last.fPort + ' · ' + ((last.object && last.object.message_label) || '') : '—', on ? MPC.ok : MPC.bad, on ? MPC.okText : MPC.bad],
+    ['Signal', MP_IC.signal, rx0 ? rx0.rssi + ' dBm' : '—', rx0 ? 'SNR ' + rx0.snr + ' dB · ' + gwName(rx0.gatewayId) : '', MPC.blue, null, rx0 ? sigBars(rx0.rssi) : null],
+    ['Uplinks · 24 h', GW_IC.rx, N(Math.round(sum(d.link24h.rxPackets))), N(Math.round(sum(d.link30d.rxPackets))) + ' in 30 days', MPC.blue],
+    ['Frame counter', MP_IC.chart, last ? N(last.fCnt) : '—', last ? (last.confirmed ? 'Confirmed uplinks' : 'Unconfirmed') + (last.adr ? ' · ADR on' : '') : '', MPC.teal],
+    ['Data rate', GW_IC.wave, last ? 'DR' + last.dr + ' · SF' + last.sf : '—', last && last.frequency ? (last.frequency / 1e6).toFixed(1) + ' MHz last channel' : '', MPC.blue],
+    ['Battery', MP_IC.battery, batt, dev.deviceStatus ? 'Link margin ' + dev.deviceStatus.margin + ' dB' : '', MPC.mute]
+  ].map(t => e('div', {key: t[0], style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
+    e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(t[1], 13, t[4]), t[0]),
+      e('div', {style: {fontSize: 17, fontWeight: 600, letterSpacing: '-.4px', color: t[5] || MPC.ink, whiteSpace: 'nowrap'}}, t[2]),
+      e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, t[3])), t[6] || null)));
+
+  // clock warning
+  const mt = lastStatus && lastStatus.object.meterTime;
+  const clockOff = mt && Math.abs(new Date(mt.replace(' ', 'T')).getTime() - new Date(lastStatus.time).getTime()) > 24 * 3600e3;
+  const notice = clockOff ? e('div', {style: {display: 'flex', gap: 10, alignItems: 'flex-start', background: '#FBF6EC', border: '1px solid #EFDDB8', borderRadius: 8, padding: '10px 12px', marginBottom: 10}},
+    e('span', {style: {color: MPC.warnText}}, ic(CP_IC.alert, 16)), e('div', {style: {fontSize: 12, color: '#6B4200'}}, e('b', null, 'Meter clock out of sync. '), 'The meter reports ' + mt + ' while the network received the frame on ' + fmtDT(lastStatus.time) + '. Send a time-sync command so the meter time-stamps its records correctly.')) : null;
+
+  // traffic & signal charts
+  const seg = (opts, cur, k) => e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, opts.map(o => e('div', {key: o, onClick: () => self.setState({[k]: o}), style: {padding: '4px 10px', fontSize: 11, fontWeight: cur === o ? 600 : 500, cursor: 'pointer', background: cur === o ? MPC.blue : '#fff', color: cur === o ? '#fff' : MPC.mute}}, o === '24h' ? '24 h' : o === '30d' ? '30 days' : o)));
+  let chart;
+  if (LM.error) chart = errBox(LM.error);
+  else if (ds === 'Uplinks') { const s = LM.rxPackets, v = s && s.datasets[0] ? s.datasets[0].data : []; chart = bars(v, s ? s.timestamps.map(lab) : [], rg === '24h' ? 3 : 5, 'uplinks', true); }
+  else { const s = ds === 'RSSI' ? LM.rssi : LM.snr, pts = [];
+    if (s && s.datasets[0]) s.timestamps.forEach((t, k) => { const v = s.datasets[0].data[k]; if (v) pts.push([lab(t), Math.round(v * 10) / 10]); });
+    chart = pts.length > 1 ? line(pts.map(p => p[1]), pts.map(p => p[0]), ds === 'RSSI' ? {min: -125, max: -75, grid: [-120, -100, -80], unit: ' dBm', color: MPC.blue, fill: '#F2F6FB', every: Math.max(1, Math.ceil(pts.length / 8)), dots: true, w: 520, h: 170} : {min: -10, max: 15, grid: [-5, 0, 10], unit: ' dB', color: MPC.teal, fill: '#EEF5F5', every: Math.max(1, Math.ceil(pts.length / 8)), dots: true, w: 520, h: 170}) : empty('Not enough uplinks in this period to draw a trend.'); }
+  const traffic = card('Uplinks & signal', MP_IC.chart, e('div', {style: {display: 'flex', gap: 6, flexWrap: 'wrap'}}, seg(['Uplinks', 'RSSI', 'SNR'], ds, 'lvTab'), seg(['24h', '30d'], rg, 'lvRange')), e('div', null,
+    e('div', {style: {fontSize: 11.5, color: MPC.mute, marginBottom: 10}}, ds === 'Uplinks' ? 'Frames received per ' + (rg === '24h' ? 'hour' : 'day') + '. The meter sends a status frame about every 4 hours.' : 'Average ' + ds + ' per ' + (rg === '24h' ? 'hour' : 'day') + ' at the receiving gateway (periods without uplinks are skipped).'),
+    chart), {height: '100%'});
+
+  // device info
+  const p = dev.deviceProfile || {};
+  const info = card('Device information', MP_IC.chip, null, e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+    kv('Meter serial', dev.tags.serial || '—'), kv('Meter address', dev.tags.meter_addr || '—'), kv('DevEUI', dev.devEui.toUpperCase()), kv('JoinEUI', dev.joinEui.toUpperCase()),
+    kv('Device name', dev.name), kv('Model', 'SH-L-EU868 ultrasonic'), e('div', {key: 'ds', style: {gridColumn: '1 / -1'}}, kv('Description', dev.description)),
+    kv('Application', dev.applicationName), kv('Device profile', p.name || '—'), kv('LoRaWAN', 'Class ' + dev.classEnabled + ' · ' + (p.supportsOtaa ? 'OTAA' : 'ABP') + ' · ' + (p.macVersion || '')),
+    kv('Region', (p.regionConfigId || '').toUpperCase()), kv('Added to network', fmtDT(dev.createdAt)), kv('Last seen', fmtDT(dev.lastSeenAt)), kv('State', dev.isDisabled ? 'Disabled' : 'Enabled', {color: dev.isDisabled ? MPC.bad : MPC.okText})), {height: '100%'});
+
+  // client
+  const client = card('Client details', MP_IC.user, pill('Unassigned', MPC.warnText, MPC.warnBg), e('div', null,
+    e('div', {style: {display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10}}, e('span', {style: {width: 38, height: 38, borderRadius: '50%', background: MPC.greyBg, color: MPC.mute, display: 'flex', alignItems: 'center', justifyContent: 'center'}}, ic(MP_IC.user, 18)),
+      e('div', null, e('div', {style: {fontSize: 13, fontWeight: 600}}, 'No client linked'), e('div', {style: {fontSize: 11, color: MPC.mute}}, 'ChirpStack name: ' + dev.name))),
+    e('div', {style: {fontSize: 11.5, color: MPC.ink2, lineHeight: 1.5}}, 'This meter is on the network but not yet linked to a client account or property in the MDMS, so credit and purchase history are not available.'),
+    e('div', {style: {display: 'flex', gap: 8, marginTop: 12}}, e('div', {style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, background: MPC.blue, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer'}}, ic(MP_IC.user, 14), 'Assign client'))), {height: '100%'});
+
+  // latest status frame
+  const statusFrame = card('Latest status frame', MP_IC.token, lastStatus ? e('span', {style: {fontSize: 10.5, color: MPC.mute}}, fmtDT(lastStatus.time)) : null, lastStatus ? e('div', null,
+    e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+      kv('Message', lastStatus.object.message_label + ' · ' + lastStatus.object.function_code), kv('Checksum', lastStatus.object.crc_ok ? 'Valid' : 'Invalid', {color: lastStatus.object.crc_ok ? MPC.okText : MPC.bad}),
+      kv('Meter clock', mt || '—', {color: clockOff ? MPC.warnText : MPC.ink}), kv('Meter address', lastStatus.object.address || '—'),
+      c2 ? kv('Counter A (raw)', N(c2.a)) : null, c2 ? kv('Counter B (raw)', N(c2.b)) : null, c2 ? kv('Value C (BCD)', c2.c != null ? c2.c.toFixed(2) : '—') : null, c2 ? kv('Value D (BCD)', c2.d != null ? c2.d.toFixed(2) : '—') : null),
+    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'C2 status frames are not described in the vendor decoder, so these fields are shown as received. Values C and D look like supply and battery voltages; confirm with SH Meters before relying on them.'),
+    e('div', {style: {marginTop: 8, padding: '7px 9px', background: MPC.bg, border: '1px solid ' + MPC.line2, borderRadius: 6, fontSize: 10.5, color: MPC.ink2, wordBreak: 'break-all'}}, lastStatus.dataHex.toUpperCase())) : empty('No status frame in the recent event log.'), {height: '100%'});
+
+  // counter A trend from recent frames
+  const aSeries = ups.filter(u => u.fPort === 2 && u.object && u.object.payload_hex).map(u => [u.time, c2Fields(u.object.payload_hex)]).filter(x => x[1]).reverse();
+  const counter = card('Counter A trend', MP_IC.drop, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, aSeries.length + ' recent frames'), aSeries.length > 1 ? e('div', null,
+    line(aSeries.map(x => x[1].a), aSeries.map(x => { const t = new Date(x[0]); return pad2(t.getHours()) + ':' + pad2(t.getMinutes()); }), {min: Math.min(...aSeries.map(x => x[1].a)) - 2, max: Math.max(...aSeries.map(x => x[1].a)) + 2, grid: [], unit: '', color: MPC.teal, fill: '#EEF5F5', every: 2, dots: true, w: 420, h: 150}),
+    e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 6}}, 'Counter A went from ' + aSeries[0][1].a + ' to ' + aSeries[aSeries.length - 1][1].a + ' over these frames. It rises slowly, which fits a volume register, but the unit is not yet confirmed.')) : empty('Not enough status frames yet.'), {height: '100%'});
+
+  // recent uplinks table
+  const upsTable = card('Recent uplinks', MP_IC.clock, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, 'from the ChirpStack event log'), ups.length ? table(
+    [th('Received'), th('Port'), th('FCnt', 'right'), th('Message'), th('RSSI', 'right'), th('SNR', 'right'), th('Channel', 'right'), th('Gateway'), th('Payload')],
+    ups.map((u, k) => { const r = u.rx[0] || {}; return e('tr', {key: k}, td(fmtDT(u.time)), td('p' + u.fPort, {bold: true, color: MPC.blue}), td(String(u.fCnt), {align: 'right'}),
+      td((u.object && u.object.message_label) || '—'), td(r.rssi != null ? r.rssi + ' dBm' : '—', {align: 'right', color: r.rssi < -105 ? MPC.warnText : MPC.ink}), td(r.snr != null ? r.snr + ' dB' : '—', {align: 'right'}),
+      td(u.frequency ? (u.frequency / 1e6).toFixed(1) + ' MHz' : '—', {align: 'right', color: MPC.mute}), td(gwName(r.gatewayId)), td(u.dataHex.length > 26 ? u.dataHex.slice(0, 26).toUpperCase() + '…' : u.dataHex.toUpperCase(), {color: MPC.mute})); })) : empty(d.eventsError || 'No uplinks in the event log.'), {height: '100%', overflow: 'hidden'});
+
+  // connectivity + map
+  const heard = {}; ups.forEach(u => (u.rx || []).forEach(r => { const h = heard[r.gatewayId] || (heard[r.gatewayId] = {n: 0, rssi: 0, snr: 0, last: r}); h.n++; h.rssi += r.rssi; h.snr += r.snr; }));
+  const conn = card('Gateway connectivity', MP_IC.signal, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, Object.keys(heard).length + ' gateway' + (Object.keys(heard).length === 1 ? '' : 's')), Object.keys(heard).length ? e('div', {style: {display: 'flex', flexDirection: 'column', gap: 8}},
+    Object.keys(heard).map(id => { const h = heard[id], g = d.gateways[id] || {}; return e('div', {key: id, style: {border: '1px solid #B8CFE8', background: '#F5F8FC', borderRadius: 6, padding: '9px 11px'}},
+      e('div', {style: {display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6}}, ic(MP_IC.signal, 15, MPC.blue), e('span', {style: {fontSize: 12, fontWeight: 600}}, g.name || id), e('span', {style: {fontSize: 10.5, color: MPC.mute, flex: 1}}, id), pill('Serving', MPC.blue, MPC.blueSoft), sigBars(h.last.rssi)),
+      e('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6}}, kv('Last RSSI', h.last.rssi + ' dBm'), kv('Last SNR', h.last.snr + ' dB'), kv('Avg RSSI', Math.round(h.rssi / h.n) + ' dBm'), kv('Frames heard', h.n + ' of ' + ups.length))); }),
+    e('div', {ref: el => { const g0 = d.gateways[Object.keys(heard)[0]]; if (g0 && g0.location) gwMap(self, 'live', el, [{id: Object.keys(heard)[0], name: g0.name, state: g0.state, location: g0.location, lastSeenAt: null}], 13); }, style: {height: 200, borderRadius: 6, overflow: 'hidden', background: '#EEF0F2', marginTop: 4}}),
+    e('div', {style: {fontSize: 10.5, color: MPC.mute}}, 'Map shows the receiving gateway. The meter’s own location is not set in ChirpStack.')) : empty('No gateway data in the recent event log.'), {height: '100%'});
+
+  // channels / data rate
+  const totals = m => (m && m.datasets || []).map(x => [x.label, x.data.reduce((a, b) => a + b, 0)]).filter(x => x[1] > 0).sort((a, b) => Number(a[0]) - Number(b[0]));
+  const hb = (rows, fmt, color) => { const mx = Math.max(1, ...rows.map(r => r[1])), tot = rows.reduce((a, r) => a + r[1], 0) || 1; return rows.length ? e('div', {style: {display: 'flex', flexDirection: 'column', gap: 8}}, rows.map(r => e('div', {key: r[0]},
+    e('div', {style: {display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 3}}, e('span', null, fmt(r[0])), e('span', {style: {color: MPC.ink2}}, N(Math.round(r[1])) + ' · ' + Math.round(r[1] / tot * 100) + '%')),
+    e('div', {style: {height: 7, background: MPC.line2, borderRadius: 4, overflow: 'hidden'}}, e('div', {style: {width: (r[1] / mx * 100) + '%', height: '100%', background: color, borderRadius: 4}}))))) : empty('No data.'); };
+  const chans = card('Uplinks by channel', GW_IC.wave, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, 'last 30 days'), e('div', null, hb(totals(d.link30d.rxPerFreq), f => (Number(f) / 1e6).toFixed(1) + ' MHz', MPC.blue),
+    e('div', {style: {fontSize: 11, fontWeight: 600, color: MPC.mute, margin: '12px 0 6px'}}, 'By data rate'), hb(totals(d.link30d.rxPerDr), x => 'DR' + x + ' · ' + (EU868_SF[x] || ''), MPC.teal)), {height: '100%'});
+
+  const row = kids => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || 320) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
+  return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, header, notice, tiles,
+    row([[traffic, 2, 520], [client, 1, 300]]),
+    row([[statusFrame, 1, 340], [counter, 1, 320], [info, 1, 340]]),
+    row([[upsTable, 1, 640]]),
+    row([[conn, 1, 380], [chans, 1, 320]]));
 }
 
 const MF_RX = {serial: /^WM-\d{6}$/i, sts: /^\d{11}$/, hex16: /^[0-9a-fA-F]{16}$/, hex32: /^[0-9a-fA-F]{32}$/, lat: /^-?\d{1,2}\.\d{3,}$/, lng: /^-?\d{1,3}\.\d{3,}$/};

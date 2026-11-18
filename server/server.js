@@ -94,6 +94,70 @@ async function getGateway(id) {
   return {gateway: gw, metrics24h: day, metrics30d: month};
 }
 
+// ---------- devices (meters) ----------
+const CLASS = ['A', 'B', 'C'];
+const MAC = ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4', '1.1.0'];
+
+// Recent device events from ChirpStack's event log (server-streaming RPC; the stored history arrives first).
+async function deviceEvents(devEui, ms) {
+  const body = fString(1, devEui);
+  const frame = Buffer.concat([Buffer.from([0]), Buffer.alloc(4), body]); frame.writeUInt32BE(body.length, 1);
+  const ac = new AbortController(); const timer = setTimeout(() => ac.abort(), ms || 2500);
+  let buf = Buffer.alloc(0);
+  try {
+    const r = await fetch(CS_URL + '/api.InternalService/StreamDeviceEvents', {method: 'POST', dispatcher, body: frame, signal: ac.signal,
+      headers: {'content-type': 'application/grpc-web+proto', 'x-grpc-web': '1', authorization: 'Bearer ' + CS_TOKEN}});
+    for await (const chunk of r.body) buf = Buffer.concat([buf, chunk]);
+  } catch (e) { if (e.name !== 'AbortError') throw e; } finally { clearTimeout(timer); }
+  const out = [];
+  for (let i = 0; i + 5 <= buf.length;) {
+    const flag = buf[i], n = buf.readUInt32BE(i + 1), part = buf.subarray(i + 5, i + 5 + n); i += 5 + n;
+    if (flag & 0x80 || i > buf.length) continue;
+    const m = decode(part), type = str(m, 3); let j = {};
+    try { j = JSON.parse(str(m, 4)); } catch (e) { continue; }
+    const ev = {type, time: j.time || ts(m, 2)};
+    if (type === 'up') Object.assign(ev, {fPort: j.fPort, fCnt: j.fCnt, dr: j.dr, confirmed: !!j.confirmed, adr: !!j.adr,
+      dataHex: j.data ? Buffer.from(j.data, 'base64').toString('hex') : '', object: j.object || null,
+      frequency: j.txInfo && j.txInfo.frequency, sf: j.txInfo && j.txInfo.modulation && j.txInfo.modulation.lora && j.txInfo.modulation.lora.spreadingFactor,
+      rx: (j.rxInfo || []).map(x => ({gatewayId: x.gatewayId, rssi: x.rssi, snr: x.snr}))});
+    else if (type === 'status') Object.assign(ev, {margin: j.margin, externalPowerSource: !!j.externalPowerSource, batteryLevelUnavailable: !!j.batteryLevelUnavailable, batteryLevel: j.batteryLevel});
+    else if (type === 'join') Object.assign(ev, {devAddr: j.devAddr});
+    else if (type === 'log') Object.assign(ev, {level: j.level, code: j.code, description: j.description});
+    out.push(ev);
+  }
+  return out.sort((a, b) => new Date(b.time) - new Date(a.time));
+}
+
+async function linkMetrics(devEui, hours, aggregation) {
+  const end = new Date(), start = new Date(end.getTime() - hours * 3600e3);
+  const r = await grpc('api.DeviceService/GetLinkMetrics', Buffer.concat([fString(1, devEui), fTimestamp(2, start), fTimestamp(3, end), fVarint(4, aggregation)]));
+  return {rxPackets: metric(one(r, 1)), rssi: metric(one(r, 2)), snr: metric(one(r, 3)), rxPerFreq: metric(one(r, 4)), rxPerDr: metric(one(r, 5)), errors: metric(one(r, 6))};
+}
+
+async function getDevice(devEui) {
+  const r = await grpc('api.DeviceService/Get', fString(1, devEui));
+  const d = decode((one(r, 1) || {val: Buffer.alloc(0)}).val);
+  const st = one(r, 5) ? decode(one(r, 5).val) : null;
+  const dev = {devEui: str(d, 1), name: str(d, 2), description: str(d, 3), applicationId: str(d, 4), deviceProfileId: str(d, 5), isDisabled: num(d, 7) === 1,
+    tags: map(d, 9), joinEui: str(d, 10), createdAt: ts(r, 2), updatedAt: ts(r, 3), lastSeenAt: ts(r, 4), classEnabled: CLASS[num(r, 6)] || 'A',
+    deviceStatus: st ? {margin: (() => { const x = one(st, 1); return x ? Number(BigInt.asIntN(32, x.val)) : null; })(), externalPowerSource: num(st, 2) === 1, batteryLevel: flt(st, 3)} : null};
+  // Tenant check through the application.
+  const app = await grpc('api.ApplicationService/Get', fString(1, dev.applicationId));
+  const a = decode((one(app, 1) || {val: Buffer.alloc(0)}).val);
+  if (TENANT && str(a, 4) !== TENANT) throw Object.assign(new Error('Device not found'), {status: 404});
+  dev.applicationName = str(a, 2);
+  const dp = await grpc('api.DeviceProfileService/Get', fString(1, dev.deviceProfileId)).catch(() => null);
+  if (dp) { const p = decode((one(dp, 1) || {val: Buffer.alloc(0)}).val);
+    dev.deviceProfile = {name: str(p, 3), macVersion: MAC[num(p, 5)] || '', regionConfigId: str(p, 29), uplinkInterval: num(p, 11), supportsOtaa: num(p, 13) === 1}; }
+  const [events, link24h, link30d, gws] = await Promise.all([
+    deviceEvents(devEui).catch(e => ({error: e.message})),
+    linkMetrics(devEui, 24, 0).catch(e => ({error: e.message})),
+    linkMetrics(devEui, 24 * 30, 1).catch(e => ({error: e.message})),
+    cached('list', 15000, listGateways).catch(() => ({gateways: []}))]);
+  const gatewayNames = {}; (gws.gateways || []).forEach(g => { gatewayNames[g.id] = {name: g.name, location: g.location, state: g.state}; });
+  return {device: dev, events: Array.isArray(events) ? events : [], eventsError: Array.isArray(events) ? null : events.error, link24h, link30d, gateways: gatewayNames};
+}
+
 // ---------- tiny cache + HTTP ----------
 const cache = new Map();
 const cached = (key, ttl, fn) => { const c = cache.get(key); if (c && Date.now() - c.t < ttl) return c.p; const p = fn(); cache.set(key, {t: Date.now(), p}); p.catch(() => cache.delete(key)); return p; };
@@ -113,6 +177,8 @@ http.createServer(async (req, res) => {
     if (u.pathname === '/api/gateways') return send(200, Object.assign({fetchedAt: new Date().toISOString(), source: CS_URL}, await cached('list', 15000, listGateways)));
     const m = /^\/api\/gateways\/([0-9a-fA-F]{16})$/.exec(u.pathname);
     if (m) { const id = m[1].toLowerCase(); return send(200, Object.assign({fetchedAt: new Date().toISOString()}, await cached('gw:' + id, 15000, () => getGateway(id)))); }
+    const dm = /^\/api\/devices\/([0-9a-fA-F]{16})$/.exec(u.pathname);
+    if (dm) { const eui = dm[1].toLowerCase(); return send(200, Object.assign({fetchedAt: new Date().toISOString()}, await cached('dev:' + eui, 20000, () => getDevice(eui)))); }
     send(404, {error: 'Not found'});
   } catch (e) {
     console.error(new Date().toISOString(), req.url, e.message);
