@@ -9,6 +9,7 @@
 //   npm run cs -- meters:list
 //   npm run cs -- gateway:frames [--eui <gateway eui>] [--minutes 10]
 //                                            live LoRaWAN frames heard by a gateway (joins, uplinks), for diagnosis
+//   npm run cs -- events:import <file.json>  load exported ChirpStack events (array or JSON lines) into the dashboard DB
 //   npm run cs -- mdp:gateways               gateways on Milesight Development Platform + forwarder settings
 //   npm run cs -- mdp:forward [--device <id|sn|eui>] [--dry-run]
 //                                            point the UG67 packet forwarder at ChirpStack (Semtech UDP 1700)
@@ -298,6 +299,38 @@ async function main(argv: string[]) {
       for await (const item of streamCall(config.chirpstack.url, config.chirpstack.apiToken, 'api.InternalService/StreamGatewayFrames', req, internalPb.LogItem, AbortSignal.timeout(minutes * 60_000))) {
         console.log(describeFrame(item.getDescription(), item.getBody(), known));
       }
+      return;
+    }
+
+    case 'events:import': {
+      const file = positionals[0];
+      if (!file) throw new Error('usage: events:import <file.json>');
+      const text = readFileSync(file, 'utf8').trim();
+      const events: Record<string, unknown>[] = text.startsWith('[')
+        ? JSON.parse(text)
+        : text.split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l));
+      const { Store } = await import('./db.js');
+      const { Ingestor } = await import('./ingest.js');
+      const store = new Store(config.dbPath);
+      const ingestor = new Ingestor(store);
+      let ok = 0;
+      let dup = 0;
+      let bad = 0;
+      // Oldest first, so the meter's "latest" values end up being the newest event.
+      events.sort((a, b) => String(a.time ?? '').localeCompare(String(b.time ?? '')));
+      for (const ev of events) {
+        // An exported event carries no type: uplinks have fPort/data, status has margin, join has devAddr only.
+        const type = 'fCnt' in ev || 'data' in ev ? 'up' : 'margin' in ev ? 'status' : 'devAddr' in ev ? 'join' : 'log';
+        try {
+          const res = ingestor.handle(type, ev) as { duplicate?: boolean };
+          res.duplicate ? dup++ : ok++;
+        } catch (e) {
+          bad++;
+          console.error(`skip: ${(e as Error).message}`);
+        }
+      }
+      store.close();
+      console.log(`Imported ${ok} events into ${config.dbPath} (${dup} already there, ${bad} rejected).`);
       return;
     }
 

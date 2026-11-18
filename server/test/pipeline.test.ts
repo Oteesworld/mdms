@@ -89,6 +89,35 @@ test('SH C2 status frame passes through raw; fPort 223 link message is labelled'
   assert.equal(link.message_label, 'Link message');
 });
 
+test('SH C2 frames: meter clock plus provisional (unconfirmed) fields, never mapped to readings', () => {
+  const out = decodeLocally(hex('68202606001521c2000000c500000070036503400800000000000000130116100122c216'), 2);
+  assert.equal(out.crc_ok, true);
+  assert.equal(out.meterTime, '2022-01-10 16:01:13');
+  assert.equal(out.c2_unconfirmed, true);
+  assert.equal(out.c2_a, 197);
+  assert.equal(out.c2_c_bcd, 3.65);
+  assert.equal(out.c2_d_bcd, 3.4);
+  assert.equal(out.message_label, 'Status (C2)');
+  const n = normalise(out);
+  assert.equal(n.registerL, null);
+  assert.equal(n.batteryV, null);
+});
+
+test('replayed status/join events are stored once', async () => {
+  const { app, store } = await setup();
+  const info = upEvent().deviceInfo;
+  const status = { deduplicationId: 'd-1', time: new Date().toISOString(), deviceInfo: info, margin: 8, batteryLevelUnavailable: true, batteryLevel: 0 };
+  const first = await app.inject({ method: 'POST', url: '/integrations/chirpstack?event=status', payload: status });
+  const again = await app.inject({ method: 'POST', url: '/integrations/chirpstack?event=status', payload: status });
+  assert.equal(first.json().duplicate, undefined);
+  assert.equal(again.json().duplicate, true);
+  assert.equal(store.get(`SELECT COUNT(*) AS n FROM device_events`)?.n, 1);
+  const m = (await app.inject({ url: `/api/meters/${DEV}` })).json().meter;
+  assert.equal(m.batteryPct, null, 'batteryLevelUnavailable must not show as 0%');
+  await app.close();
+  store.close();
+});
+
 test('SH multi-record report: alarms, valve and back-dated history', () => {
   const codec = loadCodec(codecSource()) as unknown as { calculateCRC8(b: number[]): number };
   // addr, C7, totalFlow(dot 2)=1.50, status: leak + magnetic, valve 0x7E, GAP 1h, totalFlow 1.40

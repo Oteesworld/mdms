@@ -384,7 +384,8 @@ export class ChirpStackApi {
           description: d.getDescription(),
           deviceProfileName: d.getDeviceProfileName(),
           lastSeenAt: tsToIso(d.getLastSeenAt()),
-          batteryLevel: st && !st.getExternalPowerSource() ? st.getBatteryLevel() : null,
+          // ChirpStack reports -1 when the device says its battery level is unavailable.
+          batteryLevel: st && !st.getExternalPowerSource() && st.getBatteryLevel() >= 0 ? st.getBatteryLevel() : null,
           margin: st ? st.getMargin() : null,
           tags,
         });

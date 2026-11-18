@@ -53,6 +53,14 @@ Water Meter (EU868 OTAA)** device profile (Class A, OTAA, JS codec), and points 
 application's HTTP integration at `PUBLIC_URL/integrations/chirpstack` with the
 `X-Integration-Token` header. Re-running it is safe: it updates what exists.
 
+**Without a public URL:** the service also pulls each registered meter's events
+straight from the ChirpStack API (`CHIRPSTACK_PULL_EVENTS=true`, the default when
+`CHIRPSTACK_API_TOKEN` is set). ChirpStack replays the meter's recent events, then
+streams new ones live; replays are stored once. This suits tens of meters; for
+large fleets use the HTTP integration or MQTT. Exported events (a JSON array or
+JSON lines, as ChirpStack's event log or the HTTP integration produces) can be
+loaded with `npm run cs -- events:import <file.json>`.
+
 `PUBLIC_URL` must be reachable **from the ChirpStack server** over HTTPS. If this
 service runs on the same host or LAN as ChirpStack, a private URL works. If it can't
 be reached, set `MQTT_URL` to ChirpStack's MQTT broker instead.

@@ -232,10 +232,23 @@ function decodeShFrame(bytes, warnings) {
     out.payload_hex = bytesToHex(arraySlice(body, 6, body.length)).toLowerCase();
     if (body[5] === 0xC2 && body.length >= 12) {
       // C2 ends with the meter clock as BCD ss mm hh DD MM YY (checked against network
-      // time across two frames). The rest of C2 is not in the vendor decoder.
+      // time across many frames). The rest of C2 is not in the vendor decoder.
       var t = arraySlice(body, body.length - 6, body.length).reverse();
       var mt = parseMeterTime(t);
       if (mt) out.meterTime = mt;
+      if (body.length === 32) {
+        // UNCONFIRMED split of the 20 bytes before the clock, inferred from this meter's
+        // frames (field A rises slowly, C looks like a BCD voltage). Not mapped to the
+        // dashboard's readings until checked against the meter display (P-0, P-B).
+        var p = arraySlice(body, 6, 26);
+        out.c2_unconfirmed = true;
+        out.c2_a = scaleDigits(bytesToHex(arraySlice(p, 0, 4)), 16, 0);
+        out.c2_b = scaleDigits(bytesToHex(arraySlice(p, 4, 8)), 16, 0);
+        out.c2_c_bcd = isBcd(arraySlice(p, 8, 10)) ? scaleDigits(bcdDigits(arraySlice(p, 8, 10)), 10, 2) : null;
+        out.c2_d_bcd = isBcd(arraySlice(p, 10, 12)) ? scaleDigits(bcdDigits(arraySlice(p, 10, 12)), 10, 2) : null;
+        out.c2_flags = toHex2(p[12]);
+        out.c2_rest_hex = bytesToHex(arraySlice(p, 13, 20)).toLowerCase();
+      }
     }
     out.decoded = false;
     return out;
@@ -276,7 +289,8 @@ function decodeShFrame(bytes, warnings) {
 // ====== legacy port map (non-0x68 payloads) ======
 
 var PORTS = {
-  2: { name: 'sh_data', label: 'Data report' },
+  0: { name: 'mac', label: 'MAC commands' },
+  2: { name: 'sh_meter', label: 'Meter frame' },
   5: { name: 'ack', label: 'ACK-ACK' },
   37: { name: 'installation', label: 'Installation' },
   60: { name: 'midnight_data', label: 'Midnight data', reading: 'midnight' },

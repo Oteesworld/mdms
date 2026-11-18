@@ -5,6 +5,7 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const fmt = (n, d = 0) => (n == null ? '–' : Number(n).toLocaleString('en-BW', { maximumFractionDigits: d, minimumFractionDigits: d }));
 
 const PORTS = [
+  [2, 'Meter frame'], [223, 'Link message'],
   [5, 'ACK-ACK'], [37, 'Installation'], [60, 'Midnight data'], [61, 'Live data'],
   [65, 'Tamper alarm'], [66, 'Burst alarm'], [210, 'Credit'], [225, 'Come back'],
 ];
@@ -85,7 +86,10 @@ async function loadSummary() {
 
   const counts = new Map(s.ports.map((p) => [p.fPort, p.count]));
   const others = s.ports.filter((p) => !PORTS.some(([n]) => n === p.fPort));
-  const all = [...PORTS.map(([n, l]) => ({ fPort: n, label: l, count: counts.get(n) ?? 0 })), ...others];
+  const all = [
+    ...PORTS.filter(([n]) => n === 2 || n === 223 || counts.has(n)).map(([n, l]) => ({ fPort: n, label: l, count: counts.get(n) ?? 0 })),
+    ...others,
+  ];
   const max = Math.max(1, ...all.map((p) => p.count));
   $('#ports').innerHTML = all
     .map((p) => `<div class="port ${ALARM_PORTS.has(p.fPort) ? 'alarm' : ''}" title="${p.count} uplinks on port ${p.fPort} in the last 24 h">
@@ -166,7 +170,7 @@ async function loadGateways() {
 function logRow(u, isNew) {
   const alarm = ALARM_PORTS.has(u.fPort);
   const decoded = Object.entries(u.object || {})
-    .filter(([k]) => !['port', 'message', 'message_label', 'raw_hex', 'length', 'decoded'].includes(k) && !k.startsWith('_'))
+    .filter(([k]) => !LOG_SKIP.has(k) && !k.startsWith('_'))
     .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`)
     .join(' ');
   return `<div class="row ${isNew ? 'new' : ''}" data-eui="${esc(u.devEui)}">
@@ -213,7 +217,9 @@ function connectStream() {
 
 // --- meter drawer ------------------------------------------------------------------
 
-const HIDDEN_KEYS = new Set(['port', 'message', 'message_label', 'length']);
+const HIDDEN_KEYS = new Set(['port', 'message', 'message_label', 'length', 'protocol', 'decoded', 'raw_hex', 'payload_hex']);
+// Raw/plumbing fields left out of the one-line uplink summaries.
+const LOG_SKIP = new Set(['port', 'message', 'message_label', 'raw_hex', 'payload_hex', 'length', 'decoded', 'protocol', 'function_code', 'crc_ok', 'address', 'c2_unconfirmed', 'c2_rest_hex']);
 
 function decodedTable(obj) {
   const rows = Object.entries(obj || {}).filter(([k]) => !HIDDEN_KEYS.has(k));
@@ -304,7 +310,7 @@ async function openMeter(devEui, refresh = false) {
     <section><h4>Register, last 31 days</h4>${usageChart(d.readings)}</section>
     <section><h4>Last message${last ? ` · ${esc(last.portLabel)} · ${dateTime(last.receivedAt)}` : ''}</h4>
       ${last ? decodedTable(last.object) : '<div class="muted">No uplinks received yet.</div>'}
-      ${notDecoded ? `<div class="note">${last.object.function_code ? `Function ${esc(last.object.function_code)} is not part of the meter's data report, so only its raw bytes are shown.` : `This message carries no meter data, so only its raw bytes are shown.`}</div>` : ''}
+      ${notDecoded ? `<div class="note">${last.object.c2_unconfirmed ? `Status frame (C2): the meter clock is decoded; the c2_ fields are a provisional split that is not confirmed yet, so they are not used as readings. Volume, credit and battery arrive in the meter's data report (C7) once reporting is switched on.` : last.object.function_code ? `Function ${esc(last.object.function_code)} is not part of the meter's data report, so only its raw bytes are shown.` : `No decoder for this message yet, so only its raw bytes are shown (<code>${esc(last.payloadHex)}</code>).`}</div>` : ''}
       ${last && last.object && last.object.crc_ok === false ? '<div class="note">The frame checksum did not match: treat these values with care.</div>' : ''}
     </section>
     ${d.alarms.length ? `<section><h4>Alarms</h4>${d.alarms

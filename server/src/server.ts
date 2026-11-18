@@ -55,7 +55,10 @@ function meterView(row: Row, config: Config) {
     lastSeenAt: row.last_seen_at,
     lastFCnt: row.last_f_cnt,
     lastFPort: row.last_f_port,
-    lastPortLabel: portLabel(row.last_f_port as number | null),
+    lastPortLabel:
+      lastObject && typeof (lastObject as Record<string, unknown>).message_label === 'string'
+        ? String((lastObject as Record<string, unknown>).message_label)
+        : portLabel(row.last_f_port as number | null),
     lastRssi: row.last_rssi,
     lastSnr: row.last_snr,
     lastSf: row.last_sf,
@@ -86,7 +89,10 @@ function uplinkView(r: Row) {
     receivedAt: r.received_at,
     fCnt: r.f_cnt,
     fPort: r.f_port,
-    portLabel: portLabel(r.f_port as number | null),
+    portLabel:
+      object && typeof (object as Record<string, unknown>).message_label === 'string'
+        ? String((object as Record<string, unknown>).message_label)
+        : portLabel(r.f_port as number | null),
     payloadHex: r.payload_hex,
     decoded: r.decoded === 1,
     object,

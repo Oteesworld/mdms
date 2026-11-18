@@ -30,6 +30,8 @@ export const config = {
     regParamsRevision: env('METER_REG_PARAMS_REVISION', 'A'),
     /** Expected uplink interval in seconds; ChirpStack uses it to decide a device is inactive. */
     uplinkIntervalS: int('METER_UPLINK_INTERVAL_S', 86400),
+    /** Follow each meter's event stream from the ChirpStack API (no public URL needed). */
+    pullEvents: env('CHIRPSTACK_PULL_EVENTS', 'true') !== 'false',
   },
 
   /** Milesight Development Platform OpenAPI (Application > Authentication). */

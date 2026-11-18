@@ -101,7 +101,8 @@ CREATE TABLE IF NOT EXISTS device_events (
   dev_eui   TEXT NOT NULL,
   event     TEXT NOT NULL,
   at        TEXT NOT NULL,
-  body_json TEXT
+  body_json TEXT,
+  dedup_key TEXT UNIQUE      -- ChirpStack deduplicationId + event, so replays are stored once
 );
 CREATE INDEX IF NOT EXISTS device_events_dev ON device_events (dev_eui, at DESC);
 `;
@@ -187,10 +188,10 @@ export class Store {
         m.lastSeenAt,
       );
     }
-    if (m.batteryPct != null || m.margin != null) {
+    if ((m.batteryPct != null && m.batteryPct >= 0) || m.margin != null) {
       this.run(
         `UPDATE meters SET battery_pct = COALESCE(?, battery_pct), margin = COALESCE(?, margin) WHERE dev_eui = ?`,
-        m.batteryPct ?? null,
+        m.batteryPct != null && m.batteryPct >= 0 ? m.batteryPct : null,
         m.margin ?? null,
         m.devEui,
       );

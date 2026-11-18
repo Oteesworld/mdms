@@ -100,8 +100,12 @@ export class Ingestor extends EventEmitter {
 
     // Prefer what ChirpStack decoded with the device-profile codec; fall back to
     // running the same codec here (e.g. if the profile has no codec yet).
-    const object =
-      ev.object && Object.keys(ev.object).length ? ev.object : fPort != null ? decodeLocally(bytes, fPort) : {};
+    // Decode with this repo's codec (the same file ChirpStack runs, but always the
+    // current version) and lay it over whatever ChirpStack decoded.
+    const object = {
+      ...(ev.object && typeof ev.object === 'object' ? ev.object : {}),
+      ...(fPort != null ? decodeLocally(bytes, fPort) : {}),
+    };
     const n = normalise(object);
 
     const best = [...(ev.rxInfo ?? [])].sort((a, b) => (b.rssi ?? -999) - (a.rssi ?? -999))[0];
@@ -223,7 +227,7 @@ export class Ingestor extends EventEmitter {
         receivedAt,
         fCnt: ev.fCnt ?? null,
         fPort,
-        portLabel: portLabel(fPort),
+        portLabel: typeof object.message_label === 'string' ? object.message_label : portLabel(fPort),
         payloadHex: bytes.toString('hex'),
         object,
         rssi,
@@ -246,7 +250,7 @@ export class Ingestor extends EventEmitter {
       at,
       info.devEui,
     );
-    this.logEvent(info.devEui, 'join', at, ev);
+    if (!this.logEvent(info.devEui, 'join', at, ev)) return { ok: true as const, duplicate: true };
     this.emit('device', { devEui: info.devEui, event: 'join', at, devAddr: ev.devAddr ?? null });
     return { ok: true as const };
   }
@@ -260,19 +264,22 @@ export class Ingestor extends EventEmitter {
       ev.margin ?? null,
       info.devEui,
     );
-    this.logEvent(info.devEui, 'status', at, ev);
+    if (!this.logEvent(info.devEui, 'status', at, ev)) return { ok: true as const, duplicate: true };
     this.emit('device', { devEui: info.devEui, event: 'status', at, batteryPct: battery, margin: ev.margin ?? null });
     return { ok: true as const };
   }
 
   private logEvent(devEui: string, event: string, time: string | undefined, body: unknown) {
-    this.store.run(
-      `INSERT INTO device_events (dev_eui, event, at, body_json) VALUES (?, ?, ?, ?)`,
+    const dedup = (body as { deduplicationId?: string })?.deduplicationId;
+    return this.store.run(
+      `INSERT INTO device_events (dev_eui, event, at, body_json, dedup_key) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (dedup_key) DO NOTHING`,
       devEui,
       event,
       time ? new Date(time).toISOString() : new Date().toISOString(),
       JSON.stringify(body),
-    );
+      dedup ? `${dedup}:${event}` : null,
+    ).changes > 0;
   }
 }
 
