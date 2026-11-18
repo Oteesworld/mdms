@@ -2064,6 +2064,13 @@ function renderLiveMeter(self) {
     e('div', {style: {fontSize: 11.5, color: MPC.ink2, lineHeight: 1.5}}, 'This meter is on the network but not yet linked to a client account or property in the MDMS, so credit and purchase history are not available.'),
     e('div', {style: {display: 'flex', gap: 8, marginTop: 12}}, e('div', {style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, background: MPC.blue, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer'}}, ic(MP_IC.user, 14), 'Assign client'))), {height: '100%'});
 
+  // device picture
+  const picture = card('Device picture', MP_IC.camera, null, e('div', null,
+    e('div', {style: {background: '#F7F8FA', border: '1px solid ' + MPC.line2, borderRadius: 6, height: 230, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden'}},
+      e('img', {src: 'assets/kalahari-meter.webp', alt: 'SH Meters Kalahari ultrasonic water meter', style: {maxWidth: '100%', maxHeight: 220, objectFit: 'contain', display: 'block'}})),
+    e('div', {style: {marginTop: 9, fontSize: 10.5, color: MPC.mute}}, 'SH Meters Kalahari · SH-L-EU868 ultrasonic STS meter'),
+    e('div', {style: {marginTop: 2, fontSize: 10.5, color: MPC.faint}}, 'Product image. An installation photo can replace it once taken on site.')), {height: '100%'});
+
   // latest status frame
   const statusFrame = card('Latest status frame', MP_IC.token, lastStatus ? e('span', {style: {fontSize: 10.5, color: MPC.mute}}, fmtDT(lastStatus.time)) : null, lastStatus ? e('div', null,
     e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
@@ -2106,7 +2113,7 @@ function renderLiveMeter(self) {
   const row = kids => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || 320) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
   return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, header, notice, tiles,
     row([[traffic, 2, 520], [client, 1, 300]]),
-    row([[statusFrame, 1, 340], [counter, 1, 320], [info, 1, 340]]),
+    row([[picture, 1, 280], [statusFrame, 1, 320], [counter, 1, 300], [info, 1, 340]]),
     row([[upsTable, 1, 640]]),
     row([[conn, 1, 380], [chans, 1, 320]]));
 }
