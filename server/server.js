@@ -221,7 +221,7 @@ async function pollEvents() {
 // ChirpStack HTTP integration endpoint (JSON encoding). Requires Authorization: Bearer INGEST_SECRET.
 function readBody(req) { return new Promise((ok, bad) => { let n = 0; const parts = []; req.on('data', c => { n += c.length; if (n > 1e6) { bad(new Error('too large')); req.destroy(); } else parts.push(c); }); req.on('end', () => ok(Buffer.concat(parts).toString('utf8'))); req.on('error', bad); }); }
 async function ingest(req, u) {
-  if (!INGEST_SECRET || req.headers.authorization !== 'Bearer ' + INGEST_SECRET) return [401, {error: 'unauthorized'}];
+  if (!INGEST_SECRET || req.headers.authorization !== 'Bearer ' + INGEST_SECRET) { console.log(new Date().toISOString() + ' http-integration request rejected: wrong or missing Authorization header'); return [401, {error: 'unauthorized'}]; }
   if (!store.enabled()) return [503, {error: 'history storage is not configured'}];
   const j = JSON.parse(await readBody(req) || '{}');
   if (u.searchParams.get('event') !== 'up') return [200, {ignored: u.searchParams.get('event')}];
@@ -229,5 +229,7 @@ async function ingest(req, u) {
   if (TENANT && di.tenantId && di.tenantId !== TENANT) return [403, {error: 'wrong tenant'}];
   const ev = {devEui: di.devEui, id: j.deduplicationId, time: j.time, fPort: j.fPort, fCnt: j.fCnt, object: j.object || null,
     dataHex: j.data ? Buffer.from(j.data, 'base64').toString('hex') : '', rx: (j.rxInfo || []).map(x => ({gatewayId: x.gatewayId, rssi: x.rssi, snr: x.snr}))};
-  return [200, {stored: await store.storeUplink(ev, 'http-integration')}];
+  const stored = await store.storeUplink(ev, 'http-integration');
+  console.log(new Date().toISOString() + ' http-integration uplink ' + (ev.devEui || '?') + ' fCnt ' + ev.fCnt + ' fPort ' + ev.fPort + (stored ? ' stored' : ' (duplicate)'));
+  return [200, {stored}];
 }
