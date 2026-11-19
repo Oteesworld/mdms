@@ -29,13 +29,36 @@ function ago(iso) {
   if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
   return `${Math.floor(s / 86400)} d ago`;
 }
+// All times are shown in the utility's time zone (GMT+2, Africa/Gaborone by default),
+// whatever zone the viewer's browser is in. The server sends its TIME_ZONE setting.
+let TZ = 'Africa/Gaborone';
+let TZ_LABEL = 'GMT+2';
+const dayKey = (d) => d.toLocaleDateString('en-CA', { timeZone: TZ });
 const time = (iso) => {
   const d = new Date(iso);
-  return d.toDateString() === new Date().toDateString()
-    ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return dayKey(d) === dayKey(new Date())
+    ? d.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    : d.toLocaleDateString('en-GB', { timeZone: TZ, day: 'numeric', month: 'short' });
 };
-const dateTime = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–');
+const dateTime = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', { timeZone: TZ, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '–');
+function setTimeZone(tz) {
+  if (!tz) return;
+  TZ = tz;
+  const part = new Intl.DateTimeFormat('en-GB', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find((p) => p.type === 'timeZoneName');
+  TZ_LABEL = part ? part.value.replace(/^GMT$/, 'GMT+0') : tz;
+}
+// Human-readable clock error, e.g. "4 y 10 mo behind".
+function driftText(s) {
+  const a = Math.abs(s);
+  const dir = s < 0 ? 'behind' : 'ahead';
+  if (a < 120) return 'in sync';
+  if (a < 7200) return `${Math.round(a / 60)} min ${dir}`;
+  if (a < 172800) return `${Math.round(a / 3600)} h ${dir}`;
+  const days = a / 86400;
+  if (days < 60) return `${Math.round(days)} days ${dir}`;
+  const y = Math.floor(days / 365.25), mo = Math.round((days - y * 365.25) / 30.44);
+  return `${y ? `${y} y ` : ''}${mo ? `${mo} mo ` : ''}${dir}`;
+}
 const litres = (l) => (l == null ? '–' : l >= 10000 ? `${fmt(l / 1000, 1)} kL` : `${fmt(l)} L`);
 const statusHtml = (s) => `<span class="status"><span class="sdot" style="background:${STATUS[s][1]}"></span>${STATUS[s][0]}</span>`;
 
@@ -48,7 +71,7 @@ async function api(path, opts) {
 // --- header ------------------------------------------------------------------
 
 function tickClock() {
-  $('#clock').textContent = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  $('#clock').textContent = `${new Date().toLocaleString('en-GB', { timeZone: TZ, day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ${TZ_LABEL}`;
 }
 
 function renderSync(cs) {
@@ -263,7 +286,7 @@ function usageChart(readings) {
   const ticks = [0, 0.5, 1].map((f) => v0 + f * (v1 - v0));
   const grid = ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#ECEEF1" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 3.5}" text-anchor="end">${esc(litres(v))}</text>`).join('');
   const d = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
-  const lab = (t, anchor) => `<text x="${x(t)}" y="${H - 6}" text-anchor="${anchor}">${esc(new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</text>`;
+  const lab = (t, anchor) => `<text x="${x(t)}" y="${H - 6}" text-anchor="${anchor}">${esc(new Date(t).toLocaleDateString('en-GB', { timeZone: TZ, day: 'numeric', month: 'short' }))}</text>`;
   return `<div class="chart" data-pts='${esc(JSON.stringify(pts))}' data-geo='${JSON.stringify({ W, L, R, T, B, H, t0, t1, v0, v1 })}'>
     <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Cumulative register, last 31 days">
       ${grid}<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="#D2D6DC"/>
@@ -305,11 +328,11 @@ function usageBars(u) {
     if (u.interval === 'hour') {
       const h = Number(b.key.slice(11, 13));
       if (h % 6) return '';
-      const txt = h === 0 ? new Date(b.key.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : `${b.key.slice(11, 13)}:00`;
+      const txt = h === 0 ? new Date(b.key.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' }) : `${b.key.slice(11, 13)}:00`;
       return `<text x="${L + i * slot + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(txt)}</text>`;
     }
     if ((bars.length - 1 - i) % labelEvery) return '';
-    return `<text x="${L + i * slot + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(new Date(b.key + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</text>`;
+    return `<text x="${L + i * slot + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(new Date(b.key + 'T12:00:00Z').toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' }))}</text>`;
   }).join('');
   const marks = bars.map((b, i) => bar(L + i * slot + gap / 2, (b.usageL / top) * (H - T - B), i)).join('');
   // Invisible full-height hit areas, so every bar (even 0) has a tooltip.
@@ -333,8 +356,8 @@ function wireBars(root) {
     const b = bars[Number(i)];
     svg.querySelectorAll('path[data-i]').forEach((p) => p.setAttribute('fill', p.dataset.i === i ? '#003A75' : '#00468C'));
     const when = hourly
-      ? `${new Date(b.key.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}, ${b.key.slice(11, 13)}:00–${String((Number(b.key.slice(11, 13)) + 1) % 24).padStart(2, '0')}:00`
-      : new Date(b.key + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+      ? `${new Date(b.key.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' })}, ${b.key.slice(11, 13)}:00–${String((Number(b.key.slice(11, 13)) + 1) % 24).padStart(2, '0')}:00`
+      : new Date(b.key + 'T12:00:00Z').toLocaleDateString('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     tip.hidden = false;
     tip.innerHTML = `<div class="muted">${esc(when)}</div><b>${esc(fmt(b.usageL))} L</b> used<div class="muted">${b.readings ? `${b.readings} reading${b.readings > 1 ? 's' : ''}` : 'no reading'}</div>`;
     tip.style.left = `${Math.min(e.clientX + 12, innerWidth - 200)}px`;
@@ -413,7 +436,11 @@ async function openMeter(devEui, refresh = false) {
       <div><span>Gateway</span><b class="mono">${esc(m.lastGatewayId ?? '–')}</b></div>
       <div><span>Joined network</span><b>${dateTime(m.joinedAt)}</b></div>
       <div><span>Frame counter</span><b>${m.lastFCnt ?? '–'}</b></div>
-    </div></section>
+      ${m.lastObject?.meterTime ? `<div><span>Meter clock</span><b style="${Math.abs(m.meterClockDriftS ?? 0) >= 120 ? 'color:var(--warn)' : ''}">${esc(m.lastObject.meterTime)}</b></div>
+      <div><span>Meter clock vs ${esc(TZ_LABEL)}</span><b style="${Math.abs(m.meterClockDriftS ?? 0) >= 120 ? 'color:var(--warn)' : ''}">${m.meterClockDriftS == null ? '–' : esc(driftText(m.meterClockDriftS))}</b></div>` : ''}
+    </div>
+    ${Math.abs(m.meterClockDriftS ?? 0) >= 3600 ? `<div class="note">The meter's clock is ${esc(driftText(m.meterClockDriftS))} local time (${esc(TZ_LABEL)}). Set it in SQCOMM: ParaSet → Wakeup → tick <b>Time</b> → Write. Readings here are timed by the network, so the dashboard is unaffected, but the meter's own hourly records and display use its clock.</div>` : ''}
+    </section>
     <section><div class="h4row"><h4>Water usage</h4>
       <div class="chips seg" id="usage-seg">${[['day', 'Daily'], ['hour', 'Hourly']].map(([v, l]) => `<button class="chip ${usageState.interval === v ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div></div>
       <div id="usage"><div class="muted">Loading…</div></div></section>
@@ -462,6 +489,7 @@ addEventListener('keydown', (e) => e.key === 'Escape' && closeMeter());
 
 // --- boot ---------------------------------------------------------------------------
 
+await api('/api/health').then((h) => setTimeZone(h.timeZone)).catch(() => {});
 tickClock();
 setInterval(tickClock, 30_000);
 await Promise.all([loadSummary(), loadMeters(), loadGateways(), loadLog()]).catch(console.error);

@@ -185,6 +185,17 @@ After changing the codec, run `npm test` and `npm run cs -- codec:push`.
 Battery percentage and link margin also arrive from ChirpStack's daily
 `DevStatusReq` (`status` events), whatever the payload layout.
 
+## Time zones
+
+* **ChirpStack** stores and sends every timestamp in UTC (`+00:00`); it has no
+  time-zone setting, and its web UI shows times in the viewer's browser zone.
+* **This dashboard** shows all times, and buckets daily/hourly usage, in
+  `TIME_ZONE` (default `Africa/Gaborone`, GMT+2), whatever zone the browser is in.
+* **Gateway (UG67)**: packet timestamps are UTC from GPS/NTP regardless of its zone
+  setting; set its own zone for its web UI and logs (System > General > Time).
+* **Meter clock**: SH meters keep local wall-clock time with no zone. The meter
+  panel compares it with GMT+2 and flags drift; set it in SQCOMM (ParaSet > Time).
+
 ## API
 
 | Method | Path | |

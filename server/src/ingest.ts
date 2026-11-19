@@ -149,8 +149,9 @@ export class Ingestor extends EventEmitter {
            last_f_cnt = ?3, last_f_port = ?4, last_rssi = ?5, last_snr = ?6, last_sf = ?7, last_gateway_id = ?8,
            register_l = COALESCE(?9, register_l), flow_lph = COALESCE(?10, flow_lph),
            credit_l = COALESCE(?11, credit_l), battery_pct = COALESCE(?12, battery_pct),
-           battery_v = COALESCE(?13, battery_v), valve = COALESCE(?14, valve), last_object = ?15
-         WHERE dev_eui = ?16`,
+           battery_v = COALESCE(?13, battery_v), valve = COALESCE(?14, valve), last_object = ?15,
+           last_uplink_at = ?1
+         WHERE dev_eui = ?16 AND (last_uplink_at IS NULL OR last_uplink_at <= ?1)`,
         receivedAt,
         ev.devAddr ?? null,
         ev.fCnt ?? null,

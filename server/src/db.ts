@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS meters (
   battery_v       REAL,
   margin          INTEGER,
   valve           TEXT,
-  last_object     TEXT
+  last_object     TEXT,
+  last_uplink_at  TEXT      -- when last_object was received
 );
 
 CREATE TABLE IF NOT EXISTS uplinks (
@@ -116,6 +117,17 @@ export class Store {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
     this.db.exec(SCHEMA);
+    this.migrate();
+  }
+
+  /** Bring databases created by earlier versions up to the current schema. */
+  private migrate() {
+    const cols = (table: string) => new Set((this.all(`PRAGMA table_info(${table})`) as { name: string }[]).map((c) => c.name));
+    if (!cols('meters').has('last_uplink_at')) this.db.exec(`ALTER TABLE meters ADD COLUMN last_uplink_at TEXT`);
+    if (!cols('device_events').has('dedup_key')) {
+      this.db.exec(`ALTER TABLE device_events ADD COLUMN dedup_key TEXT`);
+      this.db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS device_events_dedup ON device_events (dedup_key)`);
+    }
   }
 
   close() {

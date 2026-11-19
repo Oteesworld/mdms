@@ -320,3 +320,14 @@ test('usage API returns daily buckets for a meter', async () => {
   await app.close();
   store.close();
 });
+
+test('meter clock drift is measured in the configured time zone (GMT+2)', async () => {
+  const { meterClockDriftS, zoneOffsetMin } = await import('../src/server.ts');
+  assert.equal(zoneOffsetMin('Africa/Gaborone', new Date('2026-11-19T08:00:00Z')), 120);
+  // Received 14:00 UTC = 16:00 in Gaborone; a meter showing 16:00:30 is 30 s ahead.
+  assert.equal(meterClockDriftS('2026-11-19 16:00:30', '2026-11-19T14:00:00.000Z', 'Africa/Gaborone'), 30);
+  // The SH meter's clock (2022-01-10) is years behind.
+  const d = meterClockDriftS('2022-01-10 17:36:49', '2026-11-18T15:50:38.354Z', 'Africa/Gaborone')!;
+  assert.ok(d < -4 * 365 * 86400);
+  assert.equal(meterClockDriftS(undefined, '2026-11-19T14:00:00Z', 'Africa/Gaborone'), null);
+});

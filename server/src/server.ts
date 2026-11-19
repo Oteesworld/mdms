@@ -27,6 +27,32 @@ export function meterStatus(row: Row, config: Config, now = Date.now()): 'online
   return now - seen <= config.offlineAfterS * 1000 ? 'online' : 'offline';
 }
 
+/** UTC offset (minutes) of a time zone at a given instant, e.g. +120 for Africa/Gaborone. */
+export function zoneOffsetMin(timeZone: string, at: Date): number {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      .formatToParts(at)
+      .map((x) => [x.type, x.value]),
+  );
+  const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+  return Math.round((asUtc - at.getTime()) / 60000);
+}
+
+/**
+ * How far the meter's own clock is from real local time, in seconds (negative = behind).
+ * meterTime is wall-clock text without a zone ("2022-01-10 17:36:49"), read in the
+ * configured time zone and compared with when the network received the frame.
+ */
+export function meterClockDriftS(meterTime: unknown, receivedAt: unknown, timeZone: string): number | null {
+  if (typeof meterTime !== 'string' || typeof receivedAt !== 'string') return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/.exec(meterTime);
+  const rx = Date.parse(receivedAt);
+  if (!m || !Number.isFinite(rx)) return null;
+  const wallAsUtc = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  const meterUtc = wallAsUtc - zoneOffsetMin(timeZone, new Date(rx)) * 60000;
+  return Math.round((meterUtc - rx) / 1000);
+}
+
 function meterView(row: Row, config: Config) {
   let lastObject: unknown = null;
   try {
@@ -73,6 +99,11 @@ function meterView(row: Row, config: Config) {
     valve: row.valve,
     openAlarms: row.open_alarms ?? 0,
     lastObject,
+    meterClockDriftS: meterClockDriftS(
+      (lastObject as Record<string, unknown> | null)?.meterTime,
+      row.last_uplink_at ?? row.last_seen_at,
+      config.timeZone,
+    ),
   };
 }
 
@@ -141,7 +172,7 @@ export async function buildServer(deps: ServerDeps): Promise<FastifyInstance> {
   });
 
   // --- dashboard API ---------------------------------------------------------
-  app.get('/api/health', async () => ({ ok: true, chirpstack: deps.syncState?.() ?? null }));
+  app.get('/api/health', async () => ({ ok: true, timeZone: config.timeZone, chirpstack: deps.syncState?.() ?? null }));
 
   app.get('/api/summary', async () => {
     const meters = store.all(METERS_SQL).map((r) => meterView(r, config));
