@@ -1780,13 +1780,20 @@ const fmtDT = iso => { if (!iso) return '—'; const d = new Date(iso); return p
 const GW_STATE = {ONLINE: ['Online', MPC.okText, MPC.okBg, MPC.ok], OFFLINE: ['Offline', MPC.bad, MPC.badBg, MPC.bad], NEVER_SEEN: ['Never seen', MPC.grey, MPC.greyBg, '#A1A8B2']};
 const EU868_SF = {0: 'SF12', 1: 'SF11', 2: 'SF10', 3: 'SF9', 4: 'SF8', 5: 'SF7', 6: 'SF7 250k', 7: 'FSK'};
 
+// Retries network failures and 5xx answers (API restarting or waking from sleep) a few times before
+// reporting an error, so a brief outage clears without the user pressing Refresh.
 function gwFetch(self, path, key, done) {
   self._gwReq = self._gwReq || {};
   if (self._gwReq[key]) return;
   self._gwReq[key] = true;
-  fetch(MDMS_API + path, {headers: {accept: 'application/json'}})
-    .then(r => r.json().then(j => { if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j; }))
-    .then(j => done(null, j), err => done(err.message === 'Failed to fetch' ? 'Could not reach the MDMS API (' + MDMS_API + '). It may be waking up; try again in a moment.' : err.message))
+  const delays = [3000, 6000, 10000, 15000];
+  const attempt = n => fetch(MDMS_API + path, {headers: {accept: 'application/json'}})
+    .then(r => r.text().then(t => { let j = null; try { j = JSON.parse(t); } catch (x) {}
+      if (r.ok && j) return j;
+      const er = new Error((j && j.error) || 'HTTP ' + r.status); er.retry = r.status >= 500 || !j; throw er; }), err => { const er = new Error('network'); er.retry = true; er.network = true; throw er; })
+    .catch(err => { if (err.retry && n < delays.length) return new Promise(ok => setTimeout(ok, delays[n])).then(() => attempt(n + 1)); throw err; });
+  attempt(0)
+    .then(j => done(null, j), err => done(err.network || /^HTTP 5/.test(err.message) ? 'Could not reach the MDMS API (' + MDMS_API + ') after several tries. Press Refresh to try again.' : err.message))
     .then(() => { self._gwReq[key] = false; });
 }
 function gwLoadList(self, force) {

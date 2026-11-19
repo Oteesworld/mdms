@@ -2,32 +2,37 @@
 // turns cumulative meter readings into hourly / daily consumption.
 'use strict';
 const path = require('path');
-const {execSync} = require('child_process');
+const {exec} = require('child_process');
 
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const TZ = process.env.METER_TIMEZONE || 'Africa/Gaborone';
 let pool = null, ready = null;
+const Pool0 = (pg, opts) => new pg.Pool(opts);
 
 // Load the pg driver. The Render service may have been created without an install step, so
 // install it on first use if it is missing (set the build command to `cd server && npm install`
 // to do this at build time instead).
+// The install runs in the background so the API keeps answering requests meanwhile.
 function loadPg() {
-  try { return require('pg'); } catch (e) {
+  try { return Promise.resolve(require('pg')); } catch (e) {
     console.log('pg driver missing; running npm install in ' + __dirname);
-    execSync('npm install --omit=dev --no-audit --no-fund', {cwd: __dirname, stdio: 'inherit', timeout: 180000});
-    return require(path.join(__dirname, 'node_modules', 'pg'));
+    return new Promise((ok, bad) => exec('npm install --omit=dev --no-audit --no-fund', {cwd: __dirname, timeout: 180000}, err => {
+      if (err) return bad(err);
+      console.log('pg driver installed');
+      ok(require(path.join(__dirname, 'node_modules', 'pg')));
+    }));
   }
 }
 
 function db() {
   if (!DATABASE_URL) return null;
   if (!ready) {
-    const pg = loadPg(), {Pool} = pg;
+    ready = loadPg().then(pg => {
     // timestamps without zone (bucket starts in the meter's local time) are kept as naive UTC values
     pg.types.setTypeParser(1114, v => new Date(v.replace(' ', 'T') + 'Z'));
     const external = /\.render\.com|sslmode=require/.test(DATABASE_URL);
-    pool = new Pool({connectionString: DATABASE_URL, max: 3, ssl: external ? {rejectUnauthorized: false} : false});
-    ready = pool.query(`
+    pool = Pool0(pg, {connectionString: DATABASE_URL, max: 3, ssl: external ? {rejectUnauthorized: false} : false});
+    return pool.query(`
       CREATE TABLE IF NOT EXISTS meter_uplinks (
         id BIGSERIAL PRIMARY KEY,
         dev_eui TEXT NOT NULL,
@@ -47,7 +52,7 @@ function db() {
         UNIQUE (dev_eui, dedup_id)
       );
       CREATE INDEX IF NOT EXISTS meter_uplinks_dev_time ON meter_uplinks (dev_eui, received_at);
-    `).then(() => true).catch(e => { ready = null; throw e; });
+    `); }).then(() => true).catch(e => { ready = null; throw e; });
   }
   return ready.then(() => pool);
 }
