@@ -1964,7 +1964,7 @@ const liveUps = d => (d.events || []).filter(e => e.type === 'up');
 const liveOnline = d => d.device.lastSeenAt && (Date.now() - new Date(d.device.lastSeenAt).getTime()) < LIVE_ONLINE_HOURS * 3600e3;
 // C2 status frame (SH Meters): layout not in the vendor spec; split into the same raw fields as the ChirpStack codec.
 const c2Fields = hex => { if (!hex || hex.length < 24) return null; const bcd = s => /^[0-9]+$/.test(s) ? parseInt(s, 10) / 100 : null;
-  return {a: parseInt(hex.slice(0, 8), 16), b: parseInt(hex.slice(8, 16), 16), c: bcd(hex.slice(16, 20)), d: bcd(hex.slice(20, 24)), flags: hex.slice(24, 26)}; };
+  return {a: parseInt(hex.slice(2, 8), 16), b: parseInt(hex.slice(8, 16), 16), c: bcd(hex.slice(16, 20)), d: bcd(hex.slice(20, 24)), flags: hex.slice(24, 26)}; };
 
 // Meter display parameters (P-0 … P-D). C7 data-report keys come from the SH codec; the C2 status
 // frame carries P-0 (field A, 0.1 m3, confirmed against the display) and the meter clock (P-C, P-D).
@@ -1976,10 +1976,22 @@ const P_PARAMS = [
   ['P-8', 'Alarm water volume', 'warningWater', 'm³'], ['P-9', 'Overdraft limit', 'creditWater', 'm³'],
   ['P-A', 'Temperature', 'waterTemperature', '°C'], ['P-B', 'Battery voltage', 'voltageRtu', 'V'],
   ['P-C', 'Date', null, ''], ['P-D', 'Time', null, '']];
+const isC7 = u => u.object && u.object.function_code === '0xC7' && u.object.crc_ok !== false;
+const isC2 = u => u.fPort === 2 && u.object && u.object.function_code === '0xC2' && u.object.payload_hex;
+// Total reading (m3) per frame: C7 totalFlow, or C2 field A / 10. Values far from the newest data report are dropped.
+function readingSeries(ups) {
+  const pts = ups.map(u => isC7(u) && typeof u.object.totalFlow === 'number' ? [u.time, u.object.totalFlow, 'C7'] : isC2(u) && c2Fields(u.object.payload_hex) ? [u.time, c2Fields(u.object.payload_hex).a / 10, 'C2'] : null).filter(Boolean).reverse();
+  const ref = (pts.filter(x => x[2] === 'C7').pop() || pts[pts.length - 1] || [0, 0])[1];
+  return pts.filter(x => Math.abs(x[1] - ref) < Math.max(50, ref * 0.5));
+}
+const C7_FLAGS = [['leakageStatus', 'Leak', 1], ['burstAnalysis', 'Burst', 1], ['magneticAttackStatus', 'Magnetic tamper', 1], ['openStatus', 'Case open', 1], ['voltageStatus', 'Low voltage', 1],
+  ['emptyPipe', 'Empty pipe', 1], ['counterStatus', 'Counter fault', 1], ['flowStatus', 'Flow alarm', 1], ['actuatorStatus', 'Actuator fault', 1], ['netStatus', 'Network status', 0],
+  ['valveStatus', 'Valve status bit', 0], ['motorStatus', 'Motor status', 0], ['realtimeInfoFlag', 'Real-time data', 0], ['isStatusValid', 'Status valid flag', 0]];
+
 function meterDisplay(d) {
   const ups = liveUps(d), found = {};
-  ups.forEach(u => { const o = u.object || {}; P_PARAMS.forEach(p => { if (p[2] && !found[p[0]] && typeof o[p[2]] === 'number') found[p[0]] = {v: o[p[2]], time: u.time, src: 'Data report'}; }); });
-  const st = ups.find(u => u.fPort === 2 && u.object && u.object.payload_hex), c2 = st ? c2Fields(st.object.payload_hex) : null;
+  ups.filter(isC7).forEach(u => { const o = u.object; P_PARAMS.forEach(p => { if (p[2] && !found[p[0]] && typeof o[p[2]] === 'number') found[p[0]] = {v: o[p[2]], time: u.time, src: 'Data report'}; }); });
+  const st = ups.find(isC2), c2 = st ? c2Fields(st.object.payload_hex) : null;
   if (!found['P-0'] && c2) found['P-0'] = {v: Math.round(c2.a) / 10, time: st.time, src: 'Status frame'};
   const mt = (ups.find(u => u.object && u.object.meterTime) || {}).object;
   if (mt) { const t = mt.meterTime.split(' '), when = ups.find(u => u.object && u.object.meterTime).time; found['P-C'] = {v: t[0], time: when, src: 'Meter clock'}; found['P-D'] = {v: t[1], time: when, src: 'Meter clock'}; }
@@ -1996,13 +2008,13 @@ function liveRowCells(self, b, txt) {
     const r = [txt('Live meter', {mono: true, bold: true, color: '#00468C'}), txt(LIVE_EUI.toUpperCase(), {mono: true, color: '#767E89'}), txt(msg, {color: '#767E89'}), txt('—'), txt('—'), txt('—'), txt('—', {align: 'right'}), txt('—', {align: 'right'}), txt('—', {align: 'right', color: '#767E89'}), b('Pending')];
     r.live = true; return r;
   }
-  const up = liveUps(d)[0], rx = up && up.rx && up.rx[0], gw = rx && d.gateways[rx.gatewayId];
+  const ups = liveUps(d), up = ups[0], rx = up && up.rx && up.rx[0], gw = rx && d.gateways[rx.gatewayId];
   const on = liveOnline(d);
   const r = [txt((d.device.tags.serial || d.device.name), {mono: true, bold: true, color: '#00468C'}), txt(d.device.devEui.toUpperCase(), {mono: true, color: '#767E89'}),
     txt('SH ultrasonic STS · live', {color: '#00468C', bold: true}), txt(d.device.name + ' (unassigned)'), txt('—', {color: '#767E89'}),
     txt(gw ? gw.name : (rx ? rx.gatewayId : '—'), {mono: true}),
     txt(rx ? rx.rssi + ' / SF' + (up.sf || '') : '—', {mono: true, align: 'right', color: rx && rx.rssi < -105 ? '#965A00' : '#181D23'}),
-    txt(d.device.deviceStatus && d.device.deviceStatus.batteryLevel >= 0 ? Math.round(d.device.deviceStatus.batteryLevel) + '%' : 'n/a', {mono: true, align: 'right', color: '#767E89'}),
+    txt((ups.find(isC7) || {object: {}}).object.voltageRtu ? ups.find(isC7).object.voltageRtu.toFixed(2) + ' V' : 'n/a', {mono: true, align: 'right', color: '#767E89'}),
     txt(relTime(d.device.lastSeenAt), {mono: true, align: 'right', color: '#767E89'}), b(on ? 'Online' : 'Offline')];
   r.live = true; return r;
 }
@@ -2023,7 +2035,7 @@ function renderLiveMeter(self) {
 
   const dev = d.device, ups = liveUps(d), last = ups[0], rx0 = last && last.rx && last.rx[0], disp = meterDisplay(d);
   const on = liveOnline(d), gwName = id => (d.gateways[id] && d.gateways[id].name) || id;
-  const lastStatus = ups.find(u => u.fPort === 2 && u.object && u.object.payload_hex);
+  const lastStatus = ups.find(isC2), lastC7 = ups.find(isC7);
   const c2 = lastStatus ? c2Fields(lastStatus.object.payload_hex) : null;
   const sum = m => m && m.datasets && m.datasets[0] ? m.datasets[0].data.reduce((a, b) => a + b, 0) : 0;
   const ds = st.lvTab || 'Uplinks', rg = st.lvRange || '24h', LM = rg === '24h' ? d.link24h : d.link30d;
@@ -2047,7 +2059,7 @@ function renderLiveMeter(self) {
     ['Signal', MP_IC.signal, rx0 ? rx0.rssi + ' dBm' : '—', rx0 ? 'SNR ' + rx0.snr + ' dB · ' + gwName(rx0.gatewayId) : '', MPC.blue, null, rx0 ? sigBars(rx0.rssi) : null],
     ['Uplinks · 24 h', GW_IC.rx, N(Math.round(sum(d.link24h.rxPackets))), N(Math.round(sum(d.link30d.rxPackets))) + ' in 30 days', MPC.blue],
     ['Meter reading · P-0', MP_IC.gauge, disp[0].v != null ? fmtM3(disp[0].v) + ' m³' : '—', disp[0].v != null ? N(Math.round(disp[0].v * 1000)) + ' L · ' + fmtDT(disp[0].time) : 'Not reported yet', MPC.teal],
-    ['Data rate', GW_IC.wave, last ? 'DR' + last.dr + ' · SF' + last.sf : '—', last && last.frequency ? (last.frequency / 1e6).toFixed(1) + ' MHz last channel' : '', MPC.blue],
+    ['Remaining water · P-2', MP_IC.wallet, disp[2].v != null ? fmtM3(disp[2].v) + ' m³' : '—', disp[2].v != null ? (disp[2].v < 0 ? 'Overdraft · ' + N(Math.round(-disp[2].v * 1000)) + ' L below zero' : N(Math.round(disp[2].v * 1000)) + ' L of credit left') : 'Not reported yet', disp[2].v < 0 ? MPC.bad : MPC.blue, disp[2].v < 0 ? MPC.bad : null],
     ['Battery · P-B', MP_IC.battery, disp[11].v != null ? disp[11].v.toFixed(2) + ' V' : batt, disp[11].v != null ? fmtDT(disp[11].time) : 'Sent in data reports (not yet received)', MPC.mute]
   ].map(t => e('div', {key: t[0], style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
     e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(t[1], 13, t[4]), t[0]),
@@ -2055,10 +2067,10 @@ function renderLiveMeter(self) {
       e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, t[3])), t[6] || null)));
 
   // clock warning
-  const mt = lastStatus && lastStatus.object.meterTime;
-  const clockOff = mt && Math.abs(new Date(mt.replace(' ', 'T')).getTime() - new Date(lastStatus.time).getTime()) > 24 * 3600e3;
+  const clockSrc = ups.find(u => u.object && u.object.meterTime), mt = clockSrc && clockSrc.object.meterTime;
+  const clockOff = mt && Math.abs(new Date(mt.replace(' ', 'T')).getTime() - new Date(clockSrc.time).getTime()) > 24 * 3600e3;
   const notice = clockOff ? e('div', {style: {display: 'flex', gap: 10, alignItems: 'flex-start', background: '#FBF6EC', border: '1px solid #EFDDB8', borderRadius: 8, padding: '10px 12px', marginBottom: 10}},
-    e('span', {style: {color: MPC.warnText}}, ic(CP_IC.alert, 16)), e('div', {style: {fontSize: 12, color: '#6B4200'}}, e('b', null, 'Meter clock out of sync. '), 'The meter reports ' + mt + ' while the network received the frame on ' + fmtDT(lastStatus.time) + '. Send a time-sync command so the meter time-stamps its records correctly.')) : null;
+    e('span', {style: {color: MPC.warnText}}, ic(CP_IC.alert, 16)), e('div', {style: {fontSize: 12, color: '#6B4200'}}, e('b', null, 'Meter clock out of sync. '), 'The meter reports ' + mt + ' while the network received the frame on ' + fmtDT(clockSrc.time) + '. Send a time-sync command so the meter time-stamps its records correctly.')) : null;
 
   // traffic & signal charts
   const seg = (opts, cur, k) => e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, opts.map(o => e('div', {key: o, onClick: () => self.setState({[k]: o}), style: {padding: '4px 10px', fontSize: 11, fontWeight: cur === o ? 600 : 500, cursor: 'pointer', background: cur === o ? MPC.blue : '#fff', color: cur === o ? '#fff' : MPC.mute}}, o === '24h' ? '24 h' : o === '30d' ? '30 days' : o)));
@@ -2094,9 +2106,9 @@ function renderLiveMeter(self) {
       e('span', {style: {flex: 'none', minWidth: 34, height: 26, padding: '0 5px', borderRadius: 5, background: x.v != null ? MPC.blue : MPC.greyBg, color: x.v != null ? '#fff' : MPC.mute, fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center'}}, x.code),
       e('div', {style: {minWidth: 0, flex: 1}},
         e('div', {style: {fontSize: 10.5, color: MPC.mute, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}, title: x.label}, x.label),
-        e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : 'Not reported yet'),
+        e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : typeof x.v === 'number' && x.v < 0 ? MPC.bad : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : 'Not reported yet'),
         x.v != null ? e('div', {style: {fontSize: 9.5, color: MPC.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, x.src) : null)))),
-    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'Values come from the meter’s own uplinks. The status frames it sends today carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in its data reports, which this meter is not sending yet. They will appear here automatically once it does.')), null);
+    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Parameters marked “Not reported yet” are not included in the data reports this meter sends.' : 'Values come from the meter’s own uplinks. The status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in data reports.'))), null);
 
   // device picture
   const picture = card('Device picture', MP_IC.camera, null, e('div', null,
@@ -2105,20 +2117,35 @@ function renderLiveMeter(self) {
     e('div', {style: {marginTop: 9, fontSize: 10.5, color: MPC.mute}}, 'SH Meters Kalahari · SH-L-EU868 ultrasonic STS meter'),
     e('div', {style: {marginTop: 2, fontSize: 10.5, color: MPC.faint}}, 'Product image. An installation photo can replace it once taken on site.')), {height: '100%'});
 
+  // latest data report (C7)
+  const o7 = lastC7 && lastC7.object;
+  const activeFlags = o7 ? C7_FLAGS.filter(f => f[2] && o7[f[0]]) : [];
+  const dataReport = o7 ? card('Latest data report', MP_IC.token, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, fmtDT(lastC7.time)), e('div', null,
+    e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+      kv('Message', 'Data report · 0xC7'), kv('Checksum', o7.crc_ok ? 'Valid' : 'Invalid', {color: o7.crc_ok ? MPC.okText : MPC.bad}),
+      kv('Total reading (P-0)', fmtM3(o7.totalFlow) + ' m³'), kv('Meter clock', o7.meterTime || '—', {color: clockOff ? MPC.warnText : MPC.ink}),
+      kv('Purchased (P-4)', o7.totalPurchase != null ? fmtM3(o7.totalPurchase) + ' m³' : '—'), kv('Consumed (P-3)', o7.totalConsumption != null ? fmtM3(o7.totalConsumption) + ' m³' : '—'),
+      kv('Temperature (P-A)', o7.waterTemperature != null ? o7.waterTemperature.toFixed(1) + ' °C' : '—'), kv('Battery (P-B)', o7.voltageRtu != null ? o7.voltageRtu.toFixed(2) + ' V' : '—')),
+    e('div', {style: {fontSize: 11, fontWeight: 600, color: MPC.mute, margin: '12px 0 6px'}}, 'Status flags'),
+    e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 5}}, C7_FLAGS.filter(f => o7[f[0]] !== undefined).map(f => { const on = !!o7[f[0]], alarm = f[2] && on;
+      return e('span', {key: f[0], title: f[0] + ' = ' + o7[f[0]], style: {fontSize: 10.5, padding: '3px 7px', borderRadius: 5, fontWeight: 500, background: alarm ? MPC.badBg : f[2] ? MPC.okBg : MPC.greyBg, color: alarm ? MPC.bad : f[2] ? MPC.okText : MPC.ink2}}, f[2] ? (alarm ? '⚠ ' + f[1] : f[1] + ': OK') : f[1] + ': ' + o7[f[0]]); })),
+    e('div', {style: {marginTop: 8, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, activeFlags.length ? activeFlags.length + ' alarm flag(s) set.' : 'No alarm flags set. Grey flags are shown as reported; their meaning is not documented by the vendor.'),
+    e('div', {style: {marginTop: 8, padding: '7px 9px', background: MPC.bg, border: '1px solid ' + MPC.line2, borderRadius: 6, fontSize: 10.5, color: MPC.ink2, wordBreak: 'break-all'}}, lastC7.dataHex.toUpperCase())), {height: '100%'}) : null;
+
   // latest status frame
   const statusFrame = card('Latest status frame', MP_IC.token, lastStatus ? e('span', {style: {fontSize: 10.5, color: MPC.mute}}, fmtDT(lastStatus.time)) : null, lastStatus ? e('div', null,
     e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
       kv('Message', lastStatus.object.message_label + ' · ' + lastStatus.object.function_code), kv('Checksum', lastStatus.object.crc_ok ? 'Valid' : 'Invalid', {color: lastStatus.object.crc_ok ? MPC.okText : MPC.bad}),
-      kv('Meter clock', mt || '—', {color: clockOff ? MPC.warnText : MPC.ink}), kv('Meter address', lastStatus.object.address || '—'),
+      kv('Meter clock', lastStatus.object.meterTime || '—'), kv('Meter address', lastStatus.object.address || '—'),
       c2 ? kv('Field A · total reading (P-0)', fmtM3(c2.a / 10) + ' m³', {color: MPC.okText}) : null, c2 ? kv('Field B (raw)', N(c2.b)) : null, c2 ? kv('Field C · meter voltage', c2.c != null ? c2.c.toFixed(2) + ' V' : '—') : null, c2 ? kv('Field D (BCD)', c2.d != null ? c2.d.toFixed(2) : '—') : null),
     e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'C2 frames are not in the vendor decoder. Field A is confirmed as the total reading in 0.1 m³ (197 = 19.7 m³ on display P-0) and the frame ends with the meter clock (P-C, P-D). Field C is the meter voltage, not the P-B battery voltage. Fields B and D are not yet identified.'),
     e('div', {style: {marginTop: 8, padding: '7px 9px', background: MPC.bg, border: '1px solid ' + MPC.line2, borderRadius: 6, fontSize: 10.5, color: MPC.ink2, wordBreak: 'break-all'}}, lastStatus.dataHex.toUpperCase())) : empty('No status frame in the recent event log.'), {height: '100%'});
 
-  // counter A trend from recent frames
-  const aSeries = ups.filter(u => u.fPort === 2 && u.object && u.object.payload_hex).map(u => [u.time, c2Fields(u.object.payload_hex)]).filter(x => x[1]).reverse();
+  // total reading trend (C7 data reports and C2 status frames)
+  const aSeries = readingSeries(ups);
   const counter = card('Total reading (P-0)', MP_IC.drop, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, aSeries.length + ' recent frames'), aSeries.length > 1 ? e('div', null,
-    line(aSeries.map(x => x[1].a / 10), aSeries.map(x => { const t = new Date(x[0]); return pad2(t.getHours()) + ':' + pad2(t.getMinutes()); }), {min: Math.min(...aSeries.map(x => x[1].a)) / 10 - .2, max: Math.max(...aSeries.map(x => x[1].a)) / 10 + .2, grid: [], unit: ' m³', color: MPC.teal, fill: '#EEF5F5', every: 2, dots: true, w: 420, h: 150}),
-    e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 6}}, 'From ' + fmtM3(aSeries[0][1].a / 10) + ' m³ to ' + fmtM3(aSeries[aSeries.length - 1][1].a / 10) + ' m³ since ' + fmtDT(aSeries[0][0]) + ': about ' + N((aSeries[aSeries.length - 1][1].a - aSeries[0][1].a) * 100) + ' L used. The status frame reports in steps of 0.1 m³ (100 L).')) : empty('Not enough status frames yet.'), {height: '100%'});
+    line(aSeries.map(x => x[1]), aSeries.map(x => { const t = new Date(x[0]); return pad2(t.getHours()) + ':' + pad2(t.getMinutes()); }), {min: Math.min(...aSeries.map(x => x[1])) - .2, max: Math.max(...aSeries.map(x => x[1])) + .2, grid: [], unit: ' m³', color: MPC.teal, fill: '#EEF5F5', every: Math.max(1, Math.ceil(aSeries.length / 6)), dots: true, w: 420, h: 150}),
+    e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 6}}, 'From ' + fmtM3(aSeries[0][1]) + ' m³ to ' + fmtM3(aSeries[aSeries.length - 1][1]) + ' m³ since ' + fmtDT(aSeries[0][0]) + ': about ' + N(Math.round((aSeries[aSeries.length - 1][1] - aSeries[0][1]) * 1000)) + ' L used. The meter reports in steps of 0.1 m³ (100 L).')) : empty('Not enough frames yet.'), {height: '100%'});
 
   // recent uplinks table
   const upsTable = card('Recent uplinks', MP_IC.clock, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, 'from the ChirpStack event log'), ups.length ? table(
@@ -2148,7 +2175,7 @@ function renderLiveMeter(self) {
   return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, header, notice, tiles,
     row([[dispCard, 1, 640]]),
     row([[traffic, 2, 520], [client, 1, 300]]),
-    row([[picture, 1, 280], [statusFrame, 1, 320], [counter, 1, 300], [info, 1, 340]]),
+    row([[picture, 1, 280], [dataReport || statusFrame, 1, 340], [counter, 1, 300], [info, 1, 340]]),
     row([[upsTable, 1, 640]]),
     row([[conn, 1, 380], [chans, 1, 320]]));
 }
