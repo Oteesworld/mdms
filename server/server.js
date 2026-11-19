@@ -1,7 +1,11 @@
-// Leeroy MDMS API: read-only proxy to the ChirpStack v4 gRPC-web API.
+// Leeroy MDMS API: read-only proxy to the ChirpStack v4 gRPC-web API, plus meter reading history.
 // The ChirpStack API token stays on the server (CHIRPSTACK_TOKEN env var) and is never sent to browsers.
 'use strict';
 const http = require('http');
+const store = require('./store');
+const TRACKED = (process.env.TRACKED_DEVICES || '004a7701240c1fc9').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const INGEST_SECRET = process.env.INGEST_SECRET || '';
+const POLL_MINUTES = Number(process.env.POLL_MINUTES || 5);
 
 const PORT = process.env.PORT || 10000;
 const CS_URL = (process.env.CHIRPSTACK_URL || 'https://teemane.leeroysystems.co.bw').replace(/\/$/, '');
@@ -115,7 +119,7 @@ async function deviceEvents(devEui, ms) {
     if (flag & 0x80 || i > buf.length) continue;
     const m = decode(part), type = str(m, 3); let j = {};
     try { j = JSON.parse(str(m, 4)); } catch (e) { continue; }
-    const ev = {type, time: j.time || ts(m, 2)};
+    const ev = {type, time: j.time || ts(m, 2), id: j.deduplicationId || str(m, 1)};
     if (type === 'up') Object.assign(ev, {fPort: j.fPort, fCnt: j.fCnt, dr: j.dr, confirmed: !!j.confirmed, adr: !!j.adr,
       dataHex: j.data ? Buffer.from(j.data, 'base64').toString('hex') : '', object: j.object || null,
       frequency: j.txInfo && j.txInfo.frequency, sf: j.txInfo && j.txInfo.modulation && j.txInfo.modulation.lora && j.txInfo.modulation.lora.spreadingFactor,
@@ -167,16 +171,22 @@ http.createServer(async (req, res) => {
   const allow = origin && (ORIGINS.includes(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin)) ? origin : ORIGINS[0];
   res.setHeader('Access-Control-Allow-Origin', allow);
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
   const send = (code, obj) => { res.writeHead(code, {'content-type': 'application/json', 'cache-control': 'no-store'}); res.end(JSON.stringify(obj)); };
   try {
     const u = new URL(req.url, 'http://x');
+    if (req.method === 'POST' && u.pathname === '/api/chirpstack/uplink') return send(...await ingest(req, u));
     if (req.method !== 'GET') return send(405, {error: 'Method not allowed'});
     if (u.pathname === '/healthz') return send(200, {ok: true});
     if (u.pathname === '/api/gateways') return send(200, Object.assign({fetchedAt: new Date().toISOString(), source: CS_URL}, await cached('list', 15000, listGateways)));
     const m = /^\/api\/gateways\/([0-9a-fA-F]{16})$/.exec(u.pathname);
     if (m) { const id = m[1].toLowerCase(); return send(200, Object.assign({fetchedAt: new Date().toISOString()}, await cached('gw:' + id, 15000, () => getGateway(id)))); }
+    const cm = /^\/api\/devices\/([0-9a-fA-F]{16})\/consumption$/.exec(u.pathname);
+    if (cm) { const eui = cm[1].toLowerCase(), unit = u.searchParams.get('unit') === 'day' ? 'day' : 'hour';
+      const count = Math.min(unit === 'day' ? 90 : 168, Math.max(1, Number(u.searchParams.get('count')) || (unit === 'day' ? 30 : 24)));
+      if (!store.enabled()) return send(200, {enabled: false, reason: 'DATABASE_URL is not configured on the API service'});
+      return send(200, await store.consumption(eui, unit, count)); }
     const dm = /^\/api\/devices\/([0-9a-fA-F]{16})$/.exec(u.pathname);
     if (dm) { const eui = dm[1].toLowerCase(); return send(200, Object.assign({fetchedAt: new Date().toISOString()}, await cached('dev:' + eui, 20000, () => getDevice(eui)))); }
     send(404, {error: 'Not found'});
@@ -184,4 +194,40 @@ http.createServer(async (req, res) => {
     console.error(new Date().toISOString(), req.url, e.message);
     send(e.status || 502, {error: e.message});
   }
-}).listen(PORT, () => console.log('Leeroy MDMS API listening on ' + PORT + ' -> ' + CS_URL));
+}).listen(PORT, () => {
+  console.log('Leeroy MDMS API listening on ' + PORT + ' -> ' + CS_URL + (store.enabled() ? ' · history storage on' : ' · history storage off (no DATABASE_URL)'));
+  if (store.enabled()) {
+    store.db().then(() => console.log('database ready')).catch(e => console.error('database error: ' + e.message));
+    setTimeout(pollEvents, 5000);
+    setInterval(pollEvents, POLL_MINUTES * 60e3);
+    // Free Render web services sleep after 15 minutes without inbound traffic, which would stop the
+    // poller. Ping our own public URL to stay awake while history is being collected.
+    if (process.env.RENDER_EXTERNAL_URL && process.env.KEEP_AWAKE !== 'off') setInterval(() => fetch(process.env.RENDER_EXTERNAL_URL + '/healthz').catch(() => {}), 10 * 60e3);
+  }
+});
+
+// Copy new uplinks of tracked meters from ChirpStack's event log into the database.
+async function pollEvents() {
+  for (const eui of TRACKED) {
+    try {
+      const evs = (await deviceEvents(eui, 3000)).filter(e => e.type === 'up');
+      let added = 0;
+      for (const ev of evs) if (await store.storeUplink(Object.assign({devEui: eui}, ev), 'event-log')) added++;
+      if (added) console.log(new Date().toISOString() + ' stored ' + added + ' new uplink(s) for ' + eui);
+    } catch (e) { console.error(new Date().toISOString() + ' poll ' + eui + ': ' + e.message); }
+  }
+}
+
+// ChirpStack HTTP integration endpoint (JSON encoding). Requires Authorization: Bearer INGEST_SECRET.
+function readBody(req) { return new Promise((ok, bad) => { let n = 0; const parts = []; req.on('data', c => { n += c.length; if (n > 1e6) { bad(new Error('too large')); req.destroy(); } else parts.push(c); }); req.on('end', () => ok(Buffer.concat(parts).toString('utf8'))); req.on('error', bad); }); }
+async function ingest(req, u) {
+  if (!INGEST_SECRET || req.headers.authorization !== 'Bearer ' + INGEST_SECRET) return [401, {error: 'unauthorized'}];
+  if (!store.enabled()) return [503, {error: 'history storage is not configured'}];
+  const j = JSON.parse(await readBody(req) || '{}');
+  if (u.searchParams.get('event') !== 'up') return [200, {ignored: u.searchParams.get('event')}];
+  const di = j.deviceInfo || {};
+  if (TENANT && di.tenantId && di.tenantId !== TENANT) return [403, {error: 'wrong tenant'}];
+  const ev = {devEui: di.devEui, id: j.deduplicationId, time: j.time, fPort: j.fPort, fCnt: j.fCnt, object: j.object || null,
+    dataHex: j.data ? Buffer.from(j.data, 'base64').toString('hex') : '', rx: (j.rxInfo || []).map(x => ({gatewayId: x.gatewayId, rssi: x.rssi, snr: x.snr}))};
+  return [200, {stored: await store.storeUplink(ev, 'http-integration')}];
+}

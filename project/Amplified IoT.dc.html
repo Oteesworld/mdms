@@ -2001,6 +2001,14 @@ function meterDisplay(d) {
 }
 const fmtM3 = v => typeof v === 'number' ? v.toLocaleString('en-US', {maximumFractionDigits: 3}) : v;
 
+function liveConsLoad(self, unit, force) {
+  const k = 'cons:' + unit, cur = (self.state.liveCons || {})[unit];
+  if (!force && cur && (cur.status === 'loading' || (cur.at && Date.now() - cur.at < 60000))) return;
+  self.setState(x => ({liveCons: Object.assign({}, x.liveCons || {}, {[unit]: Object.assign({}, cur || {}, {status: 'loading'})})}));
+  gwFetch(self, '/api/devices/' + LIVE_EUI + '/consumption?unit=' + unit + '&count=' + (unit === 'day' ? 30 : 24), k, (err, j) =>
+    self.setState(x => ({liveCons: Object.assign({}, x.liveCons || {}, {[unit]: err ? {status: 'error', error: err, at: Date.now()} : {status: 'ok', data: j, at: Date.now()}})})));
+}
+
 function liveRowCells(self, b, txt) {
   const L = self.state.liveDev, d = L && L.data;
   if (!d) {
@@ -2030,7 +2038,7 @@ function renderLiveMeter(self) {
     e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: L.status === 'error' ? MPC.bad : MPC.okText}}, e('span', {style: {width: 8, height: 8, borderRadius: '50%', background: L.status === 'error' ? MPC.bad : MPC.ok}}), L.status === 'error' ? 'Live data unavailable' : 'Live from ChirpStack'),
     e('span', {style: {fontSize: 11.5, color: MPC.mute}}, 'Device ' + LIVE_EUI.toUpperCase()), e('span', {style: {flex: 1}}),
     e('span', {style: {fontSize: 11.5, color: MPC.mute}}, L.status === 'loading' ? 'Refreshing…' : L.at ? 'Updated ' + new Date(L.at).toLocaleTimeString('en-GB') : ''),
-    e('div', {onClick: () => liveLoad(self, true), style: {height: 30, padding: '0 11px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: MPC.ink2}}, ic(GW_IC.refresh, 14), 'Refresh'));
+    e('div', {onClick: () => { liveLoad(self, true); liveConsLoad(self, st.lvCons || 'hour', true); }, style: {height: 30, padding: '0 11px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: MPC.ink2}}, ic(GW_IC.refresh, 14), 'Refresh'));
   if (!d) return e('div', null, back, bar, L.status === 'error' ? errBox(L.error) : e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8}}, empty('Loading meter ' + LIVE_EUI.toUpperCase() + ' from ChirpStack…')));
 
   const dev = d.device, ups = liveUps(d), last = ups[0], rx0 = last && last.rx && last.rx[0], disp = meterDisplay(d);
@@ -2098,6 +2106,29 @@ function renderLiveMeter(self) {
       e('div', null, e('div', {style: {fontSize: 13, fontWeight: 600}}, 'No client linked'), e('div', {style: {fontSize: 11, color: MPC.mute}}, 'ChirpStack name: ' + dev.name))),
     e('div', {style: {fontSize: 11.5, color: MPC.ink2, lineHeight: 1.5}}, 'This meter is on the network but not yet linked to a client account or property in the MDMS, so credit and purchase history are not available.'),
     e('div', {style: {display: 'flex', gap: 8, marginTop: 12}}, e('div', {style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, background: MPC.blue, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer'}}, ic(MP_IC.user, 14), 'Assign client'))), {height: '100%'});
+
+  // water consumption from stored readings
+  const cu = st.lvCons || 'hour', CD = (st.liveCons || {})[cu];
+  if (!CD) setTimeout(() => liveConsLoad(self, cu), 0);
+  const cdata = CD && CD.data;
+  let consBody;
+  if (!CD || (CD.status === 'loading' && !cdata)) consBody = empty('Loading consumption history…');
+  else if (CD.status === 'error' && !cdata) consBody = errBox(CD.error);
+  else if (!cdata.enabled) consBody = e('div', {style: {padding: '18px 8px', textAlign: 'center', color: MPC.mute, fontSize: 11.5}}, 'Reading history is not switched on yet: the API has no database connection (' + (cdata.reason || 'DATABASE_URL missing') + ').');
+  else {
+    const bk = cdata.buckets, vals = bk.map(x => x.used_l || 0), known = bk.filter(x => x.used_l != null);
+    const total = known.reduce((a, x) => a + x.used_l, 0), peak = known.reduce((a, x) => x.used_l > (a ? a.used_l : -1) ? x : a, null);
+    const labs = bk.map(x => cu === 'hour' ? x.start.slice(11, 16) : x.start.slice(8, 10) + ' ' + MON[Number(x.start.slice(5, 7)) - 1]);
+    consBody = e('div', null,
+      e('div', {style: {display: 'flex', gap: 22, marginBottom: 12, flexWrap: 'wrap'}},
+        [[cu === 'hour' ? 'Last 24 hours' : 'Last 30 days', N(total) + ' L'], ['Peak ' + (cu === 'hour' ? 'hour' : 'day'), peak && peak.used_l ? N(peak.used_l) + ' L · ' + (cu === 'hour' ? peak.start.slice(11, 16) : peak.start.slice(8, 10) + ' ' + MON[Number(peak.start.slice(5, 7)) - 1]) : '—'],
+          ['Current reading', bk[bk.length - 1].reading_m3 != null ? fmtM3(bk[bk.length - 1].reading_m3) + ' m³' : '—'], ['Stored frames', N(cdata.storedFrames)]].map(x => e('div', {key: x[0]}, e('div', {style: {fontSize: 10, color: MPC.faint}}, x[0]), e('div', {style: {fontSize: 13.5, fontWeight: 600, marginTop: 2}}, x[1])))),
+      bars(vals, labs, cu === 'hour' ? 3 : 5, 'L', true),
+      e('div', {style: {display: 'flex', gap: 14, marginTop: 10, fontSize: 10.5, color: MPC.mute, flexWrap: 'wrap'}},
+        [[MPC.blue, 'Water used'], [MPC.teal, 'Highest'], ['#9DB9D6', cu === 'hour' ? 'Current hour so far' : 'Today so far']].map(l => e('span', {key: l[1], style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, e('span', {style: {width: 9, height: 9, borderRadius: 2, background: l[0]}}), l[1]))),
+      e('div', {style: {marginTop: 8, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'Worked out from the meter’s total reading (P-0), stored on every uplink since ' + fmtDT(cdata.since) + '. The meter counts in 0.1 m³ steps, so usage shows in blocks of 100 L. Times are ' + cdata.timeZone.replace('_', ' ') + ' local time.'));
+  }
+  const consCard = card('Water consumption', MP_IC.drop, e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, [['hour', 'Hourly'], ['day', 'Daily']].map(o => e('div', {key: o[0], onClick: () => { self.setState({lvCons: o[0]}); liveConsLoad(self, o[0]); }, style: {padding: '4px 11px', fontSize: 11, fontWeight: cu === o[0] ? 600 : 500, cursor: 'pointer', background: cu === o[0] ? MPC.blue : '#fff', color: cu === o[0] ? '#fff' : MPC.mute}}, o[1]))), consBody, {height: '100%'});
 
   // meter display parameters
   const shown = disp.filter(x => x.v != null).length;
@@ -2174,10 +2205,11 @@ function renderLiveMeter(self) {
   const row = kids => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || 320) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
   return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, header, notice, tiles,
     row([[dispCard, 1, 640]]),
-    row([[traffic, 2, 520], [client, 1, 300]]),
+    row([[consCard, 2, 520], [client, 1, 300]]),
+    row([[traffic, 2, 520], [chans, 1, 300]]),
     row([[picture, 1, 280], [dataReport || statusFrame, 1, 340], [counter, 1, 300], [info, 1, 340]]),
     row([[upsTable, 1, 640]]),
-    row([[conn, 1, 380], [chans, 1, 320]]));
+    row([[conn, 1, 380]]));
 }
 
 const MF_RX = {serial: /^WM-\d{6}$/i, sts: /^\d{11}$/, hex16: /^[0-9a-fA-F]{16}$/, hex32: /^[0-9a-fA-F]{32}$/, lat: /^-?\d{1,2}\.\d{3,}$/, lng: /^-?\d{1,3}\.\d{3,}$/};
