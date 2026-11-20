@@ -157,4 +157,14 @@ async function lastKnownValues(devEui) {
   return out;
 }
 
-module.exports = {enabled: () => !!DATABASE_URL, db, storeUplink, consumption, readingOf, latestDataReport, lastKnownValues};
+// Status frames (0xC2) received after a given time, oldest first: used to follow the valve state
+// and spot a top-up between data reports.
+async function statusFramesSince(devEui, sinceIso) {
+  const p = await db(); if (!p) return [];
+  const rows = (await p.query(`SELECT received_at, object->>'payload_hex' AS hex FROM meter_uplinks
+    WHERE dev_eui = $1 AND function_code = '0xC2' AND received_at > $2 AND object->>'payload_hex' IS NOT NULL
+    ORDER BY received_at LIMIT 500`, [devEui, sinceIso])).rows;
+  return rows.map(r => ({time: r.received_at.toISOString(), hex: r.hex}));
+}
+
+module.exports = {enabled: () => !!DATABASE_URL, db, storeUplink, consumption, readingOf, latestDataReport, lastKnownValues, statusFramesSince};

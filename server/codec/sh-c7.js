@@ -249,7 +249,10 @@ function decodeC7(payload, out, warnings) {
 // its display: bytes 0-3 field A, where the low 24 bits are the total reading in 0.1 m3 (A = 197 while P-0 showed
 // 19.7 m3; the top byte once carried a stray 0x14 and is ignored); bytes 8-9 BCD meter supply voltage (3.65 V,
 // not the P-B battery voltage); the frame ends with the meter clock as BCD ss mm hh DD MM YY.
-// Fields B, D and the flags are passed through unconfirmed.
+// The low byte of field B follows the valve: 0x69 (the vendor's "closed" code) while the meter was in overdraft
+// and 0x70 again after an STS top-up, so it is decoded as valveState (inferred). The flags byte matches byte 0 of
+// the data report's status word (0x48 there too): bit 6 = realtimeInfoFlag (set on frames sent outside the
+// regular schedule), bits 3-5 = motorStatus. Field D and the rest are passed through unconfirmed.
 function decodeC2(payload, out, warnings) {
   out.payload_hex = bytesToHex(payload).toLowerCase();
   if (payload.length >= 6) {
@@ -261,12 +264,18 @@ function decodeC2(payload, out, warnings) {
     if (payload[0] !== 0) { out.c2_a_top_byte = toHex2(payload[0]); warnings.push('C2 field A top byte 0x' + toHex2(payload[0]) + ' ignored'); }
     out.totalFlow = round(uintBE(slice(payload, 1, 4)) / 10, 1);
     out.c2_b = uintBE(slice(payload, 4, 8));
+    var vb = payload[7];
+    out.valveState = vb === 0x69 ? 'closed' : (vb === 0x70 || vb === 0x7E ? 'open' : 'unknown');
+    out.valve_byte = toHex2(vb);
     var c = slice(payload, 8, 10), d = slice(payload, 10, 12);
     if (isBcd(c)) out.voltage = scaled(parseInt(bcdDigits(c), 10), 2);
     if (isBcd(d)) out.c2_d_bcd = scaled(parseInt(bcdDigits(d), 10), 2);
     out.c2_flags = toHex2(payload[12]);
+    out.realtimeInfoFlag = (payload[12] >> 6) & 1;
+    out.motorStatus = (payload[12] >> 3) & 0x07;
     out.c2_rest_hex = bytesToHex(slice(payload, 13, 20)).toLowerCase();
-    out.c2_unconfirmed = ['c2_b', 'c2_d_bcd', 'c2_flags', 'c2_rest_hex'];
+    out.c2_unconfirmed = ['c2_d_bcd', 'c2_rest_hex'];
+    out.c2_inferred = ['valveState', 'realtimeInfoFlag', 'motorStatus'];
     derive(out);
   } else {
     warnings.push('C2 frame of unexpected length ' + payload.length + ': only the clock was decoded');

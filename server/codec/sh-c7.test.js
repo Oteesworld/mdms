@@ -58,6 +58,21 @@ test('C2 status frame: P-0 and clock decoded, no false TLV values', () => {
   assert.equal(data.battery_v, undefined);     // 3.65 V is the meter supply, not P-B
 });
 
+test('C2 valve byte and flags: closed in overdraft, open after a top-up', () => {
+  // real frames from meter 0288260615217 on 20 Nov 2026: 12:01 local (in overdraft) and 16:01 local (after an STS token)
+  const closed = up('68202606001521c2000000c700000069036503400800000000000000130112201126a316');
+  const open = up('68202606001521c2000000c7000000700365034008000000000000001301162011263316');
+  assert.equal(closed.data.crc_ok, true);
+  assert.equal(closed.data.valveState, 'closed');
+  assert.equal(closed.data.valve_byte, '69');
+  assert.equal(open.data.valveState, 'open');
+  assert.equal(open.data.valve_byte, '70');
+  assert.equal(open.data.realtimeInfoFlag, 0);   // flags 0x08: scheduled frame
+  assert.equal(open.data.motorStatus, 1);
+  assert.equal(up(C2).data.realtimeInfoFlag, 1); // flags 0x48: frame sent outside the schedule
+});
+
+
 test('C2 with a stray top byte in field A keeps the right reading', () => {
   const {data, warnings} = up(C2_TOP_BYTE);
   assert.equal(data.totalFlow, 19.7);          // the earlier codec read 33,554,451.7 m3

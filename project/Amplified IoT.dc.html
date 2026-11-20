@@ -1987,6 +1987,27 @@ const liveOnline = d => d.device.lastSeenAt && (Date.now() - new Date(d.device.l
 // C2 status frame (SH Meters): layout not in the vendor spec; split into the same raw fields as the ChirpStack codec.
 const c2Fields = hex => { if (!hex || hex.length < 24) return null; const bcd = s => /^[0-9]+$/.test(s) ? parseInt(s, 10) / 100 : null;
   return {a: parseInt(hex.slice(2, 8), 16), b: parseInt(hex.slice(8, 16), 16), c: bcd(hex.slice(16, 20)), d: bcd(hex.slice(20, 24)), flags: hex.slice(24, 26)}; };
+// Valve state. C2 status frames: low byte of field B (inferred from meter 0288260615217: 0x69 while the meter was
+// in overdraft, 0x70 again after an STS top-up; 0x69/0x7E are the vendor's closed/open valve codes).
+// C7 data reports carry it as valveState when the meter includes command 39.
+const VALVE_BYTE = {0x69: 'closed', 0x70: 'open', 0x7E: 'open'};
+const valveFromC2 = hex => hex && hex.length >= 16 ? VALVE_BYTE[parseInt(hex.slice(14, 16), 16)] || null : null;
+function valveInfo(d, reportTime) {
+  const pts = {};
+  liveUps(d).forEach(u => { const o = u.object || {}; let v = null;
+    if (o.function_code === '0xC2' && o.payload_hex) v = valveFromC2(o.payload_hex);
+    else if (o.function_code === '0xC7' && (o.valveState === 'open' || o.valveState === 'closed')) v = o.valveState;
+    if (v) pts[new Date(u.time).getTime()] = v; });
+  (d.statusFrames || []).forEach(f => { const v = valveFromC2(f.hex), t = new Date(f.time).getTime(); if (v && !pts[t]) pts[t] = v; });
+  const tl = Object.keys(pts).map(Number).sort((a, b) => a - b).map(t => ({t, v: pts[t]}));
+  if (!tl.length) return null;
+  const cur = tl[tl.length - 1]; let k = tl.length - 1;
+  while (k > 0 && tl[k - 1].v === cur.v) k--;
+  const rt = reportTime ? new Date(reportTime).getTime() : 0;
+  let reopen = null;
+  for (let n = 1; n < tl.length; n++) if (tl[n - 1].v === 'closed' && tl[n].v === 'open' && tl[n].t > rt) reopen = tl[n].t;
+  return {state: cur.v, since: tl[k].t, sinceKnown: k > 0, reopen, lastAt: cur.t};
+}
 
 // Meter display parameters (P-0 … P-D). C7 data-report keys come from the SH codec; the C2 status
 // frame carries P-0 (field A, 0.1 m3, confirmed against the display) and the meter clock (P-C, P-D).
@@ -2080,6 +2101,10 @@ function renderLiveMeter(self, eui) {
   if (!d) return e('div', null, back, bar, L.status === 'error' ? errBox(L.error) : e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8}}, empty('Loading meter ' + eui.toUpperCase() + ' from ChirpStack…')));
 
   const dev = d.device, ups = liveUps(d), last = ups[0], rx0 = last && last.rx && last.rx[0], disp = meterDisplay(d);
+  const repUp = liveUpsWithReport(d).find(isC7), vi = valveInfo(d, repUp && repUp.time);
+  const creditStale = vi && vi.reopen ? vi.reopen : null;
+  if (creditStale) disp.forEach(x => { if (['P-2', 'P-4', 'P-5'].indexOf(x.code) >= 0 && x.v != null) { x.stale = true; x.src = 'May be outdated · valve reopened ' + fmtDT(new Date(creditStale).toISOString()).slice(0, 18); } });
+  const fmtMs = ms => fmtDT(new Date(ms).toISOString());
   const on = liveOnline(d), gwName = id => (d.gateways[id] && d.gateways[id].name) || id;
   const lastStatus = ups.find(isC2), lastC7 = liveUpsWithReport(d).find(isC7);
   const c2 = lastStatus ? c2Fields(lastStatus.object.payload_hex) : null;
@@ -2092,7 +2117,7 @@ function renderLiveMeter(self, eui) {
     e('div', {style: {width: 46, height: 46, borderRadius: 9, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(MP_IC.gauge, 24)),
     e('div', {style: {flex: '1 1 300px', minWidth: 0}},
       e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'}},
-        e('span', {style: {fontSize: 18, fontWeight: 600}}, dev.tags.serial || dev.name || dev.devEui), pill(on ? 'Online' : 'Offline', on ? MPC.okText : MPC.bad, on ? MPC.okBg : MPC.badBg, on ? MPC.ok : MPC.bad), pill('Live', MPC.blue, MPC.blueSoft)),
+        e('span', {style: {fontSize: 18, fontWeight: 600}}, dev.tags.serial || dev.name || dev.devEui), pill(on ? 'Online' : 'Offline', on ? MPC.okText : MPC.bad, on ? MPC.okBg : MPC.badBg, on ? MPC.ok : MPC.bad), pill('Live', MPC.blue, MPC.blueSoft), vi ? pill('Valve ' + vi.state, vi.state === 'open' ? MPC.okText : MPC.bad, vi.state === 'open' ? MPC.okBg : MPC.badBg) : null),
       e('div', {style: {fontSize: 11.5, color: MPC.mute, marginTop: 4, display: 'flex', gap: 14, flexWrap: 'wrap'}},
         e('span', null, dev.name + ' · ' + dev.description), e('span', null, 'DevEUI ' + dev.devEui.toUpperCase()),
         e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5, color: on ? MPC.okText : MPC.mute, fontWeight: 600}}, ic(MP_IC.clock, 13), 'Last reading ' + fmtDT(dev.lastSeenAt) + ' · ' + relTime(dev.lastSeenAt)))),
@@ -2105,7 +2130,7 @@ function renderLiveMeter(self, eui) {
     ['Signal', MP_IC.signal, rx0 ? rx0.rssi + ' dBm' : '—', rx0 ? 'SNR ' + rx0.snr + ' dB · ' + gwName(rx0.gatewayId) : '', MPC.blue, null, rx0 ? sigBars(rx0.rssi) : null],
     ['Uplinks · 24 h', GW_IC.rx, N(Math.round(sum(d.link24h.rxPackets))), N(Math.round(sum(d.link30d.rxPackets))) + ' in 30 days', MPC.blue],
     ['Meter reading · P-0', MP_IC.gauge, disp[0].v != null ? fmtM3(disp[0].v) + ' m³' : '—', disp[0].v != null ? N(Math.round(disp[0].v * 1000)) + ' L · ' + fmtDT(disp[0].time) : 'Not reported yet', MPC.teal],
-    ['Remaining water · P-2', MP_IC.wallet, disp[2].v != null ? fmtM3(disp[2].v) + ' m³' : '—', disp[2].v != null ? (disp[2].v < 0 ? 'Overdraft ' + fmtM3(-disp[2].v) + ' m³' : N(Math.round(disp[2].v * 1000)) + ' L of credit left') + (disp[2].est ? ' · estimated' : '') : 'Not reported yet', disp[2].v < 0 ? MPC.bad : MPC.blue, disp[2].v < 0 ? MPC.bad : null],
+    ['Remaining water · P-2', MP_IC.wallet, disp[2].v != null ? fmtM3(disp[2].v) + ' m³' : '—', disp[2].v != null ? (disp[2].v < 0 ? 'Overdraft ' + fmtM3(-disp[2].v) + ' m³' : N(Math.round(disp[2].v * 1000)) + ' L of credit left') + (disp[2].stale ? ' · may be outdated' : disp[2].est ? ' · estimated' : '') : 'Not reported yet', disp[2].stale ? MPC.warn : disp[2].v < 0 ? MPC.bad : MPC.blue, disp[2].stale ? MPC.warnText : disp[2].v < 0 ? MPC.bad : null],
     ['Battery · P-B', MP_IC.battery, disp[11].v != null ? disp[11].v.toFixed(2) + ' V' : batt, disp[11].v != null ? fmtDT(disp[11].time) : 'Sent in data reports (not yet received)', MPC.mute]
   ].map(t => e('div', {key: t[0], style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
     e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(t[1], 13, t[4]), t[0]),
@@ -2136,7 +2161,8 @@ function renderLiveMeter(self, eui) {
     kv('Meter serial', dev.tags.serial || '—'), kv('Meter address', dev.tags.meter_addr || '—'), kv('DevEUI', dev.devEui.toUpperCase()), kv('JoinEUI', dev.joinEui.toUpperCase()),
     kv('Device name', dev.name), kv('Model', 'SH-L-EU868 ultrasonic'), e('div', {key: 'ds', style: {gridColumn: '1 / -1'}}, kv('Description', dev.description)),
     kv('Application', dev.applicationName), kv('Device profile', p.name || '—'), kv('LoRaWAN', 'Class ' + dev.classEnabled + ' · ' + (p.supportsOtaa ? 'OTAA' : 'ABP') + ' · ' + (p.macVersion || '')),
-    kv('Region', (p.regionConfigId || '').toUpperCase()), kv('Added to network', fmtDT(dev.createdAt)), kv('Last seen', fmtDT(dev.lastSeenAt)), kv('State', dev.isDisabled ? 'Disabled' : 'Enabled', {color: dev.isDisabled ? MPC.bad : MPC.okText})), {height: '100%'});
+    kv('Region', (p.regionConfigId || '').toUpperCase()), kv('Added to network', fmtDT(dev.createdAt)), kv('Last seen', fmtDT(dev.lastSeenAt)), kv('State', dev.isDisabled ? 'Disabled' : 'Enabled', {color: dev.isDisabled ? MPC.bad : MPC.okText}),
+    kv('Valve', vi ? (vi.state === 'open' ? 'Open' : 'Closed') + ' · ' + (vi.sinceKnown ? 'since ' : 'at least since ') + fmtMs(vi.since).slice(0, 18) : 'Not reported', {color: vi ? (vi.state === 'open' ? MPC.okText : MPC.bad) : MPC.mute})), {height: '100%'});
 
   // client
   const client = card('Client details', MP_IC.user, pill('Unassigned', MPC.warnText, MPC.warnBg), e('div', null,
@@ -2180,7 +2206,7 @@ function renderLiveMeter(self, eui) {
       e('span', {style: {flex: 'none', minWidth: 34, height: 26, padding: '0 5px', borderRadius: 5, background: x.v != null ? MPC.blue : MPC.greyBg, color: x.v != null ? '#fff' : MPC.mute, fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center'}}, x.code),
       e('div', {style: {minWidth: 0, flex: 1}},
         e('div', {style: {fontSize: 10.5, color: MPC.mute, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}, title: x.label}, x.label),
-        e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : typeof x.v === 'number' && x.v < 0 ? MPC.bad : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : 'Not reported yet'),
+        e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : x.stale ? MPC.warnText : typeof x.v === 'number' && x.v < 0 ? MPC.bad : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : 'Not reported yet'),
         x.v != null ? e('div', {style: {fontSize: 9.5, color: MPC.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, x.src) : null)))),
     e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Between data reports P-3 is the reported value plus the rise in P-0 since then, so P-3 and P-2 stay current (this matches the CIU). A parameter missing from recent reports shows its last reading and date. Parameters marked “Not reported yet” have never been sent by this meter.' : 'Values come from the meter’s own uplinks. The status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in data reports.'))), null);
 
@@ -2246,7 +2272,11 @@ function renderLiveMeter(self, eui) {
     e('div', {style: {fontSize: 11, fontWeight: 600, color: MPC.mute, margin: '12px 0 6px'}}, 'By data rate'), hb(totals(d.link30d.rxPerDr), x => 'DR' + x + ' · ' + (EU868_SF[x] || ''), MPC.teal)), {height: '100%'});
 
   const row = kids => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || 320) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
-  return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, header, notice, tiles,
+  const banner = (tone, bg, border, icon, title, text) => e('div', {style: {display: 'flex', gap: 10, alignItems: 'flex-start', background: bg, border: '1px solid ' + border, borderRadius: 8, padding: '10px 12px', marginBottom: 10}},
+    e('span', {style: {color: tone}}, ic(icon, 16)), e('div', {style: {fontSize: 12, color: tone}}, e('b', null, title + ' '), text));
+  const valveNotice = vi && vi.state === 'closed' ? banner('#8E1F18', MPC.badBg, '#F0C4C0', MP_IC.valve, 'Valve closed.', 'The meter has shut off the supply ' + (vi.sinceKnown ? 'since ' : '(at least since ') + fmtMs(vi.since) + (vi.sinceKnown ? '' : ')') + ', usually because credit ran out. Load an STS token to reopen it.') : null;
+  const staleNotice = creditStale ? banner('#6B4200', '#FBF6EC', '#EFDDB8', CP_IC.alert, 'Credit values may be outdated.', 'The valve reopened at ' + fmtMs(creditStale) + ', after the last data report (' + (repUp ? fmtDT(repUp.time) : '—') + '), which usually means a top-up. P-2, P-4 and P-5 update with the meter\u2019s next data report.') : null;
+  return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, header, notice, valveNotice, staleNotice, tiles,
     row([[dispCard, 1, 640]]),
     row([[consCard, 2, 520], [client, 1, 300]]),
     row([[traffic, 2, 520], [chans, 1, 300]]),
