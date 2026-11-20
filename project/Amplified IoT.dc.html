@@ -2031,6 +2031,10 @@ const C7_FLAGS = [['leakageStatus', 'Leak', 1], ['burstAnalysis', 'Burst', 1], [
   ['emptyPipe', 'Empty pipe', 1], ['counterStatus', 'Counter fault', 1], ['flowStatus', 'Flow alarm', 1], ['actuatorStatus', 'Actuator fault', 1], ['netStatus', 'Network status', 0],
   ['valveStatus', 'Valve status bit', 0], ['valveAlarm', 'Valve status bit', 0], ['valveState', 'Valve', 0], ['motorStatus', 'Motor status', 0], ['realtimeInfoFlag', 'Real-time data', 0], ['isStatusValid', 'Status valid flag', 0]];
 
+// Only live values are shown: anything whose source frame is older than this is hidden.
+const LIVE_MAX_AGE_H = 24;
+const liveCutoff = () => Date.now() - LIVE_MAX_AGE_H * 3600e3;
+const isLive = t => t && new Date(t).getTime() >= liveCutoff();
 function meterDisplay(d) {
   const ups = liveUpsWithReport(d), found = {};
   ups.filter(isC7).forEach(u => { const o = u.object; P_PARAMS.forEach(p => { if (p[2] && !found[p[0]] && typeof o[p[2]] === 'number') found[p[0]] = {v: o[p[2]], time: u.time, src: 'Data report · ' + fmtDT(u.time)}; }); });
@@ -2050,11 +2054,14 @@ function meterDisplay(d) {
   if (rep && found['P-3'] && found['P-0'] && found['P-0'].time !== rep.time && new Date(found['P-0'].time) > new Date(rep.time) && typeof rep.object.totalFlow === 'number') {
     const since = Math.round((found['P-0'].v - rep.object.totalFlow) * 1000) / 1000;
     if (since >= 0 && since < 1000) found['P-3'] = {v: Math.round((found['P-3'].v + since) * 1000) / 1000, time: found['P-0'].time, est: true,
-      src: 'Estimated: report ' + fmtDT(rep.time).slice(0, 12) + ' + ' + N(Math.round(since * 1000)) + ' L since'};
+      src: 'Estimated: report ' + fmtDT(rep.time).slice(0, 12) + ' + ' + N(Math.round(since * 1000)) + ' L since', base: rep.time};
   }
   const r = k => found[k] && found[k].v;
   if (!found['P-2'] && typeof r('P-4') === 'number' && typeof r('P-3') === 'number') found['P-2'] = {v: Math.round((r('P-4') - r('P-3')) * 1000) / 1000, time: found['P-3'].time, est: found['P-3'].est, src: 'P-4 − P-3' + (found['P-3'].est ? ' (estimated)' : '')};
-  return P_PARAMS.map(p => Object.assign({code: p[0], label: p[1], unit: p[3]}, found[p[0]] || {}));
+  if (found['P-2']) { const b3 = found['P-3'].base || found['P-3'].time, b4 = found['P-4'].base || found['P-4'].time; found['P-2'].base = new Date(b3) < new Date(b4) ? b3 : b4; }
+  return P_PARAMS.map(p => { const x = found[p[0]], base = x && (x.base || x.time);
+    if (x && !isLive(base)) return {code: p[0], label: p[1], unit: p[3], old: true, oldTime: base}; // not live: hide the value
+    return Object.assign({code: p[0], label: p[1], unit: p[3]}, x || {}); });
 }
 const fmtM3 = v => typeof v === 'number' ? v.toLocaleString('en-US', {maximumFractionDigits: 3}) : v;
 
@@ -2080,7 +2087,7 @@ function liveRowCells(self, b, txt, eui) {
     txt('SH ultrasonic STS · live', {color: '#00468C', bold: true}), txt(d.device.name + ' (unassigned)'), txt('—', {color: '#767E89'}),
     txt(gw ? gw.name : (rx ? rx.gatewayId : '—'), {mono: true}),
     txt(rx ? rx.rssi + ' / SF' + (up.sf || '') : '—', {mono: true, align: 'right', color: rx && rx.rssi < -105 ? '#965A00' : '#181D23'}),
-    txt((liveUpsWithReport(d).find(isC7) || {object: {}}).object.voltageRtu ? liveUpsWithReport(d).find(isC7).object.voltageRtu.toFixed(2) + ' V' : 'n/a', {mono: true, align: 'right', color: '#767E89'}),
+    txt((() => { const c = liveUpsWithReport(d).find(isC7); return c && isLive(c.time) && typeof c.object.voltageRtu === 'number' ? c.object.voltageRtu.toFixed(2) + ' V' : 'n/a'; })(), {mono: true, align: 'right', color: '#767E89'}),
     txt(relTime(d.device.lastSeenAt), {mono: true, align: 'right', color: '#767E89'}), b(on ? 'Online' : 'Offline')];
   r.live = true; return r;
 }
@@ -2102,11 +2109,11 @@ function renderLiveMeter(self, eui) {
 
   const dev = d.device, ups = liveUps(d), last = ups[0], rx0 = last && last.rx && last.rx[0], disp = meterDisplay(d);
   const repUp = liveUpsWithReport(d).find(isC7), vi = valveInfo(d, repUp && repUp.time);
-  const creditStale = vi && vi.reopen ? vi.reopen : null;
+  const creditStale = vi && vi.reopen && disp.some(x => (x.code === 'P-2' || x.code === 'P-4') && x.v != null) ? vi.reopen : null;
   if (creditStale) disp.forEach(x => { if (['P-2', 'P-4', 'P-5'].indexOf(x.code) >= 0 && x.v != null) { x.stale = true; x.src = 'May be outdated · valve reopened ' + fmtDT(new Date(creditStale).toISOString()).slice(0, 18); } });
   const fmtMs = ms => fmtDT(new Date(ms).toISOString());
   const on = liveOnline(d), gwName = id => (d.gateways[id] && d.gateways[id].name) || id;
-  const lastStatus = ups.find(isC2), lastC7 = liveUpsWithReport(d).find(isC7);
+  const lastStatus = ups.find(isC2), lastC7Any = liveUpsWithReport(d).find(isC7), lastC7 = lastC7Any && isLive(lastC7Any.time) ? lastC7Any : null;
   const c2 = lastStatus ? c2Fields(lastStatus.object.payload_hex) : null;
   const sum = m => m && m.datasets && m.datasets[0] ? m.datasets[0].data.reduce((a, b) => a + b, 0) : 0;
   const ds = st.lvTab || 'Uplinks', rg = st.lvRange || '24h', LM = rg === '24h' ? d.link24h : d.link30d;
@@ -2130,8 +2137,8 @@ function renderLiveMeter(self, eui) {
     ['Signal', MP_IC.signal, rx0 ? rx0.rssi + ' dBm' : '—', rx0 ? 'SNR ' + rx0.snr + ' dB · ' + gwName(rx0.gatewayId) : '', MPC.blue, null, rx0 ? sigBars(rx0.rssi) : null],
     ['Uplinks · 24 h', GW_IC.rx, N(Math.round(sum(d.link24h.rxPackets))), N(Math.round(sum(d.link30d.rxPackets))) + ' in 30 days', MPC.blue],
     ['Meter reading · P-0', MP_IC.gauge, disp[0].v != null ? fmtM3(disp[0].v) + ' m³' : '—', disp[0].v != null ? N(Math.round(disp[0].v * 1000)) + ' L · ' + fmtDT(disp[0].time) : 'Not reported yet', MPC.teal],
-    ['Remaining water · P-2', MP_IC.wallet, disp[2].v != null ? fmtM3(disp[2].v) + ' m³' : '—', disp[2].v != null ? (disp[2].v < 0 ? 'Overdraft ' + fmtM3(-disp[2].v) + ' m³' : N(Math.round(disp[2].v * 1000)) + ' L of credit left') + (disp[2].stale ? ' · may be outdated' : disp[2].est ? ' · estimated' : '') : 'Not reported yet', disp[2].stale ? MPC.warn : disp[2].v < 0 ? MPC.bad : MPC.blue, disp[2].stale ? MPC.warnText : disp[2].v < 0 ? MPC.bad : null],
-    ['Battery · P-B', MP_IC.battery, disp[11].v != null ? disp[11].v.toFixed(2) + ' V' : batt, disp[11].v != null ? fmtDT(disp[11].time) : 'Sent in data reports (not yet received)', MPC.mute]
+    ['Remaining water · P-2', MP_IC.wallet, disp[2].v != null ? fmtM3(disp[2].v) + ' m³' : '—', disp[2].v != null ? (disp[2].v < 0 ? 'Overdraft ' + fmtM3(-disp[2].v) + ' m³' : N(Math.round(disp[2].v * 1000)) + ' L of credit left') + (disp[2].stale ? ' · may be outdated' : disp[2].est ? ' · estimated' : '') : disp[2].old ? 'No data in last ' + LIVE_MAX_AGE_H + ' h' : 'Not reported yet', disp[2].stale ? MPC.warn : disp[2].v < 0 ? MPC.bad : MPC.blue, disp[2].stale ? MPC.warnText : disp[2].v < 0 ? MPC.bad : null],
+    ['Battery · P-B', MP_IC.battery, disp[11].v != null ? disp[11].v.toFixed(2) + ' V' : disp[11].old ? '—' : batt, disp[11].v != null ? fmtDT(disp[11].time) : disp[11].old ? 'No data in last ' + LIVE_MAX_AGE_H + ' h' : 'Sent in data reports (not yet received)', MPC.mute]
   ].map(t => e('div', {key: t[0], style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
     e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(t[1], 13, t[4]), t[0]),
       e('div', {style: {fontSize: 17, fontWeight: 600, letterSpacing: '-.4px', color: t[5] || MPC.ink, whiteSpace: 'nowrap'}}, t[2]),
@@ -2206,9 +2213,9 @@ function renderLiveMeter(self, eui) {
       e('span', {style: {flex: 'none', minWidth: 34, height: 26, padding: '0 5px', borderRadius: 5, background: x.v != null ? MPC.blue : MPC.greyBg, color: x.v != null ? '#fff' : MPC.mute, fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center'}}, x.code),
       e('div', {style: {minWidth: 0, flex: 1}},
         e('div', {style: {fontSize: 10.5, color: MPC.mute, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}, title: x.label}, x.label),
-        e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : x.stale ? MPC.warnText : typeof x.v === 'number' && x.v < 0 ? MPC.bad : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : 'Not reported yet'),
-        x.v != null ? e('div', {style: {fontSize: 9.5, color: MPC.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, x.src) : null)))),
-    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Between data reports P-3 is the reported value plus the rise in P-0 since then, so P-3 and P-2 stay current (this matches the CIU). A parameter missing from recent reports shows its last reading and date. Parameters marked “Not reported yet” have never been sent by this meter.' : 'Values come from the meter’s own uplinks. The status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in data reports.'))), null);
+        e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : x.stale ? MPC.warnText : typeof x.v === 'number' && x.v < 0 ? MPC.bad : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : x.old ? 'No data in last ' + LIVE_MAX_AGE_H + ' h' : 'Not reported yet'),
+        x.v != null || x.old ? e('div', {style: {fontSize: 9.5, color: MPC.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, x.v != null ? x.src : 'Last report ' + fmtDT(x.oldTime)) : null)))),
+    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Between data reports P-3 is the reported value plus the rise in P-0 since then, so P-3 and P-2 stay current (this matches the CIU). Only live values are shown: a parameter whose last report is more than ' + LIVE_MAX_AGE_H + ' hours old shows “No data in last ' + LIVE_MAX_AGE_H + ' h” with the time of that report. “Not reported yet” means this meter has never sent it.' : 'No data report in the last ' + LIVE_MAX_AGE_H + ' hours. Only live values are shown: status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B come from data reports and appear when the meter sends one. Hidden values show the time of their last report.'))), null);
 
   // device picture
   const picture = card('Device picture', MP_IC.camera, null, e('div', null,
