@@ -1995,7 +1995,7 @@ function readingSeries(ups) {
 }
 const C7_FLAGS = [['leakageStatus', 'Leak', 1], ['burstAnalysis', 'Burst', 1], ['magneticAttackStatus', 'Magnetic tamper', 1], ['openStatus', 'Case open', 1], ['voltageStatus', 'Low voltage', 1],
   ['emptyPipe', 'Empty pipe', 1], ['counterStatus', 'Counter fault', 1], ['flowStatus', 'Flow alarm', 1], ['actuatorStatus', 'Actuator fault', 1], ['netStatus', 'Network status', 0],
-  ['valveStatus', 'Valve status bit', 0], ['motorStatus', 'Motor status', 0], ['realtimeInfoFlag', 'Real-time data', 0], ['isStatusValid', 'Status valid flag', 0]];
+  ['valveStatus', 'Valve status bit', 0], ['valveAlarm', 'Valve status bit', 0], ['valveState', 'Valve', 0], ['motorStatus', 'Motor status', 0], ['realtimeInfoFlag', 'Real-time data', 0], ['isStatusValid', 'Status valid flag', 0]];
 
 function meterDisplay(d) {
   const ups = liveUps(d), found = {};
