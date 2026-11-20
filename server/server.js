@@ -160,7 +160,8 @@ async function getDevice(devEui) {
     cached('list', 15000, listGateways).catch(() => ({gateways: []}))]);
   const gatewayNames = {}; (gws.gateways || []).forEach(g => { gatewayNames[g.id] = {name: g.name, location: g.location, state: g.state}; });
   const storedDataReport = store.enabled() ? await store.latestDataReport(devEui).catch(e => { console.error('latestDataReport: ' + e.message); return null; }) : null;
-  return {device: dev, events: Array.isArray(events) ? events : [], eventsError: Array.isArray(events) ? null : events.error, link24h, link30d, gateways: gatewayNames, storedDataReport};
+  const lastKnown = store.enabled() ? await store.lastKnownValues(devEui).catch(e => { console.error('lastKnownValues: ' + e.message); return {}; }) : {};
+  return {device: dev, events: Array.isArray(events) ? events : [], eventsError: Array.isArray(events) ? null : events.error, link24h, link30d, gateways: gatewayNames, storedDataReport, lastKnown};
 }
 
 // ---------- tiny cache + HTTP ----------

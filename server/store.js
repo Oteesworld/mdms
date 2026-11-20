@@ -140,4 +140,21 @@ async function latestDataReport(devEui) {
   return r ? {time: r.received_at.toISOString(), fCnt: Number(r.f_cnt), fPort: r.f_port, object: r.object} : null;
 }
 
-module.exports = {enabled: () => !!DATABASE_URL, db, storeUplink, consumption, readingOf, latestDataReport};
+// Most recent value of each data-report field, from whichever stored report last carried it
+// (a field the meter leaves out of later reports keeps its last known value and date).
+const REPORT_KEYS = ['totalFlow', 'currentFlow', 'totalConsumption', 'totalPurchase', 'latestRecharge', 'hoardingAmount',
+  'warningWater', 'creditWater', 'waterTemperature', 'voltageRtu', 'valveState', 'signalStrength', 'reportInterval', 'version'];
+async function lastKnownValues(devEui) {
+  const p = await db(); if (!p) return {};
+  const rows = (await p.query(`
+    SELECT k AS key, x.v, x.received_at FROM unnest($2::text[]) AS k
+    CROSS JOIN LATERAL (
+      SELECT object -> k AS v, received_at FROM meter_uplinks
+      WHERE dev_eui = $1 AND function_code = '0xC7' AND object ? k AND coalesce(object->>'crc_ok', 'true') <> 'false'
+      ORDER BY received_at DESC LIMIT 1) x`, [devEui, REPORT_KEYS])).rows;
+  const out = {};
+  rows.forEach(r => { out[r.key] = {v: r.v, time: r.received_at.toISOString()}; });
+  return out;
+}
+
+module.exports = {enabled: () => !!DATABASE_URL, db, storeUplink, consumption, readingOf, latestDataReport, lastKnownValues};

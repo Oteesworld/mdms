@@ -2004,6 +2004,11 @@ const C7_FLAGS = [['leakageStatus', 'Leak', 1], ['burstAnalysis', 'Burst', 1], [
 function meterDisplay(d) {
   const ups = liveUpsWithReport(d), found = {};
   ups.filter(isC7).forEach(u => { const o = u.object; P_PARAMS.forEach(p => { if (p[2] && !found[p[0]] && typeof o[p[2]] === 'number') found[p[0]] = {v: o[p[2]], time: u.time, src: 'Data report · ' + fmtDT(u.time)}; }); });
+  // A field missing from the recent reports shows its last known value from the stored history.
+  const lk = d.lastKnown || {};
+  P_PARAMS.forEach(p => { const x = p[2] && lk[p[2]];
+    if (x && typeof x.v === 'number' && (!found[p[0]] || new Date(x.time) > new Date(found[p[0]].time)))
+      found[p[0]] = {v: x.v, time: x.time, src: 'Last reading · ' + fmtDT(x.time), last: true}; });
   const st = ups.find(isC2), c2 = st ? c2Fields(st.object.payload_hex) : null;
   // P-0 is also in every status frame: use whichever report is newest
   if (c2 && (!found['P-0'] || new Date(st.time) > new Date(found['P-0'].time))) found['P-0'] = {v: Math.round(c2.a) / 10, time: st.time, src: 'Status frame · ' + fmtDT(st.time)};
@@ -2166,7 +2171,7 @@ function renderLiveMeter(self) {
         e('div', {style: {fontSize: 10.5, color: MPC.mute, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}, title: x.label}, x.label),
         e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : typeof x.v === 'number' && x.v < 0 ? MPC.bad : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : 'Not reported yet'),
         x.v != null ? e('div', {style: {fontSize: 9.5, color: MPC.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, x.src) : null)))),
-    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Between data reports P-3 is the reported value plus the rise in P-0 since then, so P-3 and P-2 stay current (this matches the CIU). Parameters marked “Not reported yet” are not included in the data reports this meter sends.' : 'Values come from the meter’s own uplinks. The status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in data reports.'))), null);
+    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Between data reports P-3 is the reported value plus the rise in P-0 since then, so P-3 and P-2 stay current (this matches the CIU). A parameter missing from recent reports shows its last reading and date. Parameters marked “Not reported yet” have never been sent by this meter.' : 'Values come from the meter’s own uplinks. The status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in data reports.'))), null);
 
   // device picture
   const picture = card('Device picture', MP_IC.camera, null, e('div', null,
