@@ -2009,8 +2009,16 @@ function meterDisplay(d) {
   if (c2 && (!found['P-0'] || new Date(st.time) > new Date(found['P-0'].time))) found['P-0'] = {v: Math.round(c2.a) / 10, time: st.time, src: 'Status frame · ' + fmtDT(st.time)};
   const mt = (ups.find(u => u.object && u.object.meterTime) || {}).object;
   if (mt) { const t = mt.meterTime.split(' '), when = ups.find(u => u.object && u.object.meterTime).time; found['P-C'] = {v: t[0], time: when, src: 'Meter clock'}; found['P-D'] = {v: t[1], time: when, src: 'Meter clock'}; }
+  // P-3 rises with every litre through the meter (confirmed on the CIU: P-3 7.0 -> 7.2 while P-0 went 19.7 -> 19.9),
+  // so between data reports it is the reported P-3 plus the rise in P-0 since that report.
+  const rep = ups.find(isC7);
+  if (rep && found['P-3'] && found['P-0'] && found['P-0'].time !== rep.time && new Date(found['P-0'].time) > new Date(rep.time) && typeof rep.object.totalFlow === 'number') {
+    const since = Math.round((found['P-0'].v - rep.object.totalFlow) * 1000) / 1000;
+    if (since >= 0 && since < 1000) found['P-3'] = {v: Math.round((found['P-3'].v + since) * 1000) / 1000, time: found['P-0'].time, est: true,
+      src: 'Estimated: report ' + fmtDT(rep.time).slice(0, 12) + ' + ' + N(Math.round(since * 1000)) + ' L since'};
+  }
   const r = k => found[k] && found[k].v;
-  if (!found['P-2'] && typeof r('P-4') === 'number' && typeof r('P-3') === 'number') found['P-2'] = {v: Math.round((r('P-4') - r('P-3')) * 1000) / 1000, time: found['P-4'].time, src: 'P-4 − P-3'};
+  if (!found['P-2'] && typeof r('P-4') === 'number' && typeof r('P-3') === 'number') found['P-2'] = {v: Math.round((r('P-4') - r('P-3')) * 1000) / 1000, time: found['P-3'].time, est: found['P-3'].est, src: 'P-4 − P-3' + (found['P-3'].est ? ' (estimated)' : '')};
   return P_PARAMS.map(p => Object.assign({code: p[0], label: p[1], unit: p[3]}, found[p[0]] || {}));
 }
 const fmtM3 = v => typeof v === 'number' ? v.toLocaleString('en-US', {maximumFractionDigits: 3}) : v;
@@ -2081,7 +2089,7 @@ function renderLiveMeter(self) {
     ['Signal', MP_IC.signal, rx0 ? rx0.rssi + ' dBm' : '—', rx0 ? 'SNR ' + rx0.snr + ' dB · ' + gwName(rx0.gatewayId) : '', MPC.blue, null, rx0 ? sigBars(rx0.rssi) : null],
     ['Uplinks · 24 h', GW_IC.rx, N(Math.round(sum(d.link24h.rxPackets))), N(Math.round(sum(d.link30d.rxPackets))) + ' in 30 days', MPC.blue],
     ['Meter reading · P-0', MP_IC.gauge, disp[0].v != null ? fmtM3(disp[0].v) + ' m³' : '—', disp[0].v != null ? N(Math.round(disp[0].v * 1000)) + ' L · ' + fmtDT(disp[0].time) : 'Not reported yet', MPC.teal],
-    ['Remaining water · P-2', MP_IC.wallet, disp[2].v != null ? fmtM3(disp[2].v) + ' m³' : '—', disp[2].v != null ? (disp[2].v < 0 ? 'Overdraft · ' + N(Math.round(-disp[2].v * 1000)) + ' L below zero' : N(Math.round(disp[2].v * 1000)) + ' L of credit left') : 'Not reported yet', disp[2].v < 0 ? MPC.bad : MPC.blue, disp[2].v < 0 ? MPC.bad : null],
+    ['Remaining water · P-2', MP_IC.wallet, disp[2].v != null ? fmtM3(disp[2].v) + ' m³' : '—', disp[2].v != null ? (disp[2].v < 0 ? 'Overdraft ' + fmtM3(-disp[2].v) + ' m³' : N(Math.round(disp[2].v * 1000)) + ' L of credit left') + (disp[2].est ? ' · estimated' : '') : 'Not reported yet', disp[2].v < 0 ? MPC.bad : MPC.blue, disp[2].v < 0 ? MPC.bad : null],
     ['Battery · P-B', MP_IC.battery, disp[11].v != null ? disp[11].v.toFixed(2) + ' V' : batt, disp[11].v != null ? fmtDT(disp[11].time) : 'Sent in data reports (not yet received)', MPC.mute]
   ].map(t => e('div', {key: t[0], style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
     e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(t[1], 13, t[4]), t[0]),
@@ -2158,7 +2166,7 @@ function renderLiveMeter(self) {
         e('div', {style: {fontSize: 10.5, color: MPC.mute, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}, title: x.label}, x.label),
         e('div', {style: {fontSize: 13, fontWeight: 600, color: x.v != null ? (x.code === 'P-C' || x.code === 'P-D') && clockOff ? MPC.warnText : typeof x.v === 'number' && x.v < 0 ? MPC.bad : MPC.ink : MPC.faint, whiteSpace: 'nowrap'}}, x.v != null ? fmtM3(x.v) + (x.unit ? ' ' + x.unit : '') : 'Not reported yet'),
         x.v != null ? e('div', {style: {fontSize: 9.5, color: MPC.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, x.src) : null)))),
-    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Parameters marked “Not reported yet” are not included in the data reports this meter sends.' : 'Values come from the meter’s own uplinks. The status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in data reports.'))), null);
+    e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, (lastC7 ? 'Values come from the meter’s latest C7 data report (' + fmtDT(lastC7.time) + '). P-2 is P-4 minus P-3. Between data reports P-3 is the reported value plus the rise in P-0 since then, so P-3 and P-2 stay current (this matches the CIU). Parameters marked “Not reported yet” are not included in the data reports this meter sends.' : 'Values come from the meter’s own uplinks. The status frames carry P-0 and the clock (P-C, P-D); P-1 to P-B arrive in data reports.'))), null);
 
   // device picture
   const picture = card('Device picture', MP_IC.camera, null, e('div', null,
