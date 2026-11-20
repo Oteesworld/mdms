@@ -106,16 +106,23 @@ export async function* streamCall<T>(
   resp: PbClass<T>,
   signal?: AbortSignal,
 ): AsyncGenerator<T> {
-  const res = await fetch(`${baseUrl}/${method}`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/grpc-web+proto',
-      'x-grpc-web': '1',
-      authorization: `Bearer ${token}`,
-    },
-    body: encodeFrame(req.serializeBinary()),
-    signal,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/${method}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/grpc-web+proto',
+        'x-grpc-web': '1',
+        authorization: `Bearer ${token}`,
+      },
+      body: encodeFrame(req.serializeBinary()),
+      signal,
+    });
+  } catch (e) {
+    // Stopped (or timed out) before the server sent anything: an empty stream, not an error.
+    if ((e as Error).name === 'TimeoutError' || (e as Error).name === 'AbortError') return;
+    throw e;
+  }
   if (!res.ok || !res.body) throw new GrpcError(method, 14, `HTTP ${res.status} ${res.statusText}`);
   const status = res.headers.get('grpc-status');
   if (status && status !== '0') throw new GrpcError(method, Number(status), safeDecode(res.headers.get('grpc-message') ?? ''));
