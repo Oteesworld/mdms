@@ -757,7 +757,7 @@ class Component extends DCLogic {
   }
 
   renderVals() {
-    const st = this.state, go = s => () => this.setState({screen: s, sel: null, navMobile: false, meterSel: null, gwSel: null});
+    const st = this.state, go = s => () => this.setState({screen: s, sel: null, navMobile: false, meterSel: null, gwSel: null, orgSel: null, bulkSel: null, bulkFrom: null});
     const refit = () => setTimeout(() => this.map && this.map.invalidateSize(), 230);
     const mx = {sales: Math.max(...SUB.map(s => s.salesN)), usage: Math.max(...SUB.map(s => s.usageN)), tx: Math.max(...SUB.map(s => s.txN))};
     const tone = t => '#EEF0F2';
@@ -895,7 +895,7 @@ class Component extends DCLogic {
     const st = this.state, s = st.screen;
     const badge = (v, tone, bg) => ({v, color: tone, bg, pad: '2px 7px', font: "600 9.5px 'Roboto',sans-serif", align: 'right'});
     const txt = (v, o) => ({v, color: (o && o.color) || '#181D23', bg: 'transparent', pad: '0', font: (o && o.mono) ? "500 11px 'Roboto',sans-serif" : ((o && o.bold) ? "600 11.5px 'Roboto',sans-serif" : "400 11.5px 'Roboto',sans-serif"), align: (o && o.align) || 'left'});
-    const ST = {Active: ['#237A48', '#E6F2EA'], Arrears: ['#B3261E', '#FAE8E6'], Suspended: ['#49515C', '#F0F2F4'], Verified: ['#237A48', '#E6F2EA'], Pending: ['#965A00', '#FAF0DC'], Expired: ['#B3261E', '#FAE8E6'], Online: ['#237A48', '#E6F2EA'], Offline: ['#B3261E', '#FAE8E6'], 'Low batt': ['#965A00', '#FAF0DC'], Ready: ['#237A48', '#E6F2EA'], Queued: ['#965A00', '#FAF0DC'], Failed: ['#B3261E', '#FAE8E6']};
+    const ST = {'Leak alert': ['#B3261E', '#FAE8E6'], Active: ['#237A48', '#E6F2EA'], Arrears: ['#B3261E', '#FAE8E6'], Suspended: ['#49515C', '#F0F2F4'], Verified: ['#237A48', '#E6F2EA'], Pending: ['#965A00', '#FAF0DC'], Expired: ['#B3261E', '#FAE8E6'], Online: ['#237A48', '#E6F2EA'], Offline: ['#B3261E', '#FAE8E6'], 'Low batt': ['#965A00', '#FAF0DC'], Ready: ['#237A48', '#E6F2EA'], Queued: ['#965A00', '#FAF0DC'], Failed: ['#B3261E', '#FAE8E6']};
     const b = k => badge(k, ST[k][0], ST[k][1]);
     const out = {isTable: false, isReports: s === 'reports', isNetwork: s === 'network', isPortal: s === 'portal', isSettings: s === 'settings', kyc: null, mf: null, tbl: null, pager: [], closeKyc: () => this.setState({rowSel: null})};
 
@@ -991,6 +991,12 @@ class Component extends DCLogic {
       if (st.gwSel) { out.crumb = 'Network · Gateways'; out.title = 'Gateway details'; }
       return out;
     }
+    if (s === 'bulk' && st.bulkSel) {
+      out.mp = renderBulkProfile(this, st.bulkSel); out.crumb = 'Assets · Bulk meters'; out.title = 'Bulk meter profile'; return out;
+    }
+    if ((s === 'business' || s === 'gov') && st.orgSel) {
+      out.mp = renderOrgProfile(this, st.orgSel); out.crumb = 'Clients · ' + (s === 'gov' ? 'Government accounts' : 'Business clients'); out.title = 'Client profile'; return out;
+    }
     if (s === 'meters' && st.meterSel) {
       out.mp = st.meterSel.kind === 'live' ? renderLiveMeter(this) : renderMeterProfile(this, st.meterSel, st.newMeters || []);
       out.crumb = 'Assets · Meter register';
@@ -1020,7 +1026,7 @@ class Component extends DCLogic {
         return {label: c, go: () => this.setState(x => ({chip: {...(x.chip || {}), [s]: i}})), weight: on ? 600 : 500, bg: on ? '#EBF1F8' : '#fff', color: on ? '#00468C' : '#767E89', border: on ? '#B8CFE8' : '#E0E3E7'};
       }),
       head: cfg.head.map(h => ({label: h[0], align: h[1] || 'left'})),
-      rows: rows.map((r, i) => ({cells: r, bg: sel === i ? '#F3F7FC' : r.live ? '#F5F9FD' : 'transparent', go: isM ? () => { this.setState({meterSel: i === 0 ? {kind: 'live'} : i - 1 < added.length ? {kind: 'new', serial: added[i - 1].serial} : {kind: 'base', i: i - 1 - added.length}, addMeter: false}); if (i === 0) liveLoad(this); window.scrollTo(0, 0); } : cfg.kyc ? () => this.setState({rowSel: i}) : () => {}})),
+      rows: rows.map((r, i) => ({cells: r, bg: sel === i ? '#F3F7FC' : r.live ? '#F5F9FD' : 'transparent', go: s === 'bulk' && r.bulkId ? () => { this.setState({bulkSel: r.bulkId, bulkFrom: null}); window.scrollTo(0, 0); } : s === 'business' || s === 'gov' ? () => { this.setState({orgSel: {kind: s, i}, orgSite: 'All'}); window.scrollTo(0, 0); } : isM ? () => { this.setState({meterSel: i === 0 ? {kind: 'live'} : i - 1 < added.length ? {kind: 'new', serial: added[i - 1].serial} : {kind: 'base', i: i - 1 - added.length}, addMeter: false}); if (i === 0) liveLoad(this); window.scrollTo(0, 0); } : cfg.kyc ? () => this.setState({rowSel: i}) : () => {}})),
       count: isM && added.length ? N(50412 + added.length) + ' meters' : cfg.count, pageInfo: cfg.pageInfo
     };
     if (mfOpen) {
@@ -1182,7 +1188,7 @@ const PROPS = i => {
 
 const CLIENT_NAMES = ['Mpho Sebego', 'Lesego Kgomotso', 'Thato Molefe', 'Boitumelo Ncube', 'Kagiso Mothibi', 'Neo Ramotswe', 'Tshepo Kwelagobe', 'Dineo Motlhabane', 'Oratile Sekgoma', 'Basimane Tlhage', 'Refilwe Mogapi', 'Karabo Selepeng', 'Goitseone Mmereki', 'Tumelo Baruti'];
 const SUBS_SHORT = ['Block 8', 'Phakalane', 'Block 9', 'Old Naledi', 'Broadhurst', 'Block 5', 'Tsholofelo', 'Phase 4', 'Bontleng', 'CBD', 'Block 10', 'Kgale View', 'Block 3', 'Gaborone North'];
-const BIZ = [['Choppies Broadhurst', 'Retail'], ['Riverwalk Mall', 'Property'], ['Kgale Hub Facilities', 'Property'], ['Sefalana Cash & Carry', 'Wholesale'], ['Botswana Breweries', 'Manufacturing'], ['Cresta Lodge Gaborone', 'Hospitality'], ['Debswana Corporate', 'Mining'], ['Bokamoso Private Hospital', 'Healthcare'], ['Gaborone Motors', 'Automotive'], ['Botswana Craft', 'Retail'], ['Fairgrounds Holdings', 'Events'], ['Sandalwood Apartments', 'Residential']];
+const BIZ = [['Choppies Broadhurst', 'Retail'], ['Riverwalk Mall', 'Property'], ['Kgale Hub Facilities', 'Property'], ['Sefalana Cash & Carry', 'Wholesale'], ['Botswana Breweries', 'Manufacturing'], ['Cresta Lodge Gaborone', 'Hospitality'], ['Debswana Corporate', 'Mining'], ['Bokamoso Private Hospital', 'Healthcare'], ['Gaborone Motors', 'Automotive'], ['Botswana Craft', 'Retail'], ['Fairgrounds Holdings', 'Events'], ['Sandalwood Apartments', 'Residential'], ['Kalahari Springs Bottling', 'Bottled water']];
 const BIZ_OWNERS = {1: 22, 2: 14, 10: 9, 11: 26};
 const BIZ_TENANTS = [0, 5, 8, 9];
 const BIZ_ROLE = i => BIZ_OWNERS[i] ? 'Property owner' : BIZ_TENANTS.indexOf(i) >= 0 ? 'Tenant' : 'Owner-occupier';
@@ -2281,6 +2287,370 @@ const mfErrors = (v, existing) => {
   return e;
 };
 
+// ---------- Business & Government clients, their sites and bulk meters (demo data) ----------
+const ORG_IC = {
+  school: 'M3 10l9-5 9 5-9 5zM7 12v4.5c3 2 7 2 10 0V12M21 10v5',
+  clinic: 'M4 20.5V8h16v12.5M9 20.5v-5h6v5M12 10v4M10 12h4',
+  mall: 'M4 9.5h16M5 9.5V20h14V9.5M4 9.5l2-5h12l2 5M10 20v-5h4v5',
+  plant: 'M3 20.5V11l5 3V11l5 3V11l5 3V5h3v15.5zM7 17h2M12 17h2M17 17h2',
+  office: 'M4.5 20.5V4.5h9v16M13.5 9.5h6v11M3 20.5h18M7.5 8h3M7.5 11.5h3M7.5 15h3M16 13h1M16 16.5h1',
+  housing: 'M3.5 11 12 4l8.5 7M5.5 9.5V20h13V9.5M10 20v-5.5h4V20',
+  gov: 'M3 20.5h18M12 3.5l8 4.5H4zM4.5 17.5h15M6.5 10v7.5M10 10v7.5M14 10v7.5M17.5 10v7.5',
+  bottle: 'M10 3.5h4M10.5 3.5v3L9 9v11.5h6V9l-1.5-2.5v-3M9 13h6',
+  invoice: 'M6 3.5h12v17l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5zM9 8h6M9 11.5h6M9 15h3',
+  budget: 'M4 19.5h16M6 16V11M10 16V7M14 16v-6M18 16V5',
+  contact: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5c1.2-3.6 4.1-5.5 7.5-5.5s6.3 1.9 7.5 5.5'
+};
+const SITE_TYPE = {
+  Mall: {icon: 'mall', base: 120, shape: [2, 2, 2, 2, 2, 3, 4, 6, 8, 9, 9, 9, 10, 10, 9, 9, 9, 9, 8, 7, 5, 3, 2, 2], weekend: 1.2},
+  Plant: {icon: 'plant', base: 260, shape: [3, 3, 3, 3, 3, 4, 8, 10, 10, 10, 10, 9, 8, 10, 10, 10, 10, 9, 8, 8, 6, 4, 3, 3], weekend: 0.55},
+  School: {icon: 'school', base: 38, shape: [1, 1, 1, 1, 1, 2, 5, 9, 10, 9, 9, 10, 11, 9, 8, 6, 4, 3, 2, 2, 2, 1, 1, 1], weekend: 0.3, holidays: true},
+  Boarding: {icon: 'school', base: 70, shape: [2, 1, 1, 1, 2, 6, 10, 9, 7, 6, 6, 7, 9, 7, 6, 6, 7, 9, 9, 8, 6, 4, 3, 2], weekend: 0.8, holidays: true},
+  Clinic: {icon: 'clinic', base: 14, shape: [3, 3, 3, 3, 3, 3, 5, 8, 9, 9, 9, 8, 8, 8, 8, 7, 6, 5, 4, 4, 3, 3, 3, 3], weekend: 0.7},
+  Hospital: {icon: 'clinic', base: 150, shape: [5, 4, 4, 4, 4, 5, 7, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 5], weekend: 0.9},
+  Office: {icon: 'office', base: 18, shape: [1, 1, 1, 1, 1, 1, 3, 8, 10, 9, 9, 9, 10, 9, 9, 8, 6, 3, 1, 1, 1, 1, 1, 1], weekend: 0.15},
+  Housing: {icon: 'housing', base: 9, shape: [1, 1, 1, 1, 1, 3, 8, 10, 7, 4, 3, 3, 4, 3, 3, 3, 4, 8, 10, 8, 5, 3, 2, 1], weekend: 1.15},
+  Hotel: {icon: 'office', base: 45, shape: [3, 2, 2, 2, 3, 5, 9, 10, 9, 7, 6, 6, 6, 5, 5, 5, 6, 8, 9, 8, 7, 6, 5, 4], weekend: 1.1},
+  Store: {icon: 'mall', base: 12, shape: [1, 1, 1, 1, 1, 1, 3, 6, 9, 10, 10, 10, 10, 10, 10, 10, 9, 8, 5, 2, 1, 1, 1, 1], weekend: 1.1},
+  Camp: {icon: 'gov', base: 95, shape: [3, 2, 2, 2, 3, 7, 10, 9, 7, 6, 6, 7, 8, 7, 6, 6, 7, 9, 9, 8, 6, 5, 4, 3], weekend: 0.9}
+};
+const SUB_LL = {'Old Naledi': [-24.6727, 25.9200], 'Village': [-24.6450, 25.9290], 'Block 6': [-24.6380, 25.9180], 'Bontleng': [-24.6640, 25.9330], 'Tsholofelo': [-24.6170, 25.9640],
+  'Block 8': [-24.6273, 25.9420], 'Broadhurst': [-24.6230, 25.9300], 'CBD': [-24.6555, 25.9120], 'Tlokweng Road': [-24.6595, 25.9480], 'Gaborone West': [-24.6500, 25.8900],
+  'Block 9': [-24.6180, 25.9310], 'Phakalane': [-24.5637, 25.9520], 'Government Enclave': [-24.6560, 25.9200], 'Kgale View': [-24.6880, 25.8880], 'Mogoditshane Road': [-24.6290, 25.8790]};
+const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };
+const T_RATE = {business: 13.5, gov: 12.8}; // P per kL, demo tariffs
+// site: [name, type, suburb, bulkMeters [[use, size]], domestic meters [use | [use, payer]]]
+const ORG_DEFS = {
+  business: {
+    1: {sector: 'Property · shopping mall', icon: 'mall', terms: '30-day account', contact: ['Kabo Phiri', 'Centre facilities manager'], sites: [
+      ['Riverwalk Mall', 'Mall', 'Tlokweng Road', [['Main inlet', 'DN100'], ['Fire & sprinkler line', 'DN80'], ['HVAC cooling towers', 'DN50']],
+        UNIT_TENANTS.map((t, k) => ['Unit ' + (101 + k * 7) + ' · ' + t, 'tenant']).concat([['Food court ablutions', 'owner'], ['Centre management office', 'owner']])]]},
+    12: {sector: 'Manufacturing · bottled water', icon: 'bottle', terms: '30-day account', contact: ['Neo Kgosietsile', 'Plant engineer'], sites: [
+      ['Gaborone West bottling plant', 'Plant', 'Gaborone West', [['Process water inlet', 'DN100'], ['Wash & CIP line', 'DN80']], [['Plant canteen', 'owner'], ['Admin block', 'owner'], ['Guard house', 'owner']]],
+      ['Head office', 'Office', 'CBD', [], [['Office block', 'owner']]],
+      ['Staff housing', 'Housing', 'Block 9', [['Housing estate inlet', 'DN50']], [1, 2, 3, 4, 5, 6].map(k => ['Staff house ' + k, 'staff'])]]}
+  },
+  gov: {
+    0: {sites: [
+      ['Naledi Senior Secondary School', 'Boarding', 'Old Naledi', [['School main inlet', 'DN80']], [['Kitchen & dining hall', 'owner'], ['Boys hostel', 'owner'], ['Girls hostel', 'owner'], ['Staff house 1', 'staff'], ['Staff house 2', 'staff']]],
+      ['Gaborone Secondary School', 'School', 'Village', [['School main inlet', 'DN80']], [['Kitchen', 'owner'], ['Science block', 'owner'], ['Staff house 1', 'staff']]],
+      ['Ledumang Senior Secondary School', 'Boarding', 'Block 6', [['School main inlet', 'DN80'], ['Hostel block inlet', 'DN50']], [['Kitchen & dining hall', 'owner'], ['Hostel A', 'owner'], ['Hostel B', 'owner'], ['Staff house 1', 'staff']]],
+      ['Bontleng Community Junior School', 'School', 'Bontleng', [['School main inlet', 'DN50']], [['Kitchen', 'owner'], ['Staff house 1', 'staff']]]]},
+    1: {sites: [
+      ['Bontleng Primary School', 'School', 'Bontleng', [['School main inlet', 'DN50']], [['Kitchen', 'owner'], ['Ablution block', 'owner']]],
+      ['Tsholofelo Primary School', 'School', 'Tsholofelo', [['School main inlet', 'DN50']], [['Kitchen', 'owner'], ['Ablution block', 'owner'], ['Staff house 1', 'staff']]],
+      ['Block 8 Primary School', 'School', 'Block 8', [['School main inlet', 'DN50']], [['Kitchen', 'owner'], ['Ablution block', 'owner']]],
+      ['Bontleng Clinic', 'Clinic', 'Bontleng', [['Clinic inlet', 'DN50']], [['Maternity wing', 'owner'], ['Nurses house 1', 'staff'], ['Nurses house 2', 'staff']]],
+      ['Old Naledi Clinic', 'Clinic', 'Old Naledi', [['Clinic inlet', 'DN50']], [['Consulting block', 'owner'], ['Nurses house 1', 'staff']]],
+      ['Broadhurst Clinic', 'Clinic', 'Broadhurst', [['Clinic inlet', 'DN50']], [['Consulting block', 'owner'], ['Nurses house 1', 'staff']]],
+      ['Gaborone Civic Centre', 'Office', 'CBD', [['Civic Centre inlet', 'DN80']], [['Council chamber block', 'owner'], ['Canteen', 'owner']]]]}
+  }
+};
+// Government client accounts (vote holders) shown on the Government screen.
+const GOV_ORGS = [
+  ['V-0117', 'Ministry of Education and Skills Development', 'Education · schools'],
+  ['V-0204', 'Gaborone City Council', 'Local government · schools, clinics & offices'],
+  ['V-0421', 'Ministry of Health', 'Health · hospitals & clinics'],
+  ['V-0388', 'Ministry of Defence, Justice and Security', 'Defence · camps'],
+  ['V-0093', 'Office of the President', 'Administration · offices'],
+  ['V-0741', 'Ministry of Lands and Water Affairs', 'Administration · offices']];
+const GOV_GENERIC = {2: [['Princess Marina Hospital', 'Hospital', 'CBD'], ['Institute of Health Sciences', 'Office', 'Government Enclave']], 3: [['SSKB Camp', 'Camp', 'Mogoditshane Road']], 4: [['State House', 'Office', 'Government Enclave']], 5: [['Lands & Water Affairs HQ', 'Office', 'Government Enclave']]};
+const BIZ_TYPE = {Retail: 'Store', Property: 'Mall', Wholesale: 'Store', Manufacturing: 'Plant', Hospitality: 'Hotel', Mining: 'Office', Healthcare: 'Hospital', Automotive: 'Store', Events: 'Office', Residential: 'Housing', 'Bottled water': 'Plant'};
+
+const _orgCache = {};
+function orgModel(kind, i) {
+  const ck = kind + i; if (_orgCache[ck]) return _orgCache[ck];
+  let o;
+  if (kind === 'business') {
+    const x = BIZ[i], def = ORG_DEFS.business[i];
+    o = {kind, i, id: 'BUS-' + (30140 + i * 23), name: x[0], sector: def ? def.sector : x[1], icon: def ? def.icon : 'office', terms: def ? def.terms : (i % 3 === 0 ? 'Prepaid' : '30-day account'),
+      contact: def ? def.contact : [['Thato', 'Lesego', 'Kagiso', 'Mpho'][i % 4] + ' ' + ['Molefe', 'Seretse', 'Dube', 'Phiri'][i % 4], 'Accounts manager'],
+      sites: def ? def.sites : [[x[0], BIZ_TYPE[x[1]] || 'Office', ['CBD', 'Broadhurst', 'Gaborone West', 'Block 8', 'Kgale View', 'Phakalane'][i % 6], [['Main inlet', i % 2 ? 'DN50' : 'DN80']], Array.from({length: 2 + (i % 4)}, (_, k) => [['Kitchen', 'Ablution block', 'Office wing', 'Workshop', 'Staff house 1'][k], 'owner'])]]};
+  } else {
+    const g = GOV_ORGS[i], def = ORG_DEFS.gov[i];
+    o = {kind, i, id: g[0], vote: g[0], name: g[1], sector: g[2], icon: 'gov', terms: 'Government vote · monthly invoice', contact: [['Boitumelo Tau', 'Onalenna Kgari', 'Pako Sebina', 'Lorato Mosweu', 'Tebogo Ramotswa', 'Dineo Mokoena'][i], i === 1 ? 'Council estates engineer' : 'Accounting officer'],
+      sites: def ? def.sites : (GOV_GENERIC[i] || []).map(s => [s[0], s[1], s[2], [['Main inlet', s[1] === 'Hospital' || s[1] === 'Camp' ? 'DN100' : 'DN50']], [['Kitchen', 'owner'], ['Staff house 1', 'staff']]])};
+  }
+  const r = rnd(hashStr(o.id));
+  o.sites = o.sites.map((s, si) => {
+    const T = SITE_TYPE[s[1]] || SITE_TYPE.Office, ll = SUB_LL[s[2]] || [-24.65, 25.92];
+    const site = {name: s[0], type: s[1], typeLabel: s[1] === 'Boarding' ? 'School (boarding)' : s[1], icon: T.icon, suburb: s[2], lat: ll[0] + (r() - .5) * .008, lng: ll[1] + (r() - .5) * .008, bulk: [], dom: []};
+    site.bulk = s[3].map((b, bi) => bulkModel(o, site, b[0], b[1], si, bi));
+    site.dom = s[4].map((d, di) => { const rr = rnd(hashStr(o.id + s[0] + di)), use = Array.isArray(d) ? d[0] : d, payer = Array.isArray(d) ? d[1] : 'owner';
+      const mtd = Math.round((payer === 'tenant' ? 8 + rr() * 60 : payer === 'staff' ? 6 + rr() * 9 : 10 + rr() * 40) * 10) / 10;
+      const st = rr() < 0.08 ? 'Offline' : rr() < 0.12 ? 'Low batt' : 'Online';
+      return {serial: 'WM-' + (300000 + (hashStr(o.id + s[0] + use) % 90000)), use, payer, size: use.indexOf('Kitchen') >= 0 || use.indexOf('hostel') >= 0 || use.indexOf('Hostel') >= 0 ? 'DN20' : 'DN15', mtd, status: st,
+        bal: payer === 'tenant' ? Math.round((rr() * 900 - 120) * 100) / 100 : null}; });
+    site.mtd = site.bulk.length ? site.bulk.reduce((a, b) => a + b.mtd, 0) : site.dom.reduce((a, d) => a + d.mtd, 0);
+    site.alarms = site.bulk.filter(b => b.alarm).length + site.dom.filter(d => d.status === 'Offline').length;
+    return site;
+  });
+  o.bulk = [].concat(...o.sites.map(s => s.bulk));
+  o.dom = [].concat(...o.sites.map(s => s.dom.map(d => Object.assign({site: s.name}, d))));
+  o.mtd = o.sites.reduce((a, s) => a + s.mtd, 0);
+  o.rate = T_RATE[kind];
+  o.monthly = Array.from({length: 12}, (_, k) => o.sites.reduce((a, s) => a + (s.bulk.length ? s.bulk.reduce((x, b) => x + b.monthly[k], 0) : s.mtd * 1.6), 0));
+  o.lastMonth = o.monthly[10];
+  o.billMtd = Math.round(o.mtd * o.rate * 100) / 100;
+  const rb = rnd(hashStr(o.id + 'bal'));
+  o.balance = kind === 'gov' ? -Math.round(o.monthly[10] * o.rate * (0.5 + rb() * 0.6)) : Math.round((rb() * 60000 - 18000) * 100) / 100;
+  if (kind === 'gov') { o.budget = Math.round(o.monthly.reduce((a, b) => a + b, 0) * o.rate * (1.05 + rb() * 0.25) / 1000) * 1000; o.spentFy = Math.round(o.monthly.slice(7).reduce((a, b) => a + b, 0) * o.rate); }
+  _orgCache[ck] = o;
+  return o;
+}
+
+const _bulkIdx = {};
+function bulkModel(org, site, use, size, si, bi) {
+  const id = 'BM-' + (7100 + (hashStr(org.id + site.name + use) % 2900));
+  const r = rnd(hashStr(id)), T = SITE_TYPE[site.type] || SITE_TYPE.Office;
+  const fire = /Fire/.test(use);
+  const scale = fire ? 0.002 : /HVAC|cooling/.test(use) ? 0.35 : /Wash|CIP/.test(use) ? 0.45 : /Hostel/.test(use) ? 0.5 : /Housing/.test(use) ? 6 : 1;
+  const base = T.base * scale * (0.8 + r() * 0.4);
+  const leak = !fire && (hashStr(id) % 6 === 0 || id === 'BM-' + (7100 + (hashStr('V-0204Bontleng Primary SchoolSchool main inlet') % 2900)));
+  const sum = T.shape.reduce((a, b) => a + b, 0);
+  const leakH = leak ? Math.max(0.4, base * 0.012) : 0;
+  const hourly = T.shape.map((w, h) => Math.round((base * w / sum + leakH) * (0.85 + r() * 0.3) * 1000) / 1000); // m3 per hour, hours 00..23 today (to 13:00 recorded)
+  const days = Array.from({length: 30}, (_, k) => new Date(2026, 6, 21 + k));
+  const daily = days.map((d, k) => { const we = d.getDay() === 0 || d.getDay() === 6; const hol = T.holidays && d.getMonth() === 7 && d.getDate() < 25;
+    return Math.round((base * (we ? T.weekend : 1) * (hol ? 0.45 : 1) + leakH * 24) * (0.85 + r() * 0.3) * (k === 29 ? 0.55 : 1) * 100) / 100; });
+  const MS = [1.05, 1.12, 1.18, 0.75, 1.15, 1.2, 1.08, 0.7, 1.02, 0.95, 0.9, 0.62]; // Sep..Aug (school holidays dip for schools)
+  const monthly = MS.map((f, k) => Math.round(base * 30 * (T.holidays ? f : 0.9 + (f - 0.9) * 0.4) * (0.92 + r() * 0.16) + leakH * 720 * (k > 8 ? 1 : 0)));
+  const mtd = Math.round(daily.slice(11).reduce((a, b) => a + b, 0) * 10) / 10;
+  const unacc = fire ? 0 : leak ? 17 + r() * 8 : 3 + r() * 5;
+  const b = {id, org, orgKind: org.kind, orgI: org.i, site, use, size, fire, leak, base, hourly, days, daily, monthly, mtd, unacc: Math.round(unacc * 10) / 10,
+    reading: Math.round((base * 365 * (2 + r() * 4)) * 10) / 10, flowNow: Math.round((hourly[13] + (r() - .5) * 0.2) * 100) / 100, nightFlow: Math.round(((hourly[1] + hourly[2] + hourly[3]) / 3) * 100) / 100,
+    batt: Math.round(55 + r() * 44), rssi: -(85 + Math.floor(r() * 25)), gw: GW[hashStr(id) % 5], status: hashStr(id) % 17 === 0 ? 'Offline' : 'Online',
+    model: size === 'DN100' || size === 'DN80' ? 'Woltman W' + size.slice(2) + ' LoRa' : 'Ultrasonic U' + size.slice(2) + ' LoRa', fw: '3.' + (hashStr(id) % 3) + '.4',
+    installed: pad2(1 + hashStr(id) % 27) + ' ' + MON[hashStr(id) % 12] + ' ' + (2022 + hashStr(id) % 3), alarm: leak || (fire && false)};
+  b.lastMonth = monthly[10];
+  _bulkIdx[id] = b;
+  return b;
+}
+function allBulk() {
+  const out = [];
+  [1, 12].forEach(i => out.push(...orgModel('business', i).bulk));
+  GOV_ORGS.forEach((_, i) => out.push(...orgModel('gov', i).bulk));
+  BIZ.forEach((_, i) => { if (i !== 1 && i !== 12) out.push(...orgModel('business', i).bulk); });
+  return out;
+}
+const bulkById = id => { if (!_bulkIdx[id]) allBulk(); return _bulkIdx[id]; };
+
+// ---------- Bulk meter profile ----------
+function renderBulkProfile(self, id) {
+  const e = React.createElement, st = self.state, bm = bulkById(id);
+  const {ic, card, pill, kv, empty, th, td, table, bars, ring, battIcon, sigBars} = mpKit();
+  if (!bm) return empty('Bulk meter ' + id + ' not found.');
+  const org = bm.org, site = bm.site, gov = org.kind === 'gov';
+  const tab = st.bmTab || 'Daily';
+  const back = e('div', {onClick: () => self.setState(st.bulkFrom ? {screen: st.bulkFrom.kind, orgSel: st.bulkFrom, bulkSel: null, bulkFrom: null} : {bulkSel: null}), style: {display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: MPC.blue, cursor: 'pointer', marginBottom: 10}}, ic(MP_IC.back, 14), st.bulkFrom ? org.name : 'Bulk meters');
+  const on = bm.status === 'Online';
+  const openOrg = () => self.setState({screen: org.kind, orgSel: {kind: org.kind, i: org.i}, bulkSel: null, bulkFrom: null});
+  const header = e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 10}},
+    e('div', {style: {width: 46, height: 46, borderRadius: 9, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(ICON.bulk, 24)),
+    e('div', {style: {flex: '1 1 320px', minWidth: 0}},
+      e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'}}, e('span', {style: {fontSize: 18, fontWeight: 600}}, bm.id),
+        pill(on ? 'Online' : 'Offline', on ? MPC.okText : MPC.bad, on ? MPC.okBg : MPC.badBg, on ? MPC.ok : MPC.bad), pill(gov ? 'Government' : 'Business', MPC.blue, MPC.blueSoft), bm.leak ? pill('Night flow alarm', MPC.bad, MPC.badBg) : null),
+      e('div', {style: {fontSize: 11.5, color: MPC.mute, marginTop: 4, display: 'flex', gap: 14, flexWrap: 'wrap'}},
+        e('span', {onClick: openOrg, style: {color: MPC.blue, fontWeight: 600, cursor: 'pointer'}}, org.name), e('span', null, site.name + ' · ' + bm.use), e('span', null, bm.size + ' · ' + bm.model),
+        e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5, color: on ? MPC.okText : MPC.mute, fontWeight: 600}}, ic(MP_IC.clock, 13), 'Last reading 19 Aug 2026, ' + (on ? '12:' + pad2(40 + hashStr(bm.id) % 19) : '16 Aug, 08:15')))),
+    e('div', {style: {display: 'flex', gap: 7, flexWrap: 'wrap'}}, [['Statement', CP_IC.download, true], ['Request reading', MP_IC.refresh], ['Edit', MP_IC.edit]].map(x => e('div', {key: x[0], style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, cursor: 'pointer', fontSize: 11.5, fontWeight: 600, background: x[2] ? MPC.blue : '#fff', color: x[2] ? '#fff' : MPC.ink2, border: '1px solid ' + (x[2] ? MPC.blue : '#D2D6DC')}}, ic(x[1], 14), x[0]))));
+  const vsLast = bm.lastMonth ? Math.round((bm.mtd / (bm.lastMonth * 19 / 31) - 1) * 100) : 0;
+  const tile = (label, icon, value, sub, tone, valueTone, graphic) => e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
+    e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(icon, 13, tone), label),
+      e('div', {style: {fontSize: 17, fontWeight: 600, letterSpacing: '-.4px', color: valueTone || MPC.ink, whiteSpace: 'nowrap'}}, value),
+      e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, sub)), graphic || null);
+  const tiles = e('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(165px,1fr))', gap: 10, marginBottom: 10}},
+    tile('Meter reading', MP_IC.gauge, N(Math.round(bm.reading)) + ' m³', bm.size + ' · ' + (bm.fire ? 'fire service' : 'consumption'), MPC.blue),
+    tile('Flow now', GW_IC.wave, bm.fire ? '0.00 m³/h' : bm.flowNow.toFixed(2) + ' m³/h', 'Night average ' + bm.nightFlow.toFixed(2) + ' m³/h', bm.leak ? MPC.bad : MPC.teal, bm.leak ? MPC.bad : null),
+    tile('Today', MP_IC.drop, fmtM3(Math.round(bm.daily[29] * 10) / 10) + ' m³', 'so far, 00:00–13:00', MPC.teal),
+    tile('Month to date', MP_IC.chart, N(Math.round(bm.mtd)) + ' m³', (vsLast >= 0 ? '▲ ' : '▼ ') + Math.abs(vsLast) + '% vs July pace', MPC.blue, null),
+    tile('Unaccounted', MP_IC.signal, bm.fire ? '—' : bm.unacc.toFixed(1) + '%', bm.fire ? 'no sub-meters' : 'bulk − sub-meters', bm.unacc > 12 ? MPC.bad : MPC.ok, bm.unacc > 12 ? MPC.bad : null),
+    tile('Battery', MP_IC.battery, bm.batt + '%', 'Signal ' + bm.rssi + ' dBm', bm.batt < 35 ? MPC.warn : MPC.ok, null, battIcon(bm.batt, bm.batt < 35 ? MPC.warn : MPC.ok)));
+
+  // consumption
+  const seg = e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, ['Hourly', 'Daily', 'Monthly'].map(t => e('div', {key: t, onClick: () => self.setState({bmTab: t}), style: {padding: '4px 11px', fontSize: 11, fontWeight: tab === t ? 600 : 500, cursor: 'pointer', background: tab === t ? MPC.blue : '#fff', color: tab === t ? '#fff' : MPC.mute}}, t)));
+  const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
+  const hv = bm.hourly.slice(0, 14).map(v => Math.round(v * 1000)), hl = bm.hourly.slice(0, 14).map((_, h) => pad2(h) + ':00');
+  const series = tab === 'Hourly' ? [hv, hl, 2, 'L', true] : tab === 'Daily' ? [bm.daily.map(v => Math.round(v * 10) / 10), bm.days.map(d => pad2(d.getDate()) + ' ' + MON[d.getMonth()]), 5, 'm³', true] : [bm.monthly, months, 1, 'm³', true];
+  const avg = Math.round(series[0].slice(0, -1).reduce((a, b) => a + b, 0) / Math.max(1, series[0].length - 1) * 10) / 10;
+  const insight = bm.fire ? 'Fire and sprinkler line: no flow is expected outside tests. Any sustained flow raises an alarm.'
+    : bm.leak ? 'Water keeps flowing at night: about ' + bm.nightFlow.toFixed(2) + ' m³/h between 01:00 and 04:00 when the ' + (site.type === 'School' || site.type === 'Boarding' ? 'school' : 'site') + ' is closed. Likely a leak or a running cistern.'
+    : tab === 'Monthly' ? (site.type === 'School' || site.type === 'Boarding' ? 'Use drops in school holidays (Dec, Apr, Aug).' : 'Use is steady through the year with a summer peak.')
+    : 'Peak use ' + (site.type === 'Mall' ? 'during trading hours' : site.type === 'Plant' ? 'during production shifts' : site.type === 'Clinic' || site.type === 'Hospital' ? 'during consulting hours' : 'in the morning') + '; night flow is normal.';
+  const cons = card('Water consumption', MP_IC.chart, seg, e('div', null,
+    e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', background: bm.leak ? MPC.badBg : '#F5F8FC', border: '1px solid ' + (bm.leak ? '#F0C4C0' : '#DCE6F2'), borderRadius: 7, marginBottom: 12}},
+      e('span', {style: {color: bm.leak ? MPC.bad : MPC.blue}}, ic(bm.leak ? CP_IC.alert : MP_IC.drop, 16)), e('span', {style: {fontSize: 12, color: bm.leak ? '#8E1F18' : MPC.ink}}, insight)),
+    bars(series[0], series[1], series[2], series[3], series[4], avg),
+    e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 8}}, tab === 'Hourly' ? 'Litres per hour today. Dashed line: average.' : tab === 'Daily' ? 'm³ per day, last 30 days. Light bar: today so far.' : 'm³ per month, Sep 2025 – Aug 2026 (August so far).')), {height: '100%'});
+
+  // reconciliation
+  const subs = site.dom, subSum = Math.round(bm.mtd * (1 - bm.unacc / 100) * 10) / 10;
+  const tot = subs.reduce((a, d) => a + d.mtd, 0) || 1;
+  const recon = card('Bulk vs sub-meters (month to date)', MP_IC.signal, pill(bm.fire ? 'Fire line' : bm.unacc > 12 ? 'High loss' : 'Balanced', bm.fire ? MPC.grey : bm.unacc > 12 ? MPC.bad : MPC.okText, bm.fire ? MPC.greyBg : bm.unacc > 12 ? MPC.badBg : MPC.okBg),
+    bm.fire ? empty('This bulk meter feeds the fire system only, so it has no sub-meters to reconcile.') : e('div', null,
+      e('div', {style: {display: 'flex', height: 18, borderRadius: 5, overflow: 'hidden', marginBottom: 8}},
+        e('div', {title: 'Sub-meters ' + N(Math.round(subSum)) + ' m³', style: {width: (100 - bm.unacc) + '%', background: MPC.blue}}), e('div', {title: 'Unaccounted ' + bm.unacc + '%', style: {width: bm.unacc + '%', background: bm.unacc > 12 ? MPC.bad : MPC.warn}})),
+      e('div', {style: {display: 'flex', gap: 16, fontSize: 11, color: MPC.ink2, marginBottom: 12, flexWrap: 'wrap'}},
+        e('span', null, e('b', null, N(Math.round(bm.mtd)) + ' m³'), ' through the bulk meter'), e('span', null, e('b', null, N(Math.round(subSum)) + ' m³'), ' on ' + subs.length + ' sub-meters'),
+        e('span', {style: {color: bm.unacc > 12 ? MPC.bad : MPC.warnText}}, e('b', null, N(Math.round(bm.mtd - subSum)) + ' m³ (' + bm.unacc + '%)'), ' unaccounted')),
+      e('div', {style: {display: 'flex', flexDirection: 'column', gap: 7}}, subs.map(d => { const share = Math.round(d.mtd / tot * subSum * 10) / 10;
+        return e('div', {key: d.serial}, e('div', {style: {display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 3}}, e('span', null, d.use, e('span', {style: {color: MPC.faint, marginLeft: 6}}, d.serial)), e('span', {style: {color: MPC.ink2}}, fmtM3(share) + ' m³')),
+          e('div', {style: {height: 6, background: MPC.line2, borderRadius: 3, overflow: 'hidden'}}, e('div', {style: {width: (share / subSum * 100) + '%', height: '100%', background: '#8DB2D8'}}))); }))), {height: '100%'});
+
+  // client & billing
+  const bill = Math.round(bm.mtd * org.rate * 100) / 100;
+  const billing = card('Client & billing', ORG_IC.invoice, null, e('div', null,
+    e('div', {onClick: openOrg, style: {display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, cursor: 'pointer'}},
+      e('span', {style: {width: 36, height: 36, borderRadius: 8, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center'}}, ic(ORG_IC[org.icon] || ORG_IC.office, 18)),
+      e('div', {style: {minWidth: 0}}, e('div', {style: {fontSize: 12.5, fontWeight: 600, color: MPC.blue}}, org.name), e('div', {style: {fontSize: 10.5, color: MPC.mute}}, org.id + ' · ' + org.sector))),
+    e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+      kv('Site', site.name), kv('Use', bm.use), kv('Billing', gov ? 'Vote ' + org.vote + ' · monthly invoice' : org.terms), kv('Tariff', (gov ? 'Government' : 'Commercial') + ' · ' + P(org.rate) + '/kL'),
+      kv('Charges MTD', P(bill)), kv('Last month', P(Math.round(bm.lastMonth * org.rate * 100) / 100)), kv('Sub-meters', subs.length + ' (' + subs.filter(d => d.payer === 'tenant').length + ' tenant-paid)'), kv('Contact', org.contact[0]))), {height: '100%'});
+
+  // alarms
+  const alarms = [['Night flow / leak', bm.leak ? 'Active' : 'Normal', bm.leak ? bm.nightFlow.toFixed(2) + ' m³/h between 01:00 and 04:00' : 'Night flow within normal range'],
+    ['Burst / high flow', 'Normal', 'Below ' + (bm.size === 'DN100' ? 60 : bm.size === 'DN80' ? 40 : 25) + ' m³/h limit'], ['Reverse flow', 'Normal', 'None detected'],
+    ['Unaccounted water', !bm.fire && bm.unacc > 12 ? 'Active' : 'Normal', bm.fire ? 'Not applicable' : bm.unacc + '% this month (limit 12%)'],
+    ['Tamper / magnetic', 'Normal', 'Seal intact'], ['Low battery', bm.batt < 35 ? 'Active' : 'Normal', bm.batt + '%'], ['Communication', on ? 'Normal' : 'Active', on ? 'Uplinks every 15 min' : 'No uplink for 3 days']];
+  const chipS = s => s === 'Active' ? pill('Active', MPC.bad, MPC.badBg) : pill('Normal', MPC.okText, MPC.okBg);
+  const alarmCard = card('Alarms', MP_IC.bell, alarms.some(a => a[1] === 'Active') ? pill(alarms.filter(a => a[1] === 'Active').length + ' active', MPC.bad, MPC.badBg) : pill('All clear', MPC.okText, MPC.okBg),
+    e('div', null, alarms.map((a, k) => e('div', {key: a[0], style: {display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: k < alarms.length - 1 ? '1px solid #F0F2F4' : 'none'}},
+      e('span', {style: {width: 24, height: 24, borderRadius: 6, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', background: a[1] === 'Active' ? MPC.badBg : MPC.okBg, color: a[1] === 'Active' ? MPC.bad : MPC.okText}}, ic(a[1] === 'Active' ? MP_IC.bell : MP_IC.check, 13)),
+      e('div', {style: {flex: 1}}, e('div', {style: {fontSize: 11.5, fontWeight: 600}}, a[0]), e('div', {style: {fontSize: 10.5, color: MPC.mute}}, a[2])), chipS(a[1])))), {height: '100%'});
+
+  // device & picture
+  const dev = card('Device information', MP_IC.chip, null, e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+    kv('Serial', bm.id), kv('Model', bm.model), kv('Size', bm.size + ' flanged'), kv('Flow range Q3', (bm.size === 'DN100' ? 100 : bm.size === 'DN80' ? 63 : 25) + ' m³/h'),
+    kv('DevEUI', 'A84041' + (hashStr(bm.id) % 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0') + '9B2C'), kv('Firmware', 'v' + bm.fw), kv('LoRaWAN', 'Class A · OTAA · EU868'), kv('Gateway', bm.gw.id),
+    kv('Installed', bm.installed), kv('Valve', 'None (bulk)'), kv('Location', site.suburb), kv('Coordinates', bm.site.lat.toFixed(4) + ', ' + bm.site.lng.toFixed(4))), {height: '100%'});
+  const pic = card('Device picture', MP_IC.camera, null, e('div', {style: {background: '#F4F5F7', border: '1px solid ' + MPC.line2, borderRadius: 6, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center'}},
+    e('svg', {viewBox: '0 0 220 160', style: {height: 180, width: 'auto'}},
+      e('rect', {x: 4, y: 92, width: 70, height: 30, fill: '#9AA3AD'}), e('rect', {x: 146, y: 92, width: 70, height: 30, fill: '#9AA3AD'}),
+      e('rect', {x: 60, y: 80, width: 14, height: 54, rx: 2, fill: '#6B7480'}), e('rect', {x: 146, y: 80, width: 14, height: 54, rx: 2, fill: '#6B7480'}),
+      e('rect', {x: 72, y: 84, width: 76, height: 46, rx: 6, fill: MPC.blue}),
+      e('circle', {cx: 110, cy: 70, r: 38, fill: '#fff', stroke: MPC.blue, strokeWidth: 6}),
+      e('rect', {x: 84, y: 58, width: 52, height: 15, rx: 2, fill: MPC.ink}),
+      e('text', {x: 110, y: 69.5, textAnchor: 'middle', style: {font: '600 9px Roboto,sans-serif', fill: '#fff', letterSpacing: '1px'}}, String(Math.round(bm.reading)).padStart(7, '0')),
+      e('text', {x: 110, y: 86, textAnchor: 'middle', style: {font: '600 7px Roboto,sans-serif', fill: MPC.mute}}, 'm³ · ' + bm.size),
+      e('rect', {x: 136, y: 18, width: 44, height: 26, rx: 5, fill: '#fff', stroke: MPC.blue, strokeWidth: 2}), e('text', {x: 158, y: 35, textAnchor: 'middle', style: {font: '700 8px Roboto,sans-serif', fill: MPC.blue}}, 'LoRa'),
+      e('line', {x1: 175, y1: 18, x2: 175, y2: 4, stroke: MPC.ink2, strokeWidth: 2.5, strokeLinecap: 'round'}),
+      e('text', {x: 110, y: 150, textAnchor: 'middle', style: {font: '500 8px Roboto,sans-serif', fill: MPC.ink2}}, bm.id + ' · ' + bm.use))), {height: '100%'});
+  // reading history
+  let cum = bm.reading;
+  const hist = card('Reading history', MP_IC.clock, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, 'daily index at 00:00'), table([th('Date'), th('Index reading', 'right'), th('Consumption', 'right'), th('Night flow', 'right'), th('Status', 'right')],
+    bm.days.slice(19, 29).reverse().map((d, k) => { const use = bm.daily[28 - k], row = e('tr', {key: k}, td(pad2(d.getDate() + 1) + ' ' + MON[d.getMonth()] + ' 2026, 00:00'), td(N(Math.round(cum * 10) / 10) + ' m³', {align: 'right', bold: true}), td(fmtM3(use) + ' m³', {align: 'right', color: MPC.teal}), td(bm.nightFlow.toFixed(2) + ' m³/h', {align: 'right', color: bm.leak ? MPC.bad : MPC.mute}), td(pill('Valid', MPC.okText, MPC.okBg), {align: 'right'})); cum -= use; return row; })), {height: '100%', overflow: 'hidden'});
+  const mapCard = card('Location', MP_IC.pin, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, site.suburb), e('div', {style: {margin: '-12px -14px'}},
+    e('div', {ref: el => gwMap(self, 'bulk', el, [{id: bm.id, name: bm.id + ' · ' + site.name, state: on ? 'ONLINE' : 'OFFLINE', location: {latitude: site.lat, longitude: site.lng}, lastSeenAt: null}, {id: bm.gw.id, name: bm.gw.id, state: bm.gw.state, location: {latitude: bm.gw.lat, longitude: bm.gw.lng}, lastSeenAt: null}], 13), style: {height: 260, background: '#EEF0F2'}})), {height: '100%', overflow: 'hidden'});
+  const row = kids => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || 320) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
+  return e('div', null, back, header, tiles,
+    row([[cons, 2, 520], [billing, 1, 300]]),
+    row([[recon, 1, 360], [alarmCard, 1, 320], [pic, 1, 280]]),
+    row([[dev, 1, 360], [mapCard, 1, 360]]),
+    row([[hist, 1, 600]]));
+}
+
+// ---------- Business / Government client profile ----------
+function renderOrgProfile(self, sel) {
+  const e = React.createElement, st = self.state, o = orgModel(sel.kind, sel.i), gov = o.kind === 'gov';
+  const {ic, card, pill, kv, empty, th, td, table, bars, ring} = mpKit();
+  const back = e('div', {onClick: () => self.setState({orgSel: null}), style: {display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: MPC.blue, cursor: 'pointer', marginBottom: 10}}, ic(MP_IC.back, 14), gov ? 'Government accounts' : 'Business clients');
+  const kycStatus = gov ? 'Verified' : (o.i === 2 || o.i === 8 ? 'Pending' : o.i === 10 ? 'Expired' : 'Verified');
+  const kt = kycStatus === 'Verified' ? [MPC.okText, MPC.okBg] : kycStatus === 'Pending' ? [MPC.warnText, MPC.warnBg] : [MPC.bad, MPC.badBg];
+  const openBulk = b => { self.setState({screen: 'bulk', bulkSel: b.id, bulkFrom: {kind: o.kind, i: o.i}, orgSel: null}); window.scrollTo(0, 0); };
+  const header = e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 10}},
+    e('div', {style: {width: 48, height: 48, borderRadius: 10, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(ORG_IC[o.icon] || ORG_IC.office, 26)),
+    e('div', {style: {flex: '1 1 320px', minWidth: 0}},
+      e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'}}, e('span', {style: {fontSize: 18, fontWeight: 600}}, o.name), pill(gov ? 'Government' : 'Business', MPC.blue, MPC.blueSoft), pill('KYC ' + kycStatus.toLowerCase(), kt[0], kt[1])),
+      e('div', {style: {fontSize: 11.5, color: MPC.mute, marginTop: 4, display: 'flex', gap: 14, flexWrap: 'wrap'}}, e('span', null, (gov ? 'Vote ' : 'Account ') + o.id), e('span', null, o.sector), e('span', null, o.terms))),
+    e('div', {style: {display: 'flex', gap: 7, flexWrap: 'wrap'}}, [['Statement', CP_IC.download, true], ['Add site', MP_IC.pin], ['Edit', MP_IC.edit]].map(x => e('div', {key: x[0], style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, cursor: 'pointer', fontSize: 11.5, fontWeight: 600, background: x[2] ? MPC.blue : '#fff', color: x[2] ? '#fff' : MPC.ink2, border: '1px solid ' + (x[2] ? MPC.blue : '#D2D6DC')}}, ic(x[1], 14), x[0]))));
+  const alarmsN = o.sites.reduce((a, s) => a + s.alarms, 0);
+  const vs = Math.round((o.mtd / (o.lastMonth * 19 / 31) - 1) * 100);
+  const tile = (label, icon, value, sub, tone, vt, graphic) => e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
+    e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(icon, 13, tone), label),
+      e('div', {style: {fontSize: 17, fontWeight: 600, letterSpacing: '-.4px', color: vt || MPC.ink, whiteSpace: 'nowrap'}}, value), e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, sub)), graphic || null);
+  const budgetPct = gov ? Math.round(o.spentFy / o.budget * 100) : 0;
+  const tiles = e('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(165px,1fr))', gap: 10, marginBottom: 10}},
+    tile(gov ? 'Facilities' : 'Sites', ORG_IC[o.sites[0] && SITE_TYPE[o.sites[0].type] ? SITE_TYPE[o.sites[0].type].icon : 'office'], String(o.sites.length), o.sites.map(s => s.typeLabel).filter((v, k, a) => a.indexOf(v) === k).join(', '), MPC.blue),
+    tile('Bulk meters', ICON.bulk, String(o.bulk.length), o.bulk.filter(b => b.status === 'Online').length + ' online', MPC.blue),
+    tile('Domestic meters', MP_IC.gauge, String(o.dom.length), o.dom.filter(d => d.payer === 'tenant').length ? o.dom.filter(d => d.payer === 'tenant').length + ' paid by tenants' : 'sub-meters on site', MPC.blue),
+    tile('Consumption MTD', MP_IC.drop, N(Math.round(o.mtd)) + ' m³', (vs >= 0 ? '▲ ' : '▼ ') + Math.abs(vs) + '% vs July pace', MPC.teal),
+    tile('Charges MTD', ORG_IC.invoice, P(o.billMtd), (gov ? 'Government' : 'Commercial') + ' tariff ' + P(o.rate) + '/kL', MPC.blue),
+    gov ? tile('Budget used', ORG_IC.budget, budgetPct + '%', P(o.spentFy) + ' of ' + P(o.budget), budgetPct > 90 ? MPC.bad : MPC.ok, budgetPct > 90 ? MPC.bad : null, ring(budgetPct / 100, budgetPct > 90 ? MPC.bad : MPC.blue))
+      : tile('Balance', MP_IC.wallet, P(o.balance), o.balance < 0 ? 'Owed by client' : 'In credit', o.balance < 0 ? MPC.bad : MPC.ok, o.balance < 0 ? MPC.bad : null));
+
+  // trend + split by site
+  const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'];
+  const mAvg = Math.round(o.monthly.slice(0, 11).reduce((a, b) => a + b, 0) / 11);
+  const trend = card('Consumption, last 12 months', MP_IC.chart, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, 'm³ · all ' + (gov ? 'facilities' : 'sites')), e('div', null,
+    bars(o.monthly, months, 1, 'm³', true, mAvg),
+    e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 8}}, (gov && o.sites.some(s => s.type === 'School' || s.type === 'Boarding') ? 'Use falls in school holidays (Dec, Apr, Aug). ' : '') + 'Dashed line: 12-month average. August is month to date.')), {height: '100%'});
+  const mx = Math.max(...o.sites.map(s => s.mtd), 1);
+  const split = card('Use by ' + (gov ? 'facility' : 'site') + ' (month to date)', MP_IC.pin, null, e('div', {style: {display: 'flex', flexDirection: 'column', gap: 9}}, o.sites.slice().sort((a, b) => b.mtd - a.mtd).map(s => e('div', {key: s.name},
+    e('div', {style: {display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, marginBottom: 4}}, e('span', {style: {color: MPC.blue}}, ic(ORG_IC[s.icon], 14)), e('span', {style: {flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500}}, s.name), e('span', {style: {color: MPC.ink2}}, N(Math.round(s.mtd)) + ' m³')),
+    e('div', {style: {height: 7, background: MPC.line2, borderRadius: 4, overflow: 'hidden'}}, e('div', {style: {width: (s.mtd / mx * 100) + '%', height: '100%', background: s.alarms ? MPC.warn : MPC.blue, borderRadius: 4}}))))), {height: '100%'});
+
+  // sites & facilities cards
+  const sf = st.orgSite || 'All';
+  const siteCards = card(gov ? 'Facilities' : 'Sites', ORG_IC[o.icon] || ORG_IC.office, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, o.sites.length + ' · click to filter meters'), e('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(230px,1fr))', gap: 8}},
+    o.sites.map(s => e('div', {key: s.name, onClick: () => self.setState({orgSite: sf === s.name ? 'All' : s.name}), style: {border: '1px solid ' + (sf === s.name ? '#B8CFE8' : MPC.line2), background: sf === s.name ? '#F5F8FC' : '#fff', borderRadius: 8, padding: '10px 11px', cursor: 'pointer', display: 'flex', gap: 10}},
+      e('span', {style: {width: 34, height: 34, borderRadius: 8, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(ORG_IC[s.icon], 17)),
+      e('div', {style: {flex: 1, minWidth: 0}},
+        e('div', {style: {fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, s.name),
+        e('div', {style: {fontSize: 10.5, color: MPC.mute}}, s.typeLabel + ' · ' + s.suburb),
+        e('div', {style: {display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap', alignItems: 'center'}},
+          pill(s.bulk.length + ' bulk', MPC.blue, MPC.blueSoft), pill(s.dom.length + ' domestic', MPC.teal, '#EEF5F5'), s.alarms ? pill(s.alarms + ' alert' + (s.alarms > 1 ? 's' : ''), MPC.bad, MPC.badBg) : null,
+          e('span', {style: {marginLeft: 'auto', fontSize: 11.5, fontWeight: 600}}, N(Math.round(s.mtd)) + ' m³')))))), null);
+
+  // meters table
+  const ms = [].concat(...o.sites.filter(s => sf === 'All' || s.name === sf).map(s => s.bulk.map(b => ({bulk: b, site: s})).concat(s.dom.map(d => ({dom: d, site: s})))));
+  const statusPill = s => s === 'Online' ? pill('Online', MPC.okText, MPC.okBg, MPC.ok) : s === 'Offline' ? pill('Offline', MPC.bad, MPC.badBg, MPC.bad) : pill(s, MPC.warnText, MPC.warnBg);
+  const meters = card('Meters' + (sf !== 'All' ? ' · ' + sf : ''), MP_IC.gauge, sf !== 'All' ? e('span', {onClick: () => self.setState({orgSite: 'All'}), style: {fontSize: 11, color: MPC.blue, fontWeight: 600, cursor: 'pointer'}}, 'Show all') : e('span', {style: {fontSize: 10.5, color: MPC.mute}}, ms.length + ' meters · bulk rows open the bulk meter profile'),
+    table([th('Meter'), th('Type'), th(gov ? 'Facility' : 'Site'), th('Use'), th('Paid by'), th('Usage MTD', 'right'), th('Balance', 'right'), th('Status', 'right')],
+      ms.map((m, k) => m.bulk ? e('tr', {key: m.bulk.id, onClick: () => openBulk(m.bulk), style: {cursor: 'pointer', background: '#FAFCFE'}},
+          td(e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 6, color: MPC.blue, fontWeight: 600}}, ic(ICON.bulk, 13), m.bulk.id)), td('Bulk ' + m.bulk.size, {color: MPC.blue}), td(m.site.name), td(m.bulk.use + (m.bulk.leak ? ' ⚠' : ''), {color: m.bulk.leak ? MPC.bad : MPC.ink}), td('Account', {color: MPC.mute}),
+          td(N(Math.round(m.bulk.mtd)) + ' m³', {align: 'right', bold: true}), td('—', {align: 'right', color: MPC.faint}), td(statusPill(m.bulk.status), {align: 'right'}))
+        : e('tr', {key: m.dom.serial + k}, td(m.dom.serial), td('Domestic ' + m.dom.size, {color: MPC.mute}), td(m.site.name), td(m.dom.use), td(m.dom.payer === 'tenant' ? 'Tenant (prepaid)' : m.dom.payer === 'staff' ? 'Staff (prepaid)' : 'Account', {color: m.dom.payer === 'owner' ? MPC.mute : MPC.teal}),
+          td(fmtM3(m.dom.mtd) + ' m³', {align: 'right'}), td(m.dom.bal != null ? P(m.dom.bal) : '—', {align: 'right', color: m.dom.bal != null && m.dom.bal < 0 ? MPC.bad : MPC.ink}), td(statusPill(m.dom.status), {align: 'right'})))), {overflow: 'hidden'});
+
+  // billing / budget / invoices
+  const inv = months.slice(5).map((mo, k) => { const amt = Math.round(o.monthly[5 + k] * o.rate * 100) / 100, last = k === 6;
+    return {no: (gov ? 'GI-' : 'INV-') + (26080 - (6 - k) * 37 + (hashStr(o.id) % 30)), period: mo + (k >= 4 ? ' 2026' : ' 2026'), vol: o.monthly[5 + k], amt, status: last ? 'Open' : gov ? (k >= 4 ? 'Awaiting release' : 'Paid') : (o.balance < 0 && k === 5 ? 'Overdue' : 'Paid')}; }).reverse();
+  const invCard = card(gov ? 'Invoices & vote payments' : 'Invoices', ORG_IC.invoice, e('span', {style: {fontSize: 11, color: MPC.blue, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4}}, ic(CP_IC.download, 13), 'Statement'),
+    table([th('Invoice'), th('Period'), th('Volume', 'right'), th('Amount', 'right'), th('Status', 'right')], inv.map(x => e('tr', {key: x.no}, td(x.no), td(x.period), td(N(Math.round(x.vol)) + ' m³', {align: 'right', color: MPC.teal}), td(P(x.amt), {align: 'right', bold: true}),
+      td(x.status === 'Paid' ? pill('Paid', MPC.okText, MPC.okBg) : x.status === 'Overdue' ? pill('Overdue', MPC.bad, MPC.badBg) : x.status.indexOf('Open') === 0 ? pill(x.status, MPC.blue, MPC.blueSoft) : pill(x.status, MPC.warnText, MPC.warnBg), {align: 'right'})))), {height: '100%', overflow: 'hidden'});
+  const acct = gov ? card('Vote budget · FY 2026/27', ORG_IC.budget, pill(budgetPct + '% used', budgetPct > 90 ? MPC.bad : MPC.blue, budgetPct > 90 ? MPC.badBg : MPC.blueSoft), e('div', null,
+      e('div', {style: {display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8}}, e('span', {style: {fontSize: 20, fontWeight: 600}}, P(o.spentFy)), e('span', {style: {fontSize: 11.5, color: MPC.mute}}, 'of ' + P(o.budget) + ' allocated')),
+      e('div', {style: {height: 10, background: MPC.line2, borderRadius: 5, overflow: 'hidden', marginBottom: 6}}, e('div', {style: {width: Math.min(100, budgetPct) + '%', height: '100%', background: budgetPct > 90 ? MPC.bad : MPC.blue}})),
+      e('div', {style: {display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: MPC.mute, marginBottom: 12}}, e('span', null, 'Apr 2026'), e('span', null, '5 of 12 months elapsed (42%)'), e('span', null, 'Mar 2027')),
+      e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}}, kv('Vote', o.vote), kv('Accounting officer', o.contact[0]), kv('Unbilled (awaiting release)', P(-o.balance), {color: MPC.warnText}), kv('Projected FY spend', P(Math.round(o.spentFy / 5 * 12)), {color: o.spentFy / 5 * 12 > o.budget ? MPC.bad : MPC.ink})),
+      o.spentFy / 5 * 12 > o.budget ? e('div', {style: {marginTop: 10, padding: '8px 10px', background: MPC.badBg, color: '#8E1F18', borderRadius: 6, fontSize: 11}}, 'At this rate the vote runs out before year end. Fixing the leaks flagged below would save about ' + P(Math.round(o.bulk.filter(b => b.leak).reduce((a, b) => a + b.nightFlow * 24 * 30, 0) * o.rate)) + ' a month.') : null), {height: '100%'})
+    : card('Account', MP_IC.wallet, pill(o.terms, MPC.blue, MPC.blueSoft), e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+      kv('Balance', P(o.balance), {color: o.balance < 0 ? MPC.bad : MPC.okText}), kv('Credit limit', o.terms === 'Prepaid' ? '—' : P(250000)), kv('Tariff', 'Commercial · ' + P(o.rate) + '/kL'), kv('Charges MTD', P(o.billMtd)),
+      kv('Tenant-paid meters', String(o.dom.filter(d => d.payer === 'tenant').length)), kv('Recovered from tenants MTD', P(Math.round(o.dom.filter(d => d.payer === 'tenant').reduce((a, d) => a + d.mtd, 0) * o.rate * 100) / 100)),
+      kv('CIPA no.', 'BW0001' + (1000 + o.i * 7)), kv('VAT no.', 'C' + (33100 + o.i * 11))), {height: '100%'});
+  const contact = card('Contacts', ORG_IC.contact, null, e('div', {style: {display: 'flex', flexDirection: 'column', gap: 10}},
+    [[o.contact[0], o.contact[1], '+267 7' + (1000000 + hashStr(o.id) % 8999999), o.contact[0].toLowerCase().replace(/\s+/g, '.') + '@' + (gov ? 'gov.bw' : 'mail.co.bw')],
+      [gov ? 'Finance office' : 'Accounts payable', gov ? 'Invoices & vote releases' : 'Invoices & statements', '+267 39' + (10000 + hashStr(o.id + 'a') % 89999), (gov ? 'finance' : 'accounts') + '@' + (gov ? 'gov.bw' : 'mail.co.bw')]].map(c => e('div', {key: c[0], style: {display: 'flex', gap: 10, alignItems: 'center'}},
+      e('span', {style: {width: 34, height: 34, borderRadius: '50%', background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, fontWeight: 600, flex: 'none'}}, c[0].split(' ').map(x => x[0]).slice(0, 2).join('')),
+      e('div', {style: {minWidth: 0}}, e('div', {style: {fontSize: 12, fontWeight: 600}}, c[0]), e('div', {style: {fontSize: 10.5, color: MPC.mute}}, c[1] + ' · ' + c[2] + ' · ' + c[3]))))), {height: '100%'});
+  const alerts = [].concat(...o.sites.map(s => s.bulk.filter(b => b.leak).map(b => [CP_IC.alert, MPC.bad, MPC.badBg, 'Night flow at ' + s.name, b.nightFlow.toFixed(2) + ' m³/h on ' + b.id + ' (' + b.use + '), about ' + N(Math.round(b.nightFlow * 24 * 30)) + ' m³ a month', b])
+    .concat(s.dom.filter(d => d.status === 'Offline').map(d => [MP_IC.signal, MPC.warnText, MPC.warnBg, d.serial + ' offline', s.name + ' · ' + d.use + ', no uplink for 3 days', null]))));
+  const alertCard = card('Alerts', MP_IC.bell, alerts.length ? pill(alerts.length + ' open', MPC.bad, MPC.badBg) : pill('All clear', MPC.okText, MPC.okBg), alerts.length ? e('div', {style: {display: 'flex', flexDirection: 'column', gap: 8}}, alerts.map((a, k) => e('div', {key: k, onClick: a[5] ? () => openBulk(a[5]) : undefined, style: {display: 'flex', gap: 10, padding: '9px 10px', border: '1px solid ' + MPC.line2, borderRadius: 7, cursor: a[5] ? 'pointer' : 'default'}},
+    e('span', {style: {width: 28, height: 28, borderRadius: 7, background: a[2], color: a[1], display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(a[0], 14)),
+    e('div', null, e('div', {style: {fontSize: 11.5, fontWeight: 600}}, a[3]), e('div', {style: {fontSize: 10.5, color: MPC.mute}}, a[4]))))) : empty('No open alerts.'), {height: '100%'});
+  const docs = gov ? [['Vote authority letter', 1], ['Purchase order / LPO', 1], ['Accounting officer delegation', 1], ['Facility list signed off', o.i % 2 ? 1 : 0]]
+    : [['CIPA registration certificate', 1], ['Directors’ Omang copies', 1], ['Tax clearance (BURS)', kycStatus !== 'Expired' ? 1 : 0], ['VAT registration', 1], ['Bank confirmation letter', kycStatus === 'Verified' ? 1 : 0], ['Signed supply agreement', kycStatus === 'Verified' ? 1 : 0]];
+  const kycCard = card(gov ? 'Account documents' : 'KYC documents', MP_IC.shield, pill(docs.filter(d => d[1]).length + ' of ' + docs.length, kt[0], kt[1]), e('div', {style: {display: 'flex', flexDirection: 'column', gap: 7}}, docs.map(d => e('div', {key: d[0], style: {display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5}},
+    e('span', {style: {width: 16, height: 16, borderRadius: 4, background: d[1] ? MPC.ok : MPC.warn, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, flex: 'none'}}, d[1] ? '✓' : '!'), e('span', {style: {flex: 1}}, d[0]), e('span', {style: {fontSize: 10.5, color: MPC.mute}}, d[1] ? 'verified' : 'missing')))), {height: '100%'});
+  const row = kids => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || 320) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
+  return e('div', null, back, header, tiles,
+    row([[trend, 2, 520], [split, 1, 300]]),
+    row([[siteCards, 1, 600]]),
+    row([[meters, 1, 600]]),
+    row([[acct, 1, 340], [invCard, 1.3, 420], [alertCard, 1, 300]]),
+    row([[contact, 1, 340], [kycCard, 1, 340]]));
+}
+
 const TABLES = {
   domestic: {
     name: 'Domestic clients', count: '41,208 clients', pageInfo: 'Showing 1–14 of 41,208',
@@ -2348,16 +2718,16 @@ const TABLES = {
     }
   },
   gov: {
-    name: 'Government accounts', count: '212 votes', pageInfo: 'Showing 1–10 of 212',
-    stats: [{label: 'Vote accounts', value: '212', sub: '11 ministries', tone: '#00468C'}, {label: 'Facilities', value: '1,046', sub: 'schools, clinics, offices', tone: '#00468C'}, {label: 'Consumption MTD', value: '112.8 ML', sub: '31% of network', tone: '#2A7A7E'}, {label: 'Unbilled', value: 'P 984,200', sub: 'awaiting vote release', tone: '#D99A2B'}],
-    chips: ['All ministries', 'Health', 'Education', 'Local Government', 'Unbilled'],
-    head: [['Vote'], ['Ministry'], ['Facility'], ['Meters', 'right'], ['Bulk', 'right'], ['Consumption MTD', 'right'], ['Budget used', 'right'], ['Status', 'right']],
-    rows: (b, txt) => GOVT.map((x, i) => {
-      const r = rnd(300 + i), used = 40 + Math.floor(r() * 58);
-      return [txt(x[0], {mono: true}), txt(x[1], {bold: true}), txt(x[2], {color: '#767E89'}),
-        txt(String(2 + Math.floor(r() * 40)), {mono: true, align: 'right'}), txt(String(1 + Math.floor(r() * 4)), {mono: true, align: 'right'}),
-        txt(short(Math.round(r() * 2e7 + 1e6)) + ' L', {mono: true, align: 'right', color: '#2A7A7E'}),
-        txt(used + '%', {mono: true, align: 'right', color: used > 90 ? '#B3261E' : '#181D23'}), b(i === 4 || i === 9 ? 'Pending' : 'Active')];
+    name: 'Government accounts', count: '212 votes', pageInfo: 'Showing 1–' + GOV_ORGS.length + ' of 212',
+    stats: [{label: 'Vote accounts', value: '212', sub: '11 ministries + councils', tone: '#00468C'}, {label: 'Facilities', value: '1,046', sub: 'schools, clinics, offices', tone: '#00468C'}, {label: 'Consumption MTD', value: '112.8 ML', sub: '31% of network', tone: '#2A7A7E'}, {label: 'Unbilled', value: 'P 984,200', sub: 'awaiting vote release', tone: '#D99A2B'}],
+    chips: ['All', 'Education', 'Health', 'Local government', 'Unbilled'],
+    head: [['Vote'], ['Client'], ['Sector'], ['Facilities', 'right'], ['Bulk', 'right'], ['Domestic', 'right'], ['Consumption MTD', 'right'], ['Budget used', 'right'], ['Status', 'right']],
+    rows: (b, txt) => GOV_ORGS.map((g, i) => {
+      const o = orgModel('gov', i), used = Math.round(o.spentFy / o.budget * 100), leaks = o.bulk.filter(x => x.leak).length;
+      return [txt(g[0], {mono: true}), txt(g[1], {bold: true}), txt(g[2], {color: '#767E89'}), txt(String(o.sites.length), {mono: true, align: 'right'}),
+        txt(String(o.bulk.length), {mono: true, align: 'right'}), txt(String(o.dom.length), {mono: true, align: 'right'}),
+        txt(N(Math.round(o.mtd)) + ' m³', {mono: true, align: 'right', color: '#2A7A7E'}), txt(used + '%', {mono: true, align: 'right', color: used > 90 ? '#B3261E' : '#181D23'}),
+        b(leaks ? 'Leak alert' : 'Active')];
     })
   },
   meters: {
@@ -2376,16 +2746,15 @@ const TABLES = {
     })
   },
   bulk: {
-    name: 'Bulk meters & district metered areas', count: '412 bulk meters', pageInfo: 'Showing 1–10 of 412',
-    stats: [{label: 'Bulk meters', value: '412', sub: '38 DMAs', tone: '#00468C'}, {label: 'Bulk inflow MTD', value: '418.2 ML', sub: 'all zones', tone: '#2A7A7E'}, {label: 'Non-revenue water', value: '13.7%', sub: 'target < 12%', tone: '#D99A2B'}, {label: 'DMAs above target', value: '9', sub: 'investigate', tone: '#B3261E'}],
-    chips: ['All DMAs', 'Above target', 'Balanced', 'Sensor fault'],
-    head: [['Bulk meter'], ['DMA / zone'], ['Size'], ['Inflow MTD', 'right'], ['Sub-meter sum', 'right'], ['Loss', 'right'], ['Daily avg', 'right'], ['Status', 'right']],
-    rows: (b, txt) => ['Block 8 DMA', 'Phakalane DMA', 'Old Naledi DMA', 'Broadhurst DMA', 'Block 5 DMA', 'Phase 4 DMA', 'Tsholofelo DMA', 'CBD DMA', 'Kgale View DMA', 'Bontleng DMA'].map((z, i) => {
-      const r = rnd(200 + i), inflow = Math.round(8e6 + r() * 4.2e7), loss = Math.round((6 + r() * 16) * 10) / 10;
-      return [txt('BM-' + (7100 + i * 17), {mono: true}), txt(z, {bold: true}), txt(['DN150', 'DN200', 'DN100', 'DN150', 'DN100', 'DN150', 'DN100', 'DN200', 'DN80', 'DN80'][i], {color: '#767E89'}),
-        txt(short(inflow) + ' L', {mono: true, align: 'right'}), txt(short(Math.round(inflow * (1 - loss / 100))) + ' L', {mono: true, align: 'right', color: '#767E89'}),
-        txt(loss + '%', {mono: true, align: 'right', color: loss > 14 ? '#B3261E' : loss > 12 ? '#965A00' : '#237A48'}),
-        txt(short(Math.round(inflow / 19)) + ' L', {mono: true, align: 'right', color: '#767E89'}), b(loss > 14 ? 'Arrears' : i === 7 ? 'Pending' : 'Active')];
+    name: 'Bulk meters · Government & Business', count: '412 bulk meters', pageInfo: 'Showing 1–' + allBulk().length + ' of 412',
+    stats: [{label: 'Bulk meters', value: '412', sub: '236 government · 176 business', tone: '#00468C'}, {label: 'Bulk volume MTD', value: '418.2 ML', sub: 'all client sites', tone: '#2A7A7E'}, {label: 'Unaccounted water', value: '6.9%', sub: 'bulk vs sub-meters · target < 8%', tone: '#D99A2B'}, {label: 'Night-flow alarms', value: String(allBulk().filter(x => x.leak).length * 7), sub: 'possible leaks on site', tone: '#B3261E'}],
+    chips: ['All', 'Government', 'Business', 'Night-flow alarm'],
+    head: [['Bulk meter'], ['Client'], ['Site / facility'], ['Use'], ['Size'], ['Volume MTD', 'right'], ['Unaccounted', 'right'], ['Night flow', 'right'], ['Status', 'right']],
+    rows: (b, txt) => allBulk().map(x => {
+      const r = [txt(x.id, {mono: true, bold: true, color: '#00468C'}), txt(x.org.name, {bold: true}), txt(x.site.name, {color: '#49515C'}), txt(x.use, {color: '#767E89'}), txt(x.size, {color: '#767E89'}),
+        txt(N(Math.round(x.mtd)) + ' m³', {mono: true, align: 'right'}), txt(x.fire ? '—' : x.unacc.toFixed(1) + '%', {mono: true, align: 'right', color: x.unacc > 12 ? '#B3261E' : x.unacc > 8 ? '#965A00' : '#237A48'}),
+        txt(x.fire ? '—' : x.nightFlow.toFixed(2) + ' m³/h', {mono: true, align: 'right', color: x.leak ? '#B3261E' : '#767E89'}), b(x.status === 'Offline' ? 'Offline' : x.leak ? 'Leak alert' : 'Online')];
+      r.bulkId = x.id; return r;
     })
   },
   sites: {
