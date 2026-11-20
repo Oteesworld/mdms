@@ -96,20 +96,38 @@ async function consumption(devEui, unit, count) {
   // local "now" in the meter's time zone, as a naive timestamp like Postgres returns
   const nowLocal = new Date(new Date().toLocaleString('en-US', {timeZone: TZ}) + ' UTC');
   const start = new Date(nowLocal); if (step === 'hour') { start.setUTCMinutes(0, 0, 0); start.setUTCHours(start.getUTCHours() - (count - 1)); } else { start.setUTCHours(0, 0, 0, 0); start.setUTCDate(start.getUTCDate() - (count - 1)); }
-  const key = d => new Date(d).toISOString().slice(0, step === 'hour' ? 13 : 10);
-  const byKey = {}; clean.forEach(r => { byKey[key(r.bucket)] = r; });
-  let prev = null; clean.forEach(r => { if (r.bucket < start) prev = r.reading; });
+  const size = step === 'hour' ? 3600e3 : 864e5;
+  const idx = d => Math.round((d.getTime() - start.getTime()) / size); // bucket index relative to the window (may be negative)
   const buckets = [];
   for (let i = 0; i < count; i++) {
-    const t = new Date(start); if (step === 'hour') t.setUTCHours(t.getUTCHours() + i); else t.setUTCDate(t.getUTCDate() + i);
-    const r = byKey[key(t)];
-    const reading = r ? r.reading : prev;
-    // the first bucket with data has no earlier reading: use the rise within the bucket
-    const base = prev != null ? prev : r ? r.low : null;
-    const used = reading != null && base != null ? Math.max(0, Math.round((reading - base) * 1000)) : null;
-    buckets.push({start: t.toISOString().slice(0, 16).replace('T', ' '), reading_m3: reading, used_l: used, frames: r ? r.frames : 0});
-    if (reading != null) prev = reading;
+    const t = new Date(start.getTime() + i * size);
+    buckets.push({start: t.toISOString().slice(0, 16).replace('T', ' '), reading_m3: null, used_l: null, estimated: false, frames: 0, state: 'no-data'});
   }
+  // The meter reports its cumulative total only every few hours. Usage between two reports is
+  // spread evenly over the buckets since the previous report and marked as estimated; buckets
+  // after the latest report have no data yet.
+  let prev = null;
+  clean.forEach(r => {
+    const k = idx(r.bucket);
+    if (prev) {
+      const total = Math.max(0, (r.reading - prev.reading) * 1000), span = k - prev.k;
+      if (span >= 1) {
+        let left = Math.round(total);
+        for (let b = prev.k + 1; b <= k; b++) {
+          const share = b === k ? left : Math.round(total / span); left -= b === k ? 0 : share;
+          if (b >= 0 && b < count) Object.assign(buckets[b], {used_l: share, estimated: span > 1, state: span > 1 ? 'spread' : 'measured'});
+        }
+      } else if (k >= 0 && k < count) { // two reports in the same bucket
+        const bk = buckets[k]; bk.used_l = (bk.used_l || 0) + Math.round(total);
+      }
+    } else if (k >= 0 && k < count) { // first report ever: only the rise within its own bucket is known
+      Object.assign(buckets[k], {used_l: Math.max(0, Math.round((r.reading - r.low) * 1000)), state: 'measured'});
+    }
+    if (k >= 0 && k < count) Object.assign(buckets[k], {reading_m3: r.reading, frames: r.frames});
+    prev = {k, reading: r.reading};
+  });
+  const lastK = prev ? prev.k : -1;
+  for (let b = Math.max(0, lastK + 1); b < count; b++) buckets[b].state = 'pending';
   return {enabled: true, timeZone: TZ, unit: step, since: first.since, lastStored: first.last, storedFrames: first.n, buckets};
 }
 
