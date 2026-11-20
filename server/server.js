@@ -3,7 +3,7 @@
 'use strict';
 const http = require('http');
 const store = require('./store');
-const TRACKED = (process.env.TRACKED_DEVICES || '004a7701240c1fc9').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const TRACKED = (process.env.TRACKED_DEVICES || '004a7701240c1fc9,004a7701240c2033').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 const INGEST_SECRET = process.env.INGEST_SECRET || '';
 const POLL_MINUTES = Number(process.env.POLL_MINUTES || 5);
 
