@@ -131,4 +131,13 @@ async function consumption(devEui, unit, count) {
   return {enabled: true, timeZone: TZ, unit: step, since: first.since, lastStored: first.last, storedFrames: first.n, buckets};
 }
 
-module.exports = {enabled: () => !!DATABASE_URL, db, storeUplink, consumption, readingOf};
+// Newest stored C7 data report with a valid checksum (the ChirpStack event log keeps only ~10 uplinks).
+async function latestDataReport(devEui) {
+  const p = await db(); if (!p) return null;
+  const r = (await p.query(`SELECT received_at, f_cnt, f_port, object FROM meter_uplinks
+    WHERE dev_eui = $1 AND function_code = '0xC7' AND object->>'totalFlow' IS NOT NULL AND coalesce(object->>'crc_ok', 'true') <> 'false'
+    ORDER BY received_at DESC LIMIT 1`, [devEui])).rows[0];
+  return r ? {time: r.received_at.toISOString(), fCnt: Number(r.f_cnt), fPort: r.f_port, object: r.object} : null;
+}
+
+module.exports = {enabled: () => !!DATABASE_URL, db, storeUplink, consumption, readingOf, latestDataReport};

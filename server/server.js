@@ -159,7 +159,8 @@ async function getDevice(devEui) {
     linkMetrics(devEui, 24 * 30, 1).catch(e => ({error: e.message})),
     cached('list', 15000, listGateways).catch(() => ({gateways: []}))]);
   const gatewayNames = {}; (gws.gateways || []).forEach(g => { gatewayNames[g.id] = {name: g.name, location: g.location, state: g.state}; });
-  return {device: dev, events: Array.isArray(events) ? events : [], eventsError: Array.isArray(events) ? null : events.error, link24h, link30d, gateways: gatewayNames};
+  const storedDataReport = store.enabled() ? await store.latestDataReport(devEui).catch(e => { console.error('latestDataReport: ' + e.message); return null; }) : null;
+  return {device: dev, events: Array.isArray(events) ? events : [], eventsError: Array.isArray(events) ? null : events.error, link24h, link30d, gateways: gatewayNames, storedDataReport};
 }
 
 // ---------- tiny cache + HTTP ----------

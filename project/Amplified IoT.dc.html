@@ -1970,6 +1970,10 @@ function liveLoad(self, force) {
   gwFetch(self, '/api/devices/' + LIVE_EUI, 'dev:' + LIVE_EUI, (err, j) => self.setState(x => ({liveDev: err ? Object.assign({}, x.liveDev || {}, {status: 'error', error: err, at: Date.now()}) : {status: 'ok', data: j, at: Date.now()}})));
 }
 const liveUps = d => (d.events || []).filter(e => e.type === 'up');
+// Event-log uplinks plus the newest stored data report when the event log no longer holds one.
+const liveUpsWithReport = d => { const ups = liveUps(d), sr = d.storedDataReport;
+  if (!sr || ups.some(u => u.object && u.object.function_code === '0xC7')) return ups;
+  return ups.concat([{type: 'up', time: sr.time, fCnt: sr.fCnt, fPort: sr.fPort, object: sr.object, dataHex: sr.object.raw_hex || '', rx: [], stored: true}]); };
 const liveOnline = d => d.device.lastSeenAt && (Date.now() - new Date(d.device.lastSeenAt).getTime()) < LIVE_ONLINE_HOURS * 3600e3;
 // C2 status frame (SH Meters): layout not in the vendor spec; split into the same raw fields as the ChirpStack codec.
 const c2Fields = hex => { if (!hex || hex.length < 24) return null; const bcd = s => /^[0-9]+$/.test(s) ? parseInt(s, 10) / 100 : null;
@@ -1998,10 +2002,11 @@ const C7_FLAGS = [['leakageStatus', 'Leak', 1], ['burstAnalysis', 'Burst', 1], [
   ['valveStatus', 'Valve status bit', 0], ['valveAlarm', 'Valve status bit', 0], ['valveState', 'Valve', 0], ['motorStatus', 'Motor status', 0], ['realtimeInfoFlag', 'Real-time data', 0], ['isStatusValid', 'Status valid flag', 0]];
 
 function meterDisplay(d) {
-  const ups = liveUps(d), found = {};
-  ups.filter(isC7).forEach(u => { const o = u.object; P_PARAMS.forEach(p => { if (p[2] && !found[p[0]] && typeof o[p[2]] === 'number') found[p[0]] = {v: o[p[2]], time: u.time, src: 'Data report'}; }); });
+  const ups = liveUpsWithReport(d), found = {};
+  ups.filter(isC7).forEach(u => { const o = u.object; P_PARAMS.forEach(p => { if (p[2] && !found[p[0]] && typeof o[p[2]] === 'number') found[p[0]] = {v: o[p[2]], time: u.time, src: 'Data report · ' + fmtDT(u.time)}; }); });
   const st = ups.find(isC2), c2 = st ? c2Fields(st.object.payload_hex) : null;
-  if (!found['P-0'] && c2) found['P-0'] = {v: Math.round(c2.a) / 10, time: st.time, src: 'Status frame'};
+  // P-0 is also in every status frame: use whichever report is newest
+  if (c2 && (!found['P-0'] || new Date(st.time) > new Date(found['P-0'].time))) found['P-0'] = {v: Math.round(c2.a) / 10, time: st.time, src: 'Status frame · ' + fmtDT(st.time)};
   const mt = (ups.find(u => u.object && u.object.meterTime) || {}).object;
   if (mt) { const t = mt.meterTime.split(' '), when = ups.find(u => u.object && u.object.meterTime).time; found['P-C'] = {v: t[0], time: when, src: 'Meter clock'}; found['P-D'] = {v: t[1], time: when, src: 'Meter clock'}; }
   const r = k => found[k] && found[k].v;
@@ -2031,7 +2036,7 @@ function liveRowCells(self, b, txt) {
     txt('SH ultrasonic STS · live', {color: '#00468C', bold: true}), txt(d.device.name + ' (unassigned)'), txt('—', {color: '#767E89'}),
     txt(gw ? gw.name : (rx ? rx.gatewayId : '—'), {mono: true}),
     txt(rx ? rx.rssi + ' / SF' + (up.sf || '') : '—', {mono: true, align: 'right', color: rx && rx.rssi < -105 ? '#965A00' : '#181D23'}),
-    txt((ups.find(isC7) || {object: {}}).object.voltageRtu ? ups.find(isC7).object.voltageRtu.toFixed(2) + ' V' : 'n/a', {mono: true, align: 'right', color: '#767E89'}),
+    txt((liveUpsWithReport(d).find(isC7) || {object: {}}).object.voltageRtu ? liveUpsWithReport(d).find(isC7).object.voltageRtu.toFixed(2) + ' V' : 'n/a', {mono: true, align: 'right', color: '#767E89'}),
     txt(relTime(d.device.lastSeenAt), {mono: true, align: 'right', color: '#767E89'}), b(on ? 'Online' : 'Offline')];
   r.live = true; return r;
 }
@@ -2052,7 +2057,7 @@ function renderLiveMeter(self) {
 
   const dev = d.device, ups = liveUps(d), last = ups[0], rx0 = last && last.rx && last.rx[0], disp = meterDisplay(d);
   const on = liveOnline(d), gwName = id => (d.gateways[id] && d.gateways[id].name) || id;
-  const lastStatus = ups.find(isC2), lastC7 = ups.find(isC7);
+  const lastStatus = ups.find(isC2), lastC7 = liveUpsWithReport(d).find(isC7);
   const c2 = lastStatus ? c2Fields(lastStatus.object.payload_hex) : null;
   const sum = m => m && m.datasets && m.datasets[0] ? m.datasets[0].data.reduce((a, b) => a + b, 0) : 0;
   const ds = st.lvTab || 'Uplinks', rg = st.lvRange || '24h', LM = rg === '24h' ? d.link24h : d.link30d;
