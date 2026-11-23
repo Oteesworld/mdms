@@ -63,6 +63,8 @@ function readingOf(o) {
   if (!o) return null;
   if (o.function_code === '0xC7' && o.crc_ok !== false && typeof o.totalFlow === 'number') return o.totalFlow;
   if (o.function_code === '0xC2' && o.crc_ok !== false && typeof o.payload_hex === 'string' && o.payload_hex.length >= 8) return parseInt(o.payload_hex.slice(2, 8), 16) / 10;
+  // Honeywell / 869531-series meters: daily report with the cumulative reading in m3
+  if (o.cycleType && typeof o.currentReading === 'number') return o.currentReading;
   return null;
 }
 const num = v => typeof v === 'number' && isFinite(v) ? v : null;

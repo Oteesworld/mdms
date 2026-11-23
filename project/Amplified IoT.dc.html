@@ -1968,7 +1968,7 @@ function renderGatewaysPage(self) {
 
 // ---------- Live meter from ChirpStack (shown above the demo meters) ----------
 // Live ChirpStack meters shown at the top of the meter register, in this order.
-const LIVE_EUIS = ['004a7701240c1fc9', '004a7701240c2033'];
+const LIVE_EUIS = ['004a7701240c1fc9', '004a7701240c2033', '8695311001828500'];
 const LIVE_ONLINE_HOURS = 6; // the meter reports about every 4 hours
 function liveLoad(self, force, eui) {
   eui = eui || LIVE_EUIS[0];
@@ -1983,7 +1983,10 @@ const liveUps = d => (d.events || []).filter(e => e.type === 'up');
 const liveUpsWithReport = d => { const ups = liveUps(d), sr = d.storedDataReport;
   if (!sr || ups.some(u => u.object && u.object.function_code === '0xC7')) return ups;
   return ups.concat([{type: 'up', time: sr.time, fCnt: sr.fCnt, fPort: sr.fPort, object: sr.object, dataHex: sr.object.raw_hex || '', rx: [], stored: true}]); };
-const liveOnline = d => d.device.lastSeenAt && (Date.now() - new Date(d.device.lastSeenAt).getTime()) < LIVE_ONLINE_HOURS * 3600e3;
+// Honeywell / 869531-series meters report once a day (cycleType day), SH Kalahari meters about every 4 hours.
+const isHwDev = d => /honeywell|869531/i.test(((d.device.deviceProfile || {}).name || '') + ' ' + (d.device.description || '')) || liveUps(d).some(u => u.object && u.object.cycleType);
+const liveOnline = d => d.device.lastSeenAt && (Date.now() - new Date(d.device.lastSeenAt).getTime()) < (isHwDev(d) ? 26 : LIVE_ONLINE_HOURS) * 3600e3;
+const hwReports = d => liveUps(d).filter(u => u.object && u.object.cycleType);
 // C2 status frame (SH Meters): layout not in the vendor spec; split into the same raw fields as the ChirpStack codec.
 const c2Fields = hex => { if (!hex || hex.length < 24) return null; const bcd = s => /^[0-9]+$/.test(s) ? parseInt(s, 10) / 100 : null;
   return {a: parseInt(hex.slice(2, 8), 16), b: parseInt(hex.slice(8, 16), 16), c: bcd(hex.slice(16, 20)), d: bcd(hex.slice(20, 24)), flags: hex.slice(24, 26)}; };
@@ -2084,10 +2087,10 @@ function liveRowCells(self, b, txt, eui) {
   const ups = liveUps(d), up = ups[0], rx = up && up.rx && up.rx[0], gw = rx && d.gateways[rx.gatewayId];
   const on = liveOnline(d);
   const r = [txt((d.device.tags.serial || d.device.name), {mono: true, bold: true, color: '#00468C'}), txt(d.device.devEui.toUpperCase(), {mono: true, color: '#767E89'}),
-    txt('SH ultrasonic STS · live', {color: '#00468C', bold: true}), txt(d.device.name + ' (unassigned)'), txt('—', {color: '#767E89'}),
+    txt(isHwDev(d) ? 'Honeywell 869531 · live' : 'SH ultrasonic STS · live', {color: '#00468C', bold: true}), txt(d.device.name + ' (unassigned)'), txt('—', {color: '#767E89'}),
     txt(gw ? gw.name : (rx ? rx.gatewayId : '—'), {mono: true}),
     txt(rx ? rx.rssi + ' / SF' + (up.sf || '') : '—', {mono: true, align: 'right', color: rx && rx.rssi < -105 ? '#965A00' : '#181D23'}),
-    txt((() => { const c = liveUpsWithReport(d).find(isC7); return c && isLive(c.time) && typeof c.object.voltageRtu === 'number' ? c.object.voltageRtu.toFixed(2) + ' V' : 'n/a'; })(), {mono: true, align: 'right', color: '#767E89'}),
+    txt((() => { if (isHwDev(d)) { const s0 = d.device.deviceStatus; return s0 && s0.batteryLevel >= 0 ? Math.round(s0.batteryLevel) + '%' : 'n/a'; } const c = liveUpsWithReport(d).find(isC7); return c && isLive(c.time) && typeof c.object.voltageRtu === 'number' ? c.object.voltageRtu.toFixed(2) + ' V' : 'n/a'; })(), {mono: true, align: 'right', color: '#767E89'}),
     txt(relTime(d.device.lastSeenAt), {mono: true, align: 'right', color: '#767E89'}), b(on ? 'Online' : 'Offline')];
   r.live = true; return r;
 }
@@ -2166,10 +2169,11 @@ function renderLiveMeter(self, eui) {
   const p = dev.deviceProfile || {};
   const info = card('Device information', MP_IC.chip, null, e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
     kv('Meter serial', dev.tags.serial || '—'), kv('Meter address', dev.tags.meter_addr || '—'), kv('DevEUI', dev.devEui.toUpperCase()), kv('JoinEUI', dev.joinEui.toUpperCase()),
-    kv('Device name', dev.name), kv('Model', 'SH-L-EU868 ultrasonic'), e('div', {key: 'ds', style: {gridColumn: '1 / -1'}}, kv('Description', dev.description)),
+    kv('Device name', dev.name), kv('Model', isHwDev(d) ? 'Honeywell · 869531 series' : 'SH-L-EU868 ultrasonic'), e('div', {key: 'ds', style: {gridColumn: '1 / -1'}}, kv('Description', dev.description)),
     kv('Application', dev.applicationName), kv('Device profile', p.name || '—'), kv('LoRaWAN', 'Class ' + dev.classEnabled + ' · ' + (p.supportsOtaa ? 'OTAA' : 'ABP') + ' · ' + (p.macVersion || '')),
     kv('Region', (p.regionConfigId || '').toUpperCase()), kv('Added to network', fmtDT(dev.createdAt)), kv('Last seen', fmtDT(dev.lastSeenAt)), kv('State', dev.isDisabled ? 'Disabled' : 'Enabled', {color: dev.isDisabled ? MPC.bad : MPC.okText}),
-    kv('Valve', vi ? (vi.state === 'open' ? 'Open' : 'Closed') + ' · ' + (vi.sinceKnown ? 'since ' : 'at least since ') + fmtMs(vi.since).slice(0, 18) : 'Not reported', {color: vi ? (vi.state === 'open' ? MPC.okText : MPC.bad) : MPC.mute})), {height: '100%'});
+    (() => { const hw = isHwDev(d) && hwReports(d)[0], pct = hw && hw.object.valve ? hw.object.valve.openPercentage : null;
+      return pct != null ? kv('Valve', pct + '% open · ' + fmtDT(hw.time).slice(0, 18), {color: pct === 0 ? MPC.bad : MPC.okText}) : kv('Valve', vi ? (vi.state === 'open' ? 'Open' : 'Closed') + ' · ' + (vi.sinceKnown ? 'since ' : 'at least since ') + fmtMs(vi.since).slice(0, 18) : 'Not reported', {color: vi ? (vi.state === 'open' ? MPC.okText : MPC.bad) : MPC.mute}); })()), {height: '100%'});
 
   // client
   const client = card('Client details', MP_IC.user, pill('Unassigned', MPC.warnText, MPC.warnBg), e('div', null,
@@ -2258,7 +2262,7 @@ function renderLiveMeter(self, eui) {
   const upsTable = card('Recent uplinks', MP_IC.clock, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, 'from the ChirpStack event log'), ups.length ? table(
     [th('Received'), th('Port'), th('FCnt', 'right'), th('Message'), th('RSSI', 'right'), th('SNR', 'right'), th('Channel', 'right'), th('Gateway'), th('Payload')],
     ups.map((u, k) => { const r = u.rx[0] || {}; return e('tr', {key: k}, td(fmtDT(u.time)), td('p' + u.fPort, {bold: true, color: MPC.blue}), td(String(u.fCnt), {align: 'right'}),
-      td((u.object && u.object.message_label) || '—'), td(r.rssi != null ? r.rssi + ' dBm' : '—', {align: 'right', color: r.rssi < -105 ? MPC.warnText : MPC.ink}), td(r.snr != null ? r.snr + ' dB' : '—', {align: 'right'}),
+      td(u.object && u.object.cycleType ? 'Daily report' : u.fPort === 0 ? 'MAC frame (no payload)' : (u.object && u.object.message_label) || '—'), td(r.rssi != null ? r.rssi + ' dBm' : '—', {align: 'right', color: r.rssi < -105 ? MPC.warnText : MPC.ink}), td(r.snr != null ? r.snr + ' dB' : '—', {align: 'right'}),
       td(u.frequency ? (u.frequency / 1e6).toFixed(1) + ' MHz' : '—', {align: 'right', color: MPC.mute}), td(gwName(r.gatewayId)), td(u.dataHex.length > 26 ? u.dataHex.slice(0, 26).toUpperCase() + '…' : u.dataHex.toUpperCase(), {color: MPC.mute})); })) : empty(d.eventsError || 'No uplinks in the event log.'), {height: '100%', overflow: 'hidden'});
 
   // connectivity + map
@@ -2281,6 +2285,69 @@ function renderLiveMeter(self, eui) {
   const row = kids => e('div', {style: {display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10}}, kids.map((k, i) => e('div', {key: i, style: {flex: (k[1] || 1) + ' 1 ' + (k[2] || 320) + 'px', minWidth: 0, maxWidth: '100%'}}, k[0])));
   const banner = (tone, bg, border, icon, title, text) => e('div', {style: {display: 'flex', gap: 10, alignItems: 'flex-start', background: bg, border: '1px solid ' + border, borderRadius: 8, padding: '10px 12px', marginBottom: 10}},
     e('span', {style: {color: tone}}, ic(icon, 16)), e('div', {style: {fontSize: 12, color: tone}}, e('b', null, title + ' '), text));
+  if (isHwDev(d)) {
+    // ---- Honeywell layout: one report a day; values older than one report cycle (26 h) are not shown ----
+    const reps = hwReports(d), hr = reps[0], ho = hr && hr.object, liveRep = hr && (Date.now() - new Date(hr.time).getTime()) < 26 * 3600e3;
+    const o = liveRep ? ho : null, stat = dev.deviceStatus || {};
+    const valvePct = o && o.valve && typeof o.valve.openPercentage === 'number' ? o.valve.openPercentage : null;
+    const nod = 'No report in last 26 h';
+    const hwTiles = e('div', {style: {display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(165px,1fr))', gap: 10, marginBottom: 10}}, [
+      ['Last report', MP_IC.clock, hr ? relTime(hr.time) : '—', hr ? 'Daily report · ' + fmtDT(hr.time).slice(0, 18) : 'No report yet', on ? MPC.ok : MPC.bad, on ? MPC.okText : MPC.bad],
+      ['Signal', MP_IC.signal, rx0 ? rx0.rssi + ' dBm' : '—', rx0 ? 'SNR ' + rx0.snr + ' dB · ' + gwName(rx0.gatewayId) : '', MPC.blue, null, rx0 ? sigBars(rx0.rssi) : null],
+      ['Meter reading', MP_IC.gauge, o ? fmtM3(o.currentReading) + ' m³' : '—', o ? N(Math.round(o.currentReading * 1000)) + ' L · meter time ' + String(o.timestamp).replace('_', ' ').slice(0, 16) : nod, MPC.teal],
+      ['Valve', MP_IC.valve, valvePct == null ? '—' : valvePct + '% open', valvePct == null ? nod : valvePct >= 100 ? 'Fully open' : valvePct === 0 ? 'Closed' : 'Partly open', valvePct === 0 ? MPC.bad : MPC.ok, valvePct === 0 ? MPC.bad : null],
+      ['Water', MP_IC.drop, o && typeof o.waterTemperature === 'number' ? o.waterTemperature.toFixed(1) + ' °C' : '—', o ? 'Pressure ' + (o.waterPressure || 0) + (o.emptyPipe ? ' · empty pipe' : '') : nod, o && o.emptyPipe ? MPC.warn : MPC.teal, o && o.emptyPipe ? MPC.warnText : null],
+      ['Battery', MP_IC.battery, stat.batteryLevel >= 0 ? Math.round(stat.batteryLevel) + '%' : '—', o ? 'Comms ' + o.communicationBoardVoltage + ' V · meter ' + o.meterBoardVoltage + ' V' : 'LoRaWAN device status', MPC.ok]
+    ].map(t => e('div', {key: t[0], style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '11px 13px', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8}},
+      e('div', {style: {flex: 1, minWidth: 0}}, e('div', {style: {display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MPC.mute, marginBottom: 6}}, ic(t[1], 13, t[4]), t[0]),
+        e('div', {style: {fontSize: 17, fontWeight: 600, letterSpacing: '-.4px', color: t[5] || MPC.ink, whiteSpace: 'nowrap'}}, t[2]),
+        e('div', {style: {fontSize: 10.5, color: MPC.mute, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}, t[3])), t[6] || null)));
+    const yesNo = (v, bad) => v ? pill(bad, MPC.warnText, MPC.warnBg) : pill('No', MPC.okText, MPC.okBg);
+    const dataCard = card('Latest daily report', MP_IC.token, hr ? e('span', {style: {fontSize: 10.5, color: MPC.mute}}, fmtDT(hr.time)) : null, o ? e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
+      kv('Meter time', String(o.timestamp).replace('_', ' ')), kv('Report cycle', o.cycleType ? 'Every ' + o.cycleType.value + ' ' + o.cycleType.period : '—'),
+      kv('Forward reading', fmtM3(o.currentReading) + ' m³'), kv('Reverse flow', fmtM3(o.reverseFlow || 0) + ' m³'),
+      kv('Water temperature', o.waterTemperature + ' °C'), kv('Water pressure', String(o.waterPressure)),
+      kv('Valve opening', valvePct == null ? '—' : valvePct + '%', {color: valvePct === 0 ? MPC.bad : MPC.okText}), kv('Remaining balance', o.remainingBalance != null ? N(o.remainingBalance) : '—'),
+      kv('Comms board', o.communicationBoardVoltage + ' V'), kv('Meter board', o.meterBoardVoltage + ' V'),
+      e('div', {key: 'ep'}, e('div', {style: {fontSize: 10, color: MPC.faint, marginBottom: 2}}, 'Empty pipe'), yesNo(o.emptyPipe, 'Yes')), e('div', {key: 'lp'}, e('div', {style: {fontSize: 10, color: MPC.faint, marginBottom: 2}}, 'Low pressure'), yesNo(o.lowPressure, 'Yes')))
+      : empty(hr ? 'The last daily report is from ' + fmtDT(hr.time) + ', more than 26 hours ago. Only live data is shown.' : 'No decoded report yet.'), {height: '100%'});
+    const hwAlarms = [['Empty pipe', o ? (o.emptyPipe ? 'Active' : 'Normal') : '—', o && o.emptyPipe ? 'No water in the meter body: not connected, or supply off' : 'Pipe full'],
+      ['Low pressure', o ? (o.lowPressure ? 'Active' : 'Normal') : '—', o && o.lowPressure ? 'Supply pressure below the meter threshold' : 'Pressure normal'],
+      ['Reverse flow', o ? ((o.reverseFlow || 0) > 0 ? 'Active' : 'Normal') : '—', o ? fmtM3(o.reverseFlow || 0) + ' m³ reversed' : ''],
+      ['Valve closed', valvePct == null ? '—' : valvePct === 0 ? 'Active' : 'Normal', valvePct == null ? '' : valvePct + '% open'],
+      ['Communication', on ? 'Normal' : 'Active', on ? 'Daily report received' : 'No report in the last 26 h']];
+    const alarmCard = card('Alarms', MP_IC.bell, hwAlarms.some(a => a[1] === 'Active') ? pill(hwAlarms.filter(a => a[1] === 'Active').length + ' active', MPC.warnText, MPC.warnBg) : pill('All clear', MPC.okText, MPC.okBg),
+      e('div', null, hwAlarms.map((a, k) => e('div', {key: a[0], style: {display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: k < hwAlarms.length - 1 ? '1px solid #F0F2F4' : 'none'}},
+        e('span', {style: {width: 24, height: 24, borderRadius: 6, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', background: a[1] === 'Active' ? MPC.warnBg : a[1] === 'Normal' ? MPC.okBg : MPC.greyBg, color: a[1] === 'Active' ? MPC.warnText : a[1] === 'Normal' ? MPC.okText : MPC.mute}}, ic(a[1] === 'Active' ? MP_IC.bell : MP_IC.check, 13)),
+        e('div', {style: {flex: 1}}, e('div', {style: {fontSize: 11.5, fontWeight: 600}}, a[0]), e('div', {style: {fontSize: 10.5, color: MPC.mute}}, a[2])),
+        a[1] === 'Active' ? pill('Active', MPC.warnText, MPC.warnBg) : a[1] === 'Normal' ? pill('Normal', MPC.okText, MPC.okBg) : pill('No data', MPC.grey, MPC.greyBg)))), {height: '100%'});
+    // daily readings: each report's current reading plus its history entries, newest first
+    const byDay = {};
+    reps.slice().reverse().forEach(u => { const ob = u.object;
+      (ob.history || []).forEach(h => { if (!byDay[h.timestamp]) byDay[h.timestamp] = {t: h.timestamp, v: h.forwardReading, src: 'history'}; });
+      byDay[ob.timestamp] = {t: ob.timestamp, v: ob.currentReading, src: 'report', at: u.time, temp: ob.waterTemperature}; });
+    const days = Object.keys(byDay).sort().map(k => byDay[k]);
+    days.forEach((x, k) => { x.use = k ? Math.max(0, Math.round((x.v - days[k - 1].v) * 1000)) : null; });
+    const readCard = card('Daily readings', MP_IC.clock, e('span', {style: {fontSize: 10.5, color: MPC.mute}}, 'meter time, from the daily reports'), days.length ? table([th('Meter time'), th('Reading', 'right'), th('Used that day', 'right'), th('Water temp.', 'right'), th('Source')],
+      days.slice().reverse().map(x => e('tr', {key: x.t}, td(String(x.t).replace('_', ' ')), td(fmtM3(x.v) + ' m³', {align: 'right', bold: true}), td(x.use == null ? '—' : N(x.use) + ' L', {align: 'right', color: MPC.teal}),
+        td(x.temp != null ? x.temp + ' °C' : '—', {align: 'right', color: MPC.mute}), td(x.src === 'report' ? 'Daily report' : 'History in report', {color: MPC.mute})))) : empty('No daily reports yet.'), {height: '100%', overflow: 'hidden'});
+    const notes = o && o.emptyPipe ? banner('#6B4200', '#FBF6EC', '#EFDDB8', CP_IC.alert, 'Empty pipe.', 'The meter reports no water in its body and a reading of ' + fmtM3(o.currentReading) + ' m³, so it is probably not connected to the supply yet (or the supply is off).') : null;
+    const hwHeader = e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 10}},
+      e('div', {style: {width: 46, height: 46, borderRadius: 9, background: MPC.blueSoft, color: MPC.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none'}}, ic(MP_IC.gauge, 24)),
+      e('div', {style: {flex: '1 1 300px', minWidth: 0}},
+        e('div', {style: {display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'}}, e('span', {style: {fontSize: 18, fontWeight: 600}}, dev.tags.serial || dev.name),
+          pill(on ? 'Online' : 'Offline', on ? MPC.okText : MPC.bad, on ? MPC.okBg : MPC.badBg, on ? MPC.ok : MPC.bad), pill('Live', MPC.blue, MPC.blueSoft),
+          valvePct != null ? pill(valvePct === 0 ? 'Valve closed' : 'Valve open', valvePct === 0 ? MPC.bad : MPC.okText, valvePct === 0 ? MPC.badBg : MPC.okBg) : null),
+        e('div', {style: {fontSize: 11.5, color: MPC.mute, marginTop: 4, display: 'flex', gap: 14, flexWrap: 'wrap'}},
+          e('span', null, dev.name + ' · ' + dev.description), e('span', null, 'DevEUI ' + dev.devEui.toUpperCase()),
+          e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 5, color: on ? MPC.okText : MPC.mute, fontWeight: 600}}, ic(MP_IC.clock, 13), 'Last reading ' + fmtDT(dev.lastSeenAt) + ' · ' + relTime(dev.lastSeenAt)))),
+      e('a', {href: CS_CONSOLE + '/#/tenants/6c5d8987-2305-4194-b4ac-44b5501af209/applications/' + dev.applicationId + '/devices/' + dev.devEui, target: '_blank', rel: 'noopener', style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', fontSize: 11.5, fontWeight: 600, color: MPC.ink2, textDecoration: 'none'}}, ic(GW_IC.external, 14), 'Open in ChirpStack'));
+    return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, hwHeader, notes, hwTiles,
+      row([[dataCard, 1, 380], [alarmCard, 1, 320], [client, 1, 300]]),
+      row([[readCard, 1, 520], [info, 1, 340]]),
+      row([[upsTable, 1, 640]]),
+      row([[conn, 1, 380], [chans, 1, 320]]));
+  }
   const valveNotice = vi && vi.state === 'closed' ? banner('#8E1F18', MPC.badBg, '#F0C4C0', MP_IC.valve, 'Valve closed.', 'The meter has shut off the supply ' + (vi.sinceKnown ? 'since ' : '(at least since ') + fmtMs(vi.since) + (vi.sinceKnown ? '' : ')') + ', usually because credit ran out. Load an STS token to reopen it.') : null;
   const staleNotice = creditStale ? banner('#6B4200', '#FBF6EC', '#EFDDB8', CP_IC.alert, 'Credit values may be outdated.', 'The valve reopened at ' + fmtMs(creditStale) + ', after the last data report (' + (repUp ? fmtDT(repUp.time) : '—') + '), which usually means a top-up. P-2, P-4 and P-5 update with the meter\u2019s next data report.') : null;
   return e('div', null, back, bar, L.status === 'error' ? errBox(L.error + ' Showing the last data received.') : null, header, notice, valveNotice, staleNotice, tiles,

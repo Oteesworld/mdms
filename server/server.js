@@ -3,7 +3,8 @@
 'use strict';
 const http = require('http');
 const store = require('./store');
-const TRACKED = (process.env.TRACKED_DEVICES || '004a7701240c1fc9,004a7701240c2033').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const vm = require('vm');
+const TRACKED = (process.env.TRACKED_DEVICES || '004a7701240c1fc9,004a7701240c2033,8695311001828500').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 const INGEST_SECRET = process.env.INGEST_SECRET || '';
 const POLL_MINUTES = Number(process.env.POLL_MINUTES || 5);
 
@@ -132,6 +133,32 @@ async function deviceEvents(devEui, ms) {
   return out.sort((a, b) => new Date(b.time) - new Date(a.time));
 }
 
+// Run a device profile's own JavaScript codec (from ChirpStack) on raw bytes. The script is the
+// operator's codec from their ChirpStack, compiled once per profile version and run with a time limit.
+const _codecs = new Map();
+function profileDecoder(codec) {
+  if (!codec || !codec.script) return null;
+  const key = codec.id + '@' + codec.updatedAt;
+  if (!_codecs.has(key)) {
+    try { const ctx = vm.createContext({}); new vm.Script(codec.script).runInContext(ctx, {timeout: 1000});
+      _codecs.set(key, typeof ctx.decodeUplink === 'function' ? input => vm.runInContext('decodeUplink(__in)', Object.assign(ctx, {__in: input}), {timeout: 500}) : null);
+    } catch (e) { console.error('codec ' + codec.id + ': ' + e.message); _codecs.set(key, null); }
+  }
+  return _codecs.get(key);
+}
+function redecode(ev, codec) {
+  if (ev.type !== 'up' || !ev.fPort || !ev.dataHex) return ev;
+  const o = ev.object || {};
+  const undecoded = !ev.object || o.message === 'unknown' || (o.decoded === false && !o.function_code && o.message !== 'link');
+  if (!undecoded) return ev;
+  const dec = profileDecoder(codec); if (!dec) return ev;
+  try {
+    const r = dec({bytes: Array.from(Buffer.from(ev.dataHex, 'hex')), fPort: ev.fPort, recvTime: ev.time});
+    if (r && r.data && Object.keys(r.data).length) return Object.assign({}, ev, {object: r.data, redecoded: true});
+  } catch (e) { /* keep the original object */ }
+  return ev;
+}
+
 async function linkMetrics(devEui, hours, aggregation) {
   const end = new Date(), start = new Date(end.getTime() - hours * 3600e3);
   const r = await grpc('api.DeviceService/GetLinkMetrics', Buffer.concat([fString(1, devEui), fTimestamp(2, start), fTimestamp(3, end), fVarint(4, aggregation)]));
@@ -152,12 +179,17 @@ async function getDevice(devEui) {
   dev.applicationName = str(a, 2);
   const dp = await grpc('api.DeviceProfileService/Get', fString(1, dev.deviceProfileId)).catch(() => null);
   if (dp) { const p = decode((one(dp, 1) || {val: Buffer.alloc(0)}).val);
-    dev.deviceProfile = {name: str(p, 3), macVersion: MAC[num(p, 5)] || '', regionConfigId: str(p, 29), uplinkInterval: num(p, 11), supportsOtaa: num(p, 13) === 1}; }
-  const [events, link24h, link30d, gws] = await Promise.all([
+    dev.deviceProfile = {name: str(p, 3), macVersion: MAC[num(p, 5)] || '', regionConfigId: str(p, 29), uplinkInterval: num(p, 11), supportsOtaa: num(p, 13) === 1, updatedAt: ts(dp, 3)};
+    dev._codec = {id: dev.deviceProfileId, updatedAt: ts(dp, 3), script: str(p, 9)}; }
+  const [events0, link24h, link30d, gws] = await Promise.all([
     deviceEvents(devEui).catch(e => ({error: e.message})),
     linkMetrics(devEui, 24, 0).catch(e => ({error: e.message})),
     linkMetrics(devEui, 24 * 30, 1).catch(e => ({error: e.message})),
     cached('list', 15000, listGateways).catch(() => ({gateways: []}))]);
+  // Uplinks stored before the device got its current codec were decoded as unknown frames:
+  // decode those again with the device profile's current codec so their readings show.
+  const events = Array.isArray(events0) ? events0.map(ev => redecode(ev, dev._codec)) : events0;
+  delete dev._codec;
   const gatewayNames = {}; (gws.gateways || []).forEach(g => { gatewayNames[g.id] = {name: g.name, location: g.location, state: g.state}; });
   const storedDataReport = store.enabled() ? await store.latestDataReport(devEui).catch(e => { console.error('latestDataReport: ' + e.message); return null; }) : null;
   const lastKnown = store.enabled() ? await store.lastKnownValues(devEui).catch(e => { console.error('lastKnownValues: ' + e.message); return {}; }) : {};
