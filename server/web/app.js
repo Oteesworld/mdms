@@ -142,7 +142,7 @@ function renderMeters(flashEui) {
   });
   $('#meter-rows').innerHTML = rows
     .map((m) => `<tr data-eui="${esc(m.devEui)}" class="${m.devEui === flashEui ? 'flash' : ''}">
-      <td><div class="name">${esc(m.name)}</div><div class="sub mono">${esc(m.devEui)}</div></td>
+      <td><div class="name">${esc(m.name)}${m.model ? ` <span class="model">${esc(m.model)}</span>` : ''}</div><div class="sub mono">${esc(m.devEui)}</div></td>
       <td>${statusHtml(m.status)}${m.openAlarms ? `<span class="badge">${m.openAlarms} alarm${m.openAlarms > 1 ? 's' : ''}</span>` : ''}</td>
       <td title="${esc(m.lastSeenAt ?? '')}">${ago(m.lastSeenAt)}</td>
       <td class="r">${litres(m.registerL)}</td>
@@ -193,7 +193,7 @@ async function loadGateways() {
 // --- live uplinks ----------------------------------------------------------------
 
 // Short, readable summary of an uplink: key readings first, then any raised alarms.
-const LOG_KEYS = ['totalFlow', 'credit_l', 'currentFlow', 'voltageRtu', 'voltage', 'valve', 'meterTime'];
+const LOG_KEYS = ['totalFlow', 'credit_l', 'currentFlow', 'voltageRtu', 'voltage', 'valve', 'meterTime', 'reportTime'];
 function logSummary(obj) {
   const parts = [];
   for (const k of LOG_KEYS) if (obj[k] !== undefined && obj[k] !== null) {
@@ -255,9 +255,9 @@ function connectStream() {
 
 // --- meter drawer ------------------------------------------------------------------
 
-const HIDDEN_KEYS = new Set(['port', 'message', 'message_label', 'length', 'protocol', 'decoded', 'raw_hex', 'payload_hex']);
+const HIDDEN_KEYS = new Set(['port', 'message', 'message_label', 'length', 'protocol', 'decoded', 'raw_hex', 'payload_hex', 'model']);
 // Raw/plumbing fields left out of the one-line uplink summaries.
-const LOG_SKIP = new Set(['port', 'message', 'message_label', 'raw_hex', 'payload_hex', 'length', 'decoded', 'protocol', 'function_code', 'crc_ok', 'address', 'c2_unconfirmed', 'c2_rest_hex']);
+const LOG_SKIP = new Set(['port', 'message', 'message_label', 'raw_hex', 'payload_hex', 'length', 'decoded', 'protocol', 'function_code', 'crc_ok', 'address', 'model', 'c2_unconfirmed', 'c2_rest_hex', 'hw_unconfirmed', 'hw_b5_14_hex']);
 
 function decodedTable(obj) {
   const rows = Object.entries(obj || {}).filter(([k]) => !HIDDEN_KEYS.has(k) && !DUPLICATES.has(k) && !k.startsWith('_'));
@@ -305,6 +305,7 @@ const usageState = { interval: 'day' };
 function usageBars(u) {
   const bars = u.buckets;
   if (!bars.some((b) => b.readings > 0)) return '<div class="muted">No readings in this period yet.</div>';
+  if (!bars.some((b) => b.usageL > 0)) return `<div class="muted">No water used in this period (${bars.reduce((n, b) => n + b.readings, 0)} readings, total unchanged).</div>`;
   const W = 520, H = 180, L = 52, R = 8, T = 12, B = 26;
   const max = Math.max(1, ...bars.map((b) => b.usageL));
   // Round the axis top up to a tidy number of litres.
@@ -415,12 +416,14 @@ async function openMeter(devEui, refresh = false) {
   const d = await api(`/api/meters/${encodeURIComponent(devEui)}`);
   if (state.open !== devEui) return;
   const m = d.meter;
-  const last = d.uplinks[0];
+  // Latest uplink that carries meter data (link and MAC frames carry none).
+  const hasData = (u) => u.object && (u.object.decoded === true || u.object.totalFlow !== undefined || u.object.meterTime !== undefined || u.object.reportTime !== undefined);
+  const last = d.uplinks.find(hasData) ?? d.uplinks[0];
   const notDecoded = last && last.object && last.object.decoded === false;
   const drawer = $('#drawer');
   const scroll = drawer.scrollTop;
   drawer.innerHTML = `
-    <div class="dh"><div><div class="muted" style="font-size:11.5px">Meter</div><h3>${esc(m.name)}</h3>
+    <div class="dh"><div><div class="muted" style="font-size:11.5px">Meter${m.model ? ` · ${esc(m.model)}` : ''}</div><h3>${esc(m.name)}</h3>
       <div style="margin-top:4px">${statusHtml(m.status)} <span class="muted">· last seen ${ago(m.lastSeenAt)}</span></div></div>
       <button class="close" id="close" aria-label="Close">×</button></div>
     <section><div class="kv">
@@ -445,9 +448,9 @@ async function openMeter(devEui, refresh = false) {
       <div class="chips seg" id="usage-seg">${[['day', 'Daily'], ['hour', 'Hourly']].map(([v, l]) => `<button class="chip ${usageState.interval === v ? 'on' : ''}" data-v="${v}">${l}</button>`).join('')}</div></div>
       <div id="usage"><div class="muted">Loading…</div></div></section>
     <section><h4>Register, last 31 days</h4>${usageChart(d.readings)}</section>
-    <section><h4>Last message${last ? ` · ${esc(last.portLabel)} · ${dateTime(last.receivedAt)}` : ''}</h4>
+    <section><h4>${last && hasData(last) ? 'Latest meter data' : 'Last message'}${last ? ` · ${esc(last.portLabel)} · ${dateTime(last.receivedAt)}` : ''}</h4>
       ${last ? decodedTable(last.object) : '<div class="muted">No uplinks received yet.</div>'}
-      ${notDecoded ? `<div class="note">${last.object.c2_unconfirmed ? `Status frame: the total meter reading and the meter clock are decoded. Fields B to D are not confirmed, so they are not used as readings. Credit, flow and battery arrive in the meter's data report once reporting is switched on (key code 11111).` : last.object.function_code ? `Function ${esc(last.object.function_code)} is not part of the meter's data report, so only its raw bytes are shown.` : `No decoder for this message yet, so only its raw bytes are shown (<code>${esc(last.payloadHex)}</code>).`}</div>` : ''}
+      ${notDecoded ? `<div class="note">${last.object.hw_unconfirmed ? `Honeywell daily report: only the report time is decoded. The hw_ fields are candidates that are not confirmed (no Honeywell payload specification yet), so they are not used as readings.` : last.object.c2_unconfirmed ? `Status frame: the total meter reading and the meter clock are decoded. Fields B to D are not confirmed, so they are not used as readings. Credit, flow and battery arrive in the meter's data report once reporting is switched on (key code 11111).` : last.object.function_code ? `Function ${esc(last.object.function_code)} is not part of the meter's data report, so only its raw bytes are shown.` : (['link', 'mac'].includes(last.object.message) ? `This ${esc(String(last.portLabel).toLowerCase())} carries no meter data.` : `No decoder for this message yet, so only its raw bytes are shown (<code>${esc(last.payloadHex)}</code>).`)}</div>` : ''}
       ${last && last.object && last.object.crc_ok === false ? '<div class="note">The frame checksum did not match: treat these values with care.</div>' : ''}
     </section>
     ${d.alarms.length ? `<section><h4>Alarms</h4>${d.alarms

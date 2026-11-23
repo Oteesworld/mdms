@@ -1,33 +1,14 @@
 /**
- * Amplified IoT water meter payload codec (ChirpStack v4 JavaScript codec).
+ * Shared SH Meters frame library (ES5, runs in ChirpStack's JS codec engine).
  *
- * The same file is pushed to the ChirpStack device profile by
- * `npm run cs -- codec:push` and loaded by the mdms server as a fallback, so
- * there is one source of truth for how meter bytes become readable values.
+ * Not a codec by itself: `npm run cs -- codec:push` uploads, per device profile,
+ * this file followed by the model codec (codec/sh-meters.js or codec/kalahari.js),
+ * and the mdms server combines them the same way for its own decoding.
  *
- * 1. SH Meters STS ultrasonic water meter (SH-L-EU868), "C7" protocol, ported
- *    from the vendor's ChirpStack v3 decoder (function_C7_Decode.js) and
- *    encoder (function_C7_Encode.js):
- *
- *      68 | LEN (or FF LEN') | ADDR (5 bytes) | FUNC | TLV fields... | CRC-8 | 16
- *
- *    - CRC-8: polynomial 0xE5, init 0x00, over ADDR..last field.
- *    - FUNC 0xC7: data report. Fields are TLV: control byte = dot (bits 7-6,
- *      number of decimals) + command (bits 5-0); the command sets the length.
- *      Command 41 starts an older record (data byte = hours before the first),
- *      so one uplink can carry up to 24 hourly records.
- *    - FUNC 0xC8: token downlink (see encodeDownlink).
- *    - Other function codes (e.g. 0xC2 sent after joining) are passed through
- *      raw: their layout is not in the vendor decoder.
- *    The meter sends data on fPort 2; fPort 223 carries a short link message
- *    (ff ff .. .. 00 ff) with no meter data.
- *
- * 2. Legacy port map from the earlier LEEROY meters (ports 5, 37, 59, 60, 61,
- *    65, 66, 210, 225), used for payloads that are not 0x68 frames.
- *
- * Output field names the dashboard understands: register_l, flow_lph,
- * credit_l, battery_v, temperature_c, valve ("open"/"closed"), leak, burst,
- * magnetic, low_battery, history[] (older hourly records with hours_ago).
+ * Frame: 68 | LEN (or FF LEN') | ADDR (5 bytes) | FUNC | fields... | CRC-8 (poly 0xE5) | 16
+ *  - FUNC 0xC7: TLV data report (vendor function_C7_Decode.js), used by Kalahari meters.
+ *  - FUNC 0xC2: status frame, used by SH meters (layout worked out on meter 2606001521).
+ *  - FUNC 0xC8: STS token downlink (vendor function_C7_Encode.js).
  */
 
 // ====== helpers (ES5) ======
@@ -213,7 +194,8 @@ function normaliseRecord(rec) {
 
 var FUNCTIONS = { 0xC7: 'data_report', 0xC8: 'token', 0xC2: 'status_c2' };
 
-function decodeShFrame(bytes, warnings) {
+function decodeShFrame(bytes, warnings, opts) {
+  opts = opts || {};
   if (bytes.length < 10) return { error: 'frame too short' };
   var headerSize = bytes[1] === 0xFF ? 3 : 2;
   var crc = bytes[bytes.length - 2];
@@ -232,7 +214,7 @@ function decodeShFrame(bytes, warnings) {
   if (body[5] !== 0xC7) {
     out.message_label = body[5] === 0xC2 ? 'Status' : 'Function ' + out.function_code;
     out.payload_hex = bytesToHex(arraySlice(body, 6, body.length)).toLowerCase();
-    if (body[5] === 0xC2 && body.length >= 12) {
+    if (body[5] === 0xC2 && opts.c2Layout && body.length >= 12) {
       // C2 ends with the meter clock as BCD ss mm hh DD MM YY (checked against network
       // time across many frames). The rest of C2 is not in the vendor decoder.
       var t = arraySlice(body, body.length - 6, body.length).reverse();
@@ -297,7 +279,7 @@ function decodeShFrame(bytes, warnings) {
   return out;
 }
 
-// ====== legacy port map (non-0x68 payloads) ======
+// ====== port labels (payloads that are not 0x68 frames) ======
 
 var PORTS = {
   0: { name: 'mac', label: 'MAC commands' },
@@ -312,29 +294,6 @@ var PORTS = {
   223: { name: 'link', label: 'Link message' },
   225: { name: 'come_back', label: 'Come back' }
 };
-
-function decodeUplink(input) {
-  var bytes = input.bytes || [];
-  var port = input.fPort;
-  var warnings = [];
-  var data;
-  if (bytes.length >= 10 && bytes[0] === 0x68) {
-    data = decodeShFrame(bytes, warnings);
-  } else {
-    var meta = PORTS[port];
-    data = {
-      message: meta ? meta.name : 'unknown',
-      message_label: meta ? meta.label : 'Port ' + port,
-      decoded: false
-    };
-    if (meta && meta.alarm) data.alarm = meta.alarm;
-    if (meta && meta.reading) data.reading_type = meta.reading;
-  }
-  data.port = port;
-  data.raw_hex = bytesToHex(bytes).toLowerCase();
-  data.length = bytes.length;
-  return { data: data, warnings: warnings };
-}
 
 // ====== downlinks ======
 
@@ -351,7 +310,7 @@ function hexToBytes(hex) {
  * -> 68 LEN ADDR C8 [ctrl(count-1, 62) token bytes...] CRC 16
  * Raw frames are also accepted: { "hex": "68...16", "fPort": 2 }.
  */
-function encodeDownlink(input) {
+function shEncodeDownlink(input) {
   var d = input.data || {};
   if (typeof d.hex === 'string') return { bytes: hexToBytes(d.hex), fPort: d.fPort || input.fPort || 2 };
 
@@ -377,7 +336,23 @@ function encodeDownlink(input) {
   return { bytes: frame, fPort: input.fPort || 2 };
 }
 
-// Allow the mdms server to load this file as well.
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { decodeUplink: decodeUplink, encodeDownlink: encodeDownlink, PORTS: PORTS, calculateCRC8: calculateCRC8 };
+// Shared decodeUplink body for the SH-family model codecs.
+function shDecodeUplink(input, opts) {
+  var bytes = input.bytes || [];
+  var port = input.fPort;
+  var warnings = [];
+  var data;
+  if (bytes.length >= 10 && bytes[0] === 0x68) {
+    data = decodeShFrame(bytes, warnings, opts);
+  } else {
+    var meta = PORTS[port];
+    data = { message: meta ? meta.name : 'unknown', message_label: meta ? meta.label : 'Port ' + port, decoded: false };
+    if (meta && meta.alarm) data.alarm = meta.alarm;
+    if (meta && meta.reading) data.reading_type = meta.reading;
+  }
+  data.model = opts && opts.model;
+  data.port = port;
+  data.raw_hex = bytesToHex(bytes).toLowerCase();
+  data.length = bytes.length;
+  return { data: data, warnings: warnings };
 }

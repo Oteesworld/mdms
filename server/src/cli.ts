@@ -1,11 +1,12 @@
 // Provisioning CLI for the ChirpStack server.
 //
 //   npm run cs -- status
-//   npm run cs -- setup                      application + meter device profile (+ codec) + HTTP integration
-//   npm run cs -- codec:push                 upload codec/water-meter.js to the device profile
+//   npm run cs -- setup                      application + one device profile (+ codec) per meter model + HTTP integration
+//   npm run cs -- codec:push                 upload each model's codec to its device profile
 //   npm run cs -- gateway:add --eui 24e124fffef12345 --name "UG67 Leeroy HQ" --lat -24.6282 --lon 25.9231
 //   npm run cs -- gateway:list
-//   npm run cs -- meters:import secrets/meters.keys.csv [--dry-run]
+//   npm run cs -- meters:import secrets/meters.keys.csv [--model sh|kalahari|honeywell] [--dry-run]
+//   npm run cs -- meters:set-model <devEui> sh|kalahari|honeywell   move a meter to that model's device profile
 //   npm run cs -- meters:list
 //   npm run cs -- gateway:frames [--eui <gateway eui>] [--minutes 10]
 //                                            live LoRaWAN frames heard by a gateway (joins, uplinks), for diagnosis
@@ -22,6 +23,7 @@ import internalPb from '@chirpstack/chirpstack-api/api/internal_pb.js';
 import { ChirpStackApi } from './chirpstack/api.js';
 import { streamCall } from './chirpstack/grpcweb.js';
 import { codecSource } from './decode.js';
+import { MODELS, modelForProfile, parseModel, type ModelKey } from './models.js';
 import { FORWARDER_KEYS, MilesightApi, PKT_TYPE_NAMES, pick, semtechForwarderValues, type MdpDevice } from './milesight.js';
 
 const HEX = (n: number) => new RegExp(`^[0-9a-f]{${n}}$`);
@@ -40,6 +42,7 @@ export interface MeterRow {
   latitude?: number;
   longitude?: number;
   description?: string;
+  model?: string;
 }
 
 const HEADER_ALIASES: Record<string, keyof MeterRow> = {
@@ -50,6 +53,7 @@ const HEADER_ALIASES: Record<string, keyof MeterRow> = {
   appkey: 'appKey', app_key: 'appKey',
   lat: 'latitude', latitude: 'latitude', lon: 'longitude', lng: 'longitude', long: 'longitude', longitude: 'longitude',
   description: 'description', location: 'description', address_text: 'description',
+  model: 'model', type: 'model', meter_model: 'model',
 };
 
 function splitCsvLine(line: string): string[] {
@@ -102,6 +106,7 @@ export function parseMeterCsv(text: string): { rows: MeterRow[]; errors: string[
       joinEui: cleanHex(rec.joinEui),
       appKey: cleanHex(rec.appKey),
       description: rec.description || undefined,
+      model: rec.model || undefined,
       latitude: rec.latitude ? Number(rec.latitude) : undefined,
       longitude: rec.longitude ? Number(rec.longitude) : undefined,
     };
@@ -114,6 +119,7 @@ export function parseMeterCsv(text: string): { rows: MeterRow[]; errors: string[
     if (row.devAddr && !/^[0-9a-f]{1,20}$/.test(row.devAddr)) problems.push('ADDR must be hex/decimal digits');
     if (row.latitude !== undefined && !(Math.abs(row.latitude) <= 90)) problems.push('bad latitude');
     if (row.longitude !== undefined && !(Math.abs(row.longitude) <= 180)) problems.push('bad longitude');
+    if (row.model && !parseModel(row.model)) problems.push(`unknown model "${row.model}" (sh, kalahari, honeywell)`);
     if (seen.has(row.devEui)) problems.push(`duplicate DevEUI ${row.devEui}`);
     seen.add(row.devEui);
     if (problems.length) errors.push(`line ${row.line}${row.serial ? ` (${row.serial})` : ''}: ${problems.join('; ')}`);
@@ -169,20 +175,33 @@ async function mdpGateways(mdp: MilesightApi): Promise<MdpDevice[]> {
 async function context(cs: ChirpStackApi) {
   const tenantId = await cs.resolveTenantId(config.chirpstack.tenantId);
   const applicationId = await cs.findApplication(tenantId, config.chirpstack.applicationName);
-  const deviceProfileId = await cs.findDeviceProfile(tenantId, config.chirpstack.deviceProfileName);
-  return { tenantId, applicationId, deviceProfileId };
+  const profiles = {} as Record<ModelKey, string | null>;
+  for (const m of Object.values(MODELS)) profiles[m.key] = await cs.findDeviceProfile(tenantId, m.profileName);
+  return { tenantId, applicationId, profiles };
 }
 
-function profileSettings() {
+function profileSettings(model: ModelKey) {
   const c = config.chirpstack;
+  const m = MODELS[model];
   return {
-    name: c.deviceProfileName,
+    name: m.profileName,
+    description: m.description,
     regionConfigId: c.regionConfigId,
     macVersion: c.macVersion,
     regParamsRevision: c.regParamsRevision,
-    uplinkIntervalS: c.uplinkIntervalS,
-    codecScript: codecSource(),
+    uplinkIntervalS: m.uplinkIntervalS,
+    codecScript: codecSource(model),
   };
+}
+
+async function ensureProfiles(cs: ChirpStackApi, tenantId: string) {
+  const ids = {} as Record<ModelKey, string>;
+  for (const m of Object.values(MODELS)) {
+    const dp = await cs.ensureDeviceProfile(tenantId, profileSettings(m.key));
+    ids[m.key] = dp.id;
+    console.log(`${dp.created ? 'Created' : 'Updated'} device profile "${m.profileName}" ${dp.id} (codec: ${m.codecFiles.join(' + ')})`);
+  }
+  return ids;
 }
 
 async function main(argv: string[]) {
@@ -199,6 +218,7 @@ async function main(argv: string[]) {
       alt: { type: 'string' },
       'dry-run': { type: 'boolean', default: false },
       'public-url': { type: 'string' },
+      model: { type: 'string' },
       device: { type: 'string' },
       minutes: { type: 'string' },
       host: { type: 'string' },
@@ -213,7 +233,9 @@ async function main(argv: string[]) {
       console.log(`ChirpStack     ${config.chirpstack.url}`);
       console.log(`Tenant         ${ctx.tenantId}`);
       console.log(`Application    ${ctx.applicationId ?? '(missing: run setup)'}  "${config.chirpstack.applicationName}"`);
-      console.log(`Device profile ${ctx.deviceProfileId ?? '(missing: run setup)'}  "${config.chirpstack.deviceProfileName}"`);
+      for (const m of Object.values(MODELS)) {
+        console.log(`Profile        ${(ctx.profiles[m.key] ?? '(missing: run setup)').padEnd(36)}  "${m.profileName}"`);
+      }
       const gws = await cs.listGateways(ctx.tenantId);
       console.log(`Gateways       ${gws.length}`);
       for (const g of gws) console.log(`  ${g.gatewayId}  ${g.state.padEnd(10)} ${g.name}  last seen ${g.lastSeenAt ?? 'never'}`);
@@ -221,6 +243,10 @@ async function main(argv: string[]) {
         const devs = await cs.listDevices(ctx.applicationId);
         const seen = devs.filter((d) => d.lastSeenAt).length;
         console.log(`Meters         ${devs.length} registered, ${seen} have sent data`);
+        for (const d of devs) {
+          const model = modelForProfile(d.deviceProfileName);
+          console.log(`  ${d.devEui}  ${(model ? MODELS[model].label : '?').padEnd(10)} ${d.name.padEnd(22)} last seen ${d.lastSeenAt ?? 'never'}`);
+        }
       }
       return;
     }
@@ -234,8 +260,7 @@ async function main(argv: string[]) {
         'Prepaid LoRaWAN water meters, managed by the Amplified IoT MDMS.',
       );
       console.log(`${app.created ? 'Created' : 'Found'} application ${app.id}`);
-      const dp = await cs.ensureDeviceProfile(tenantId, profileSettings());
-      console.log(`${dp.created ? 'Created' : 'Updated'} device profile ${dp.id} (codec from codec/water-meter.js)`);
+      await ensureProfiles(cs, tenantId);
       const publicUrl = (values['public-url'] ?? config.publicUrl).replace(/\/$/, '');
       if (publicUrl) {
         if (!config.integrationToken) throw new Error('Set INTEGRATION_TOKEN before registering the HTTP integration.');
@@ -251,8 +276,27 @@ async function main(argv: string[]) {
     case 'codec:push': {
       const cs = api();
       const tenantId = await cs.resolveTenantId(config.chirpstack.tenantId);
-      const dp = await cs.ensureDeviceProfile(tenantId, profileSettings());
-      console.log(`Codec uploaded to device profile ${dp.id}`);
+      await ensureProfiles(cs, tenantId);
+      return;
+    }
+
+    case 'meters:set-model': {
+      const [eui, modelArg] = positionals;
+      const devEui = cleanHex(eui);
+      const model = parseModel(modelArg);
+      if (!HEX(16).test(devEui) || !model) throw new Error('usage: meters:set-model <devEui> sh|kalahari|honeywell');
+      const cs = api();
+      const ctx = await context(cs);
+      const profileId = ctx.profiles[model];
+      if (!profileId) throw new Error(`Profile "${MODELS[model].profileName}" is missing: run setup first.`);
+      const dev = await cs.getDevice(devEui);
+      if (!dev) throw new Error(`Meter ${devEui} is not registered in ChirpStack.`);
+      if (dev.deviceProfileId === profileId) {
+        console.log(`${devEui} "${dev.name}" is already on "${MODELS[model].profileName}".`);
+        return;
+      }
+      await cs.setDeviceProfile(devEui, profileId);
+      console.log(`Moved ${devEui} "${dev.name}" to "${MODELS[model].profileName}". Its keys and network session are unchanged.`);
       return;
     }
 
@@ -346,7 +390,9 @@ async function main(argv: string[]) {
       }
       const cs = api();
       const ctx = await context(cs);
-      if (!ctx.applicationId || !ctx.deviceProfileId) throw new Error('Run "npm run cs -- setup" first.');
+      if (!ctx.applicationId) throw new Error('Run "npm run cs -- setup" first.');
+      const flagModel = values.model ? parseModel(values.model) : null;
+      if (values.model && !flagModel) throw new Error('--model must be sh, kalahari or honeywell');
       let created = 0;
       let updated = 0;
       let failed = 0;
@@ -356,8 +402,17 @@ async function main(argv: string[]) {
         if (r.devAddr) tags.meter_addr = r.devAddr;
         if (r.latitude !== undefined) tags.latitude = String(r.latitude);
         if (r.longitude !== undefined) tags.longitude = String(r.longitude);
+        const model = parseModel(r.model) ?? flagModel;
+        if (!model) {
+          failed++;
+          console.error(`FAILED  ${r.devEui}  ${r.serial}: no model (add a model column or pass --model sh|kalahari|honeywell)`);
+          continue;
+        }
+        const profileId = ctx.profiles[model];
+        if (!profileId) throw new Error(`Profile "${MODELS[model].profileName}" is missing: run setup first.`);
+        tags.model = MODELS[model].label;
         try {
-          const res = await cs.upsertMeter(ctx.applicationId, ctx.deviceProfileId, {
+          const res = await cs.upsertMeter(ctx.applicationId, profileId, {
             devEui: r.devEui,
             joinEui: r.joinEui,
             appKey: r.appKey,
@@ -366,7 +421,7 @@ async function main(argv: string[]) {
             tags,
           });
           res.created ? created++ : updated++;
-          console.log(`${res.created ? 'added  ' : 'updated'} ${r.devEui}  ${r.serial}`);
+          console.log(`${res.created ? 'added  ' : 'updated'} ${r.devEui}  ${r.serial}  (${MODELS[model].label})`);
         } catch (e) {
           failed++;
           console.error(`FAILED  ${r.devEui}  ${r.serial}: ${(e as Error).message}`);

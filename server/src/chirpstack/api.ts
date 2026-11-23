@@ -50,6 +50,7 @@ export type GatewayState = (typeof GATEWAY_STATES)[number];
 
 export interface DeviceProfileSettings {
   name: string;
+  description?: string;
   regionConfigId: string;
   macVersion: string;
   regParamsRevision: string;
@@ -230,7 +231,7 @@ export class ChirpStackApi {
       // Ask each meter for battery + link margin once a day (DevStatusReq).
       p.setDeviceStatusReqInterval(1);
     }
-    p.setDescription('Prepaid LoRaWAN water meter, Class A, OTAA. Payload codec managed from the mdms repo (server/codec/water-meter.js).');
+    p.setDescription(s.description ?? 'LoRaWAN water meter, Class A, OTAA. Payload codec managed from the mdms repo (server/codec/).');
     p.setRegion(region as never);
     p.setRegionConfigId(s.regionConfigId);
     p.setMacVersion(mac as never);
@@ -364,6 +365,31 @@ export class ChirpStackApi {
       }
     }
     return { created };
+  }
+
+  /** A device's name, profile and application, or null if ChirpStack doesn't know it. */
+  async getDevice(devEui: string): Promise<{ name: string; deviceProfileId: string; applicationId: string } | null> {
+    const get = new D.GetDeviceRequest();
+    get.setDevEui(devEui.toLowerCase());
+    try {
+      const d = (await this.rpc.unary('api.DeviceService/Get', get, D.GetDeviceResponse)).getDevice();
+      return d ? { name: d.getName(), deviceProfileId: d.getDeviceProfileId(), applicationId: d.getApplicationId() } : null;
+    } catch (e) {
+      if (isNotFound(e)) return null;
+      throw e;
+    }
+  }
+
+  /** Move a device to another device profile, keeping its name, keys, tags and session. */
+  async setDeviceProfile(devEui: string, deviceProfileId: string): Promise<void> {
+    const get = new D.GetDeviceRequest();
+    get.setDevEui(devEui.toLowerCase());
+    const dev = (await this.rpc.unary('api.DeviceService/Get', get, D.GetDeviceResponse)).getDevice();
+    if (!dev) throw new Error(`device ${devEui} not found`);
+    dev.setDeviceProfileId(deviceProfileId);
+    const req = new D.UpdateDeviceRequest();
+    req.setDevice(dev);
+    await this.rpc.unary('api.DeviceService/Update', req, emptyPb());
   }
 
   async listDevices(applicationId: string): Promise<DeviceSummary[]> {

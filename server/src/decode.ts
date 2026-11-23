@@ -1,11 +1,12 @@
-// Loads codec/water-meter.js (the same codec ChirpStack runs) and turns a
+// Loads the per-model payload codecs (the same scripts ChirpStack runs) and turns a
 // decoded object into the normalised values the dashboard stores.
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
+import { MODELS, type ModelKey } from './models.js';
 
-export const CODEC_PATH = fileURLToPath(new URL('../codec/water-meter.js', import.meta.url));
+export const CODEC_DIR = fileURLToPath(new URL('../codec/', import.meta.url));
 
 export interface Codec {
   decodeUplink(input: { bytes: number[]; fPort: number; variables?: Record<string, string> }): {
@@ -16,29 +17,40 @@ export interface Codec {
   PORTS: Record<number, { name: string; label: string; alarm?: string; reading?: string }>;
 }
 
-export function codecSource(): string {
-  return readFileSync(CODEC_PATH, 'utf8');
+/** The complete ChirpStack codec script for a model (its files concatenated in order). */
+export function codecSource(model: ModelKey = 'sh'): string {
+  return MODELS[model].codecFiles.map((f) => readFileSync(CODEC_DIR + f, 'utf8')).join('\n');
 }
 
 export function loadCodec(source = codecSource()): Codec {
   const sandbox = { module: { exports: {} as Codec } };
-  vm.runInNewContext(source, sandbox, { filename: 'water-meter.js', timeout: 1000 });
+  vm.runInNewContext(source, sandbox, { filename: 'codec.js', timeout: 1000 });
   return sandbox.module.exports;
 }
 
-let codec: Codec | undefined;
-function getCodec(): Codec {
-  return (codec ??= loadCodec());
+const codecs = new Map<ModelKey, Codec>();
+function getCodec(model: ModelKey): Codec {
+  let c = codecs.get(model);
+  if (!c) codecs.set(model, (c = loadCodec(codecSource(model))));
+  return c;
 }
 
-export function portLabel(port: number | null | undefined): string {
+/** Model to decode with when the device profile doesn't say: SH frames start with 0x68. */
+function guessModel(bytes: Uint8Array, fPort: number): ModelKey {
+  if (bytes.length >= 10 && bytes[0] === 0x68) return 'sh';
+  if (fPort === 10 && bytes.length === 49) return 'honeywell';
+  return 'sh';
+}
+
+export function portLabel(port: number | null | undefined, model: ModelKey = 'sh'): string {
   if (port == null) return '';
-  return getCodec().PORTS[port]?.label ?? `Port ${port}`;
+  return getCodec(model).PORTS[port]?.label ?? getCodec('sh').PORTS[port]?.label ?? `Port ${port}`;
 }
 
-export function decodeLocally(bytes: Uint8Array, fPort: number): Record<string, unknown> {
+export function decodeLocally(bytes: Uint8Array, fPort: number, model?: ModelKey | null): Record<string, unknown> {
+  const m = model ?? guessModel(bytes, fPort);
   try {
-    const res = getCodec().decodeUplink({ bytes: Array.from(bytes), fPort });
+    const res = getCodec(m).decodeUplink({ bytes: Array.from(bytes), fPort });
     return { ...(res.data ?? {}), ...(res.errors?.length ? { _errors: res.errors } : {}) };
   } catch (e) {
     return { port: fPort, raw_hex: Buffer.from(bytes).toString('hex'), decoded: false, _errors: [String(e)] };

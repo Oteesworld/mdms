@@ -20,7 +20,12 @@ const sync = startSync(config, store, log);
 const app = await buildServer({ config, store, ingestor, syncState: sync.state });
 logger = app.log;
 const mqttClient = startMqtt(config, ingestor, log);
-const pull = startPull(config, ingestor, log);
+// Start pulling events once the first sync has recorded each meter's current device
+// profile, so replayed history is decoded with the right model's codec.
+let pull: { stop(): void } = { stop: () => {} };
+void sync.ready.then(() => {
+  pull = startPull(config, ingestor, log);
+});
 
 if (!config.integrationToken) {
   app.log.warn('INTEGRATION_TOKEN is not set: anyone who can reach /integrations/chirpstack can post meter data');

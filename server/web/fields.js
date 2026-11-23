@@ -51,6 +51,16 @@ export const FIELDS = {
   version: { label: 'Firmware version' },
   tamperRecord: { label: 'Tamper record' },
 
+  // --- Honeywell daily report (fPort 10) ---
+  reportTime: { label: 'Report time', help: 'End of the reporting day: local midnight (22:00 UTC).' },
+  hw_unconfirmed: { label: 'Some fields unconfirmed', flag: true },
+  hw_b4: { label: 'Byte 4 (unconfirmed)' },
+  hw_u32_15: { label: 'Field at byte 15 (unconfirmed)', help: 'Varies 2666 to 3021 day to day: possibly temperature in 0.01 °C.' },
+  hw_u16_19: { label: 'Field at byte 19 (unconfirmed)', help: '360 or 361: possibly battery voltage in 0.01 V.' },
+  hw_u16_21: { label: 'Field at byte 21 (unconfirmed)', help: 'Constant 364 so far.' },
+  hw_u32_41: { label: 'Field at byte 41 (unconfirmed)', help: 'Constant 1,000,000 so far: possibly a unit or pulse constant.' },
+  hw_b5_14_hex: { label: 'Bytes 5-14 (unconfirmed)' },
+
   // --- frame ---
   address: { label: 'Meter address', help: 'Printed on the meter label as ADDR; also used to bind the CIU keypad and to address STS tokens.' },
   function_code: { label: 'Message type', help: '0xC7 = data report, 0xC2 = status, 0xC8 = token (downlink).' },

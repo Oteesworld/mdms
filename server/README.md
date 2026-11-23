@@ -7,14 +7,14 @@ live meter dashboard.
 ```
 water meter ──LoRa──▶ Milesight UG67 ──Semtech UDP :1700──▶ ChirpStack v4 (teemane)
                                                               │  device-profile codec
-                                                              ▼  (codec/water-meter.js)
+                                                              ▼  (codec per device profile)
                        dashboard ◀── SSE ── this service ◀── HTTP integration POST
                                          (SQLite: uplinks,     /integrations/chirpstack?event=up
                                           readings, alarms)    (or MQTT, optional)
 ```
 
 * **Provisioning CLI** (`npm run cs -- …`): creates the ChirpStack application,
-  the meter device profile with its payload codec, and the HTTP integration;
+  one device profile per meter model with its own payload codec, and the HTTP integration;
   registers the UG67 gateway and imports meters (DevEUI, AppEUI/JoinEUI, AppKey)
   from a CSV.
 * **Ingest**: ChirpStack POSTs every device event (`up`, `join`, `status`, …) to
@@ -48,8 +48,8 @@ npm run build && npm start
 npm run cs -- setup
 ```
 
-This creates the **Amplified IoT Water Meters** application and the **Amplified IoT
-Water Meter (EU868 OTAA)** device profile (Class A, OTAA, JS codec), and points the
+This creates the **Amplified IoT Water Meters** application and one device profile
+per meter model (Class A, OTAA, EU868, each with its own JS codec), and points the
 application's HTTP integration at `PUBLIC_URL/integrations/chirpstack` with the
 `X-Integration-Token` header. Re-running it is safe: it updates what exists.
 
@@ -121,8 +121,8 @@ Put the meter keys in a CSV under `secrets/`, which git ignores. AppKeys are
 secrets, so never commit them. The header can use the names on the meter labels:
 
 ```csv
-serial,addr,deveui,appeui,appkey,lat,lon,description
-WM-104882,01AB23CD,24E124136B502217,70B3D57ED0000000,2B7E151628AED2A6ABF7158809CF4F3C,-24.65,25.91,Plot 1234 Block 8
+serial,addr,deveui,appeui,appkey,model,lat,lon,description
+0288260615217,2606001521,004A7701240C1FC9,2C26C50124842008,<32-hex AppKey>,sh,-24.65,25.91,Plot 1234 Block 8
 ```
 
 ```bash
@@ -144,12 +144,35 @@ npm run cs -- meters:import secrets/meters.keys.csv
 * Confirm `METER_MAC_VERSION` (default `1.0.3`) and `METER_REG_PARAMS_REVISION`
   (default `A`) against the meter datasheet, then run `setup` again if they change.
 
+## Meter models and device profiles
+
+All meters share one tenant, one application and the same gateways; each model has
+its own ChirpStack device profile because its payload format differs:
+
+| Model | Device profile | Codec uploaded to ChirpStack | What it decodes |
+|---|---|---|---|
+| SH Meters (`sh`) | SH Meters (EU868 OTAA) | `codec/lib/sh-frame.js` + `codec/sh-meters.js` | C2 status frames every 4 h (total reading, meter voltage, clock), C7 data reports |
+| Kalahari (`kalahari`) | Kalahari (EU868 OTAA) | `codec/lib/sh-frame.js` + `codec/kalahari.js` | Vendor C7 data reports: total, flow, credit, temperature, battery, valve, alarms, hourly history |
+| Honeywell (`honeywell`) | Honeywell (EU868 OTAA) | `codec/honeywell.js` | fPort 10 daily report: report time only (no vendor spec yet) |
+
+```bash
+npm run cs -- codec:push                              # upload every model's codec to its profile
+npm run cs -- meters:set-model 004a7701240c2033 kalahari   # move a meter to a model's profile
+npm run cs -- meters:import secrets/new.keys.csv --model kalahari   # or a "model" column per row
+```
+
+`meters:import` needs the model, from a `model` column (`sh`, `kalahari`,
+`honeywell`) or `--model`. Moving a meter keeps its keys and network session. The
+dashboard decodes each uplink with the codec of the meter's device profile, and
+shows the model next to the meter name. The old single profile "Amplified IoT Water
+Meter (EU868 OTAA)" is no longer used.
+
 ## 4. Decoding the payload
 
-`codec/water-meter.js` is a standard ChirpStack JavaScript codec (`decodeUplink`).
-`setup` and `codec:push` upload it to the device profile, so ChirpStack decodes
-every uplink. The service uses ChirpStack's decoded `object`, and runs the same
-file itself as a fallback.
+Each model's codec is a standard ChirpStack JavaScript codec (`decodeUplink`,
+`encodeDownlink`). `setup` and `codec:push` upload it to that model's device profile,
+so ChirpStack decodes every uplink. The service runs the same scripts itself and
+lays its result over ChirpStack's `object`, so improvements apply to older uplinks too.
 
 [`docs/sh-meter-reference.md`](docs/sh-meter-reference.md) explains every SH meter value, display page, alarm, token message and key code. **SH Meters STS ultrasonic meters (SH-L-EU868)** use the vendor's "C7" protocol on
 fPort 2, ported from SH Meters' own ChirpStack v3 decoder and encoder:

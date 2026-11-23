@@ -10,6 +10,7 @@ import type { Row, Store } from './db.js';
 import { portLabel } from './decode.js';
 import { BadEvent, EVENT_TYPES, type Ingestor } from './ingest.js';
 import { usageBuckets, type Interval } from './usage.js';
+import { MODELS, modelForProfile } from './models.js';
 
 const WEB_DIR = fileURLToPath(new URL('../web/', import.meta.url));
 
@@ -75,6 +76,10 @@ function meterView(row: Row, config: Config) {
     devAddr: row.dev_addr,
     joinEui: row.join_eui,
     deviceProfile: row.device_profile,
+    model: (() => {
+      const k = modelForProfile(row.device_profile as string | null);
+      return k ? MODELS[k].label : null;
+    })(),
     tags,
     status: meterStatus(row, config),
     lowBattery: battery != null && battery <= config.lowBatteryPct,

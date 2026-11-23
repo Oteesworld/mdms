@@ -17,7 +17,7 @@ export function startSync(config: Config, store: Store, log: (msg: string, err?:
   const state: SyncState = { enabled: Boolean(config.chirpstack.apiToken), ok: false, at: null, error: null };
   if (!state.enabled) {
     state.error = 'CHIRPSTACK_API_TOKEN not set; gateway and meter lists are not synced';
-    return { state: () => state, stop: () => {} };
+    return { state: () => state, stop: () => {}, ready: Promise.resolve() };
   }
 
   const api = new ChirpStackApi(config.chirpstack.url, config.chirpstack.apiToken);
@@ -55,8 +55,9 @@ export function startSync(config: Config, store: Store, log: (msg: string, err?:
     }
   }
 
-  void run();
+  // First sync done (or failed): meters exist with their current profile and name.
+  const ready = run();
   const timer = setInterval(run, 60_000);
   timer.unref();
-  return { state: () => state, stop: () => clearInterval(timer) };
+  return { state: () => state, stop: () => clearInterval(timer), ready };
 }

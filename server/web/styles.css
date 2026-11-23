@@ -152,3 +152,4 @@ table.meters { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .usage-sum { font-size: 12.5px; margin-bottom: 6px; }
 .bars svg text { fill: var(--muted); stroke: none; font-size: 10.5px; font-family: 'Public Sans', sans-serif; }
 .bars svg path, .bars svg rect { stroke: none; }
+.meters .model { font-size: 10.5px; font-weight: 500; color: var(--navy); background: #EAF1F8; border-radius: 9px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; }

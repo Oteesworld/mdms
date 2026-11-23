@@ -331,3 +331,90 @@ test('meter clock drift is measured in the configured time zone (GMT+2)', async 
   assert.ok(d < -4 * 365 * 86400);
   assert.equal(meterClockDriftS(undefined, '2026-11-19T14:00:00Z', 'Africa/Gaborone'), null);
 });
+
+test('each meter model decodes with its own codec', async () => {
+  const { MODELS, modelForProfile, parseModel } = await import('../src/models.ts');
+  const c2 = hex('68202606001521c2000000c500000070036503400800000000000000130116100122c216');
+
+  // SH Meters: the C2 status layout (total reading, voltage, clock) applies.
+  const sh = decodeLocally(c2, 2, 'sh');
+  assert.equal(sh.model, 'sh');
+  assert.equal(sh.register_l, 19700);
+  // Kalahari: same frame family, but the SH C2 layout is not assumed; C7 reports decode fully.
+  const kal = decodeLocally(c2, 2, 'kalahari');
+  assert.equal(kal.model, 'kalahari');
+  assert.equal(kal.crc_ok, true);
+  assert.equal(kal.register_l, undefined);
+  assert.equal(kal.meterTime, undefined);
+  const kalC7 = decodeLocally(hex(C7_REPORT), 2, 'kalahari');
+  assert.equal(kalC7.register_l, 210);
+  assert.equal(kalC7.battery_v, 3.7);
+
+  // Honeywell: daily fPort 10 report; only the report time is decoded, the rest is unconfirmed.
+  const hw = decodeLocally(hex('e065036b0100000000000000000000cd0b000069016c0128400000010000000000000000000000000000000040420f0000'), 10, 'honeywell');
+  assert.equal(hw.model, 'honeywell');
+  assert.equal(hw.message_label, 'Daily report');
+  assert.equal(hw.reportTime, '2026-11-22T22:00:00Z');
+  assert.equal(hw.hw_unconfirmed, true);
+  assert.equal(normalise(hw).registerL, null);
+  assert.equal(normalise(hw).batteryV, null);
+
+  // Without a known profile the frame itself picks the codec.
+  assert.equal(decodeLocally(c2, 2).model, 'sh');
+  assert.equal(decodeLocally(hex('e065036b0100000000000000000000cd0b000069016c0128400000010000000000000000000000000000000040420f0000'), 10).model, 'honeywell');
+
+  // Profiles and names.
+  assert.equal(modelForProfile(MODELS.kalahari.profileName), 'kalahari');
+  assert.equal(modelForProfile('Amplified IoT Water Meter (EU868 OTAA)'), null, 'legacy profile: decode by frame shape');
+  assert.equal(modelForProfile('something else'), null);
+  assert.equal(parseModel('HoneyWell'), 'honeywell');
+  assert.equal(parseModel('SH-Meters'), 'sh');
+  assert.equal(parseModel('nope'), null);
+
+  // Every model's ChirpStack script is self-contained and exposes decodeUplink/encodeDownlink.
+  for (const m of Object.keys(MODELS) as (keyof typeof MODELS)[]) {
+    const c = loadCodec(codecSource(m)) as unknown as { decodeUplink: unknown; encodeDownlink: unknown };
+    assert.equal(typeof c.decodeUplink, 'function', m);
+    assert.equal(typeof c.encodeDownlink, 'function', m);
+  }
+});
+
+test('ingest picks the codec from the device profile name', async () => {
+  const { app, store } = await setup();
+  const { MODELS } = await import('../src/models.ts');
+  const c2 = Buffer.from('68202606001521c2000000c500000070036503400800000000000000130116100122c216', 'hex').toString('base64');
+  const ev = upEvent({ fPort: 2, data: c2 });
+  ev.deviceInfo = { ...ev.deviceInfo, deviceProfileName: MODELS.kalahari.profileName };
+  await app.inject({ method: 'POST', url: '/integrations/chirpstack?event=up', payload: ev });
+  const m = (await app.inject({ url: `/api/meters/${DEV}` })).json().meter;
+  assert.equal(m.lastObject.model, 'kalahari');
+  assert.equal(m.registerL, null, 'Kalahari does not use the SH status layout');
+  await app.close();
+  store.close();
+});
+
+test('meter key CSV accepts a model column', () => {
+  const { rows, errors } = parseMeterCsv(
+    'serial,deveui,appeui,appkey,model\nA,004a7701240c2033,2c26c50124842008,b4c7ba782a2c753b8e74e02a3a54e807,Kalahari\nB,004a7701240c2034,2c26c50124842008,b4c7ba782a2c753b8e74e02a3a54e807,Itron',
+  );
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].model, 'Kalahari');
+  assert.match(errors[0], /unknown model "Itron"/);
+});
+
+test('replayed events do not overwrite the meter profile or name from ChirpStack', async () => {
+  const { app, store } = await setup();
+  const { MODELS } = await import('../src/models.ts');
+  // Sync from ChirpStack: current name and profile.
+  store.ensureMeter({ devEui: DEV, name: 'Kalahari 0026230012', deviceProfile: MODELS.kalahari.profileName });
+  // A replayed old event, from before the rename and the profile change.
+  const ev = upEvent({ fPort: 2, data: Buffer.from(C7_REPORT, 'hex').toString('base64') });
+  ev.deviceInfo = { ...ev.deviceInfo, deviceName: 'old name', deviceProfileName: 'Amplified IoT Water Meter (EU868 OTAA)' };
+  await app.inject({ method: 'POST', url: '/integrations/chirpstack?event=up', payload: ev });
+  const m = (await app.inject({ url: `/api/meters/${DEV}` })).json().meter;
+  assert.equal(m.name, 'Kalahari 0026230012');
+  assert.equal(m.model, 'Kalahari');
+  assert.equal(m.lastObject.model, 'kalahari', 'decoded with the current profile codec');
+  await app.close();
+  store.close();
+});

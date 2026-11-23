@@ -4,6 +4,7 @@
 import { EventEmitter } from 'node:events';
 import type { Store } from './db.js';
 import { decodeLocally, normalise, portLabel } from './decode.js';
+import { modelForProfile } from './models.js';
 
 export interface DeviceInfo {
   tenantId?: string;
@@ -60,6 +61,12 @@ export class Ingestor extends EventEmitter {
     super();
   }
 
+  /** The meter's model: its current device profile (from sync), else the event's profile. */
+  private modelFor(devEui: string, eventProfile: string | undefined) {
+    const row = this.store.get(`SELECT device_profile FROM meters WHERE dev_eui = ?`, devEui);
+    return modelForProfile(row?.device_profile as string | undefined) ?? modelForProfile(eventProfile);
+  }
+
   handle(event: string, body: unknown): { ok: true; duplicate?: boolean } {
     if (!body || typeof body !== 'object' || !('deviceInfo' in body)) {
       throw new BadEvent('missing deviceInfo');
@@ -76,6 +83,7 @@ export class Ingestor extends EventEmitter {
       applicationId: info.applicationId,
       deviceProfile: info.deviceProfileName,
       tags: info.tags,
+      fromEvent: true,
     });
 
     switch (event) {
@@ -104,7 +112,7 @@ export class Ingestor extends EventEmitter {
     // current version) and lay it over whatever ChirpStack decoded.
     const object = {
       ...(ev.object && typeof ev.object === 'object' ? ev.object : {}),
-      ...(fPort != null ? decodeLocally(bytes, fPort) : {}),
+      ...(fPort != null ? decodeLocally(bytes, fPort, this.modelFor(devEui, ev.deviceInfo.deviceProfileName)) : {}),
     };
     const n = normalise(object);
 

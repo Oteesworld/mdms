@@ -22,14 +22,11 @@ export const config = {
     apiToken: env('CHIRPSTACK_API_TOKEN'),
     tenantId: env('CHIRPSTACK_TENANT_ID'),
     applicationName: env('CHIRPSTACK_APPLICATION_NAME', 'Amplified IoT Water Meters'),
-    deviceProfileName: env('CHIRPSTACK_DEVICE_PROFILE_NAME', 'Amplified IoT Water Meter (EU868 OTAA)'),
     regionConfigId: env('CHIRPSTACK_REGION_CONFIG_ID', 'eu868'),
     /** LoRaWAN MAC version the meters implement: 1.0.2, 1.0.3, 1.0.4 or 1.1.0. */
     macVersion: env('METER_MAC_VERSION', '1.0.3'),
     /** Regional parameters revision: A, B, RP002-1.0.0 ... RP002-1.0.5. */
     regParamsRevision: env('METER_REG_PARAMS_REVISION', 'A'),
-    /** Expected uplink interval in seconds; ChirpStack uses it to decide a device is inactive. */
-    uplinkIntervalS: int('METER_UPLINK_INTERVAL_S', 86400),
     /** Follow each meter's event stream from the ChirpStack API (no public URL needed). */
     pullEvents: env('CHIRPSTACK_PULL_EVENTS', 'true') !== 'false',
   },

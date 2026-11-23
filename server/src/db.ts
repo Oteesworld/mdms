@@ -171,18 +171,26 @@ export class Store {
     lastSeenAt?: string | null;
     batteryPct?: number | null;
     margin?: number | null;
+    /**
+     * True when the details come from a device event. Events can be replays from
+     * before a rename or a device-profile change, so they only fill in what is
+     * missing; the ChirpStack device list (sync) is the source of truth.
+     */
+    fromEvent?: boolean;
   }) {
     const now = new Date().toISOString();
+    const pick = (col: string) =>
+      `CASE WHEN ?9 = 1 THEN COALESCE(meters.${col}, excluded.${col}) ELSE COALESCE(excluded.${col}, meters.${col}) END`;
     this.run(
       `INSERT INTO meters (dev_eui, name, serial, description, application_id, device_profile, tags_json, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (dev_eui) DO UPDATE SET
-         name = COALESCE(excluded.name, meters.name),
-         serial = COALESCE(excluded.serial, meters.serial),
-         description = COALESCE(excluded.description, meters.description),
-         application_id = COALESCE(excluded.application_id, meters.application_id),
-         device_profile = COALESCE(excluded.device_profile, meters.device_profile),
-         tags_json = COALESCE(excluded.tags_json, meters.tags_json)`,
+         name = ${pick('name')},
+         serial = ${pick('serial')},
+         description = ${pick('description')},
+         application_id = ${pick('application_id')},
+         device_profile = ${pick('device_profile')},
+         tags_json = ${pick('tags_json')}`,
       m.devEui,
       m.name ?? m.devEui,
       m.tags?.serial ?? null,
@@ -191,6 +199,7 @@ export class Store {
       m.deviceProfile ?? null,
       m.tags ? JSON.stringify(m.tags) : null,
       now,
+      m.fromEvent ? 1 : 0,
     );
     if (m.lastSeenAt) {
       this.run(
