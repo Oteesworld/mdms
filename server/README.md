@@ -153,13 +153,18 @@ its own ChirpStack device profile because its payload format differs:
 |---|---|---|---|
 | SH Meters (`sh`) | SH Meters (EU868 OTAA) | `codec/lib/sh-frame.js` + `codec/sh-meters.js` | C2 status frames every 4 h (total reading, meter voltage, clock), C7 data reports |
 | Kalahari (`kalahari`) | Kalahari (EU868 OTAA) | `codec/lib/sh-frame.js` + `codec/kalahari.js` | Vendor C7 data reports: total, flow, credit, temperature, battery, valve, alarms, hourly history |
-| Honeywell (`honeywell`) | Honeywell (EU868 OTAA) | `codec/honeywell.js` | fPort 10 daily report: report time only (no vendor spec yet) |
+| Honeywell (`honeywell`) | Honeywell (EU868 OTAA) | `codec/honeywell.js` (vendor codec, spec V0.1.12) | Daily report on fPort 10: reading, reverse flow, balance, temperature, pressure, two battery voltages, valve, alarms; also readings (11/12), token records (13), versions (121), alarm events (122), token events (123), command replies (201). Downlink commands on fPort 201 (time sync, valve, token, reporting). |
 
 ```bash
 npm run cs -- codec:push                              # upload every model's codec to its profile
 npm run cs -- meters:set-model 004a7701240c2033 kalahari   # move a meter to a model's profile
 npm run cs -- meters:import secrets/new.keys.csv --model kalahari   # or a "model" column per row
 ```
+
+The Honeywell codec is the vendor's file, unchanged; the service maps its fields to
+the dashboard (readings and balance in 0.1 L, battery = communication-board voltage).
+It reads the ChirpStack device variable `timezone` (UTC offset in 15-minute units);
+`meters:import` and `meters:set-model` set it from `TIME_ZONE` (GMT+2 = `8`).
 
 `meters:import` needs the model, from a `model` column (`sh`, `kalahari`,
 `honeywell`) or `--model`. Moving a meter keeps its keys and network session. The

@@ -13,6 +13,13 @@ export interface MeterModel {
   codecFiles: string[];
   /** Expected uplink interval in seconds (ChirpStack marks a device inactive after it). */
   uplinkIntervalS: number;
+  /** Labels for fPorts, when the codec doesn't provide them. */
+  portLabels?: Record<number, string>;
+  /**
+   * ChirpStack device variables the codec reads (set on import and on set-model).
+   * tzOffsetMin is the dashboard TIME_ZONE's UTC offset in minutes (GMT+2 = 120).
+   */
+  variables?: (tzOffsetMin: number) => Record<string, string>;
 }
 
 export const MODELS: Record<ModelKey, MeterModel> = {
@@ -36,9 +43,22 @@ export const MODELS: Record<ModelKey, MeterModel> = {
     key: 'honeywell',
     label: 'Honeywell',
     profileName: 'Honeywell (EU868 OTAA)',
-    description: 'Honeywell LoRaWAN water meter. 49-byte daily report on fPort 10. Codec: server/codec/honeywell.js.',
+    description: "Honeywell LoRaWAN water meter. Vendor (Milesight) codec v2.1.1, spec V0.1.12: daily report on fPort 10, readings 11/12, token records 13, version 121, alarm 122, token event 123, command replies 201 (downlinks on 201). Device variable 'timezone' = UTC offset in 15 min units. Codec: server/codec/honeywell.js.",
     codecFiles: ['honeywell.js'],
     uplinkIntervalS: 24 * 3600,
+    portLabels: {
+      0: 'MAC commands',
+      10: 'Daily report',
+      11: 'Forward readings',
+      12: 'Reverse readings',
+      13: 'Token records',
+      121: 'Versions',
+      122: 'Alarm event',
+      123: 'Token event',
+      201: 'Command reply',
+    },
+    // The codec renders its timestamps in local time: timezone in units of 15 minutes.
+    variables: (tzOffsetMin) => ({ timezone: String(Math.round(tzOffsetMin / 15)) }),
   },
 };
 

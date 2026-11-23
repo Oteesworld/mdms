@@ -193,7 +193,7 @@ async function loadGateways() {
 // --- live uplinks ----------------------------------------------------------------
 
 // Short, readable summary of an uplink: key readings first, then any raised alarms.
-const LOG_KEYS = ['totalFlow', 'credit_l', 'currentFlow', 'voltageRtu', 'voltage', 'valve', 'meterTime', 'reportTime'];
+const LOG_KEYS = ['totalFlow', 'credit_l', 'currentFlow', 'voltageRtu', 'voltage', 'communicationBoardVoltage', 'valve', 'meterTime', 'timestamp'];
 function logSummary(obj) {
   const parts = [];
   for (const k of LOG_KEYS) if (obj[k] !== undefined && obj[k] !== null) {
@@ -257,7 +257,7 @@ function connectStream() {
 
 const HIDDEN_KEYS = new Set(['port', 'message', 'message_label', 'length', 'protocol', 'decoded', 'raw_hex', 'payload_hex', 'model']);
 // Raw/plumbing fields left out of the one-line uplink summaries.
-const LOG_SKIP = new Set(['port', 'message', 'message_label', 'raw_hex', 'payload_hex', 'length', 'decoded', 'protocol', 'function_code', 'crc_ok', 'address', 'model', 'c2_unconfirmed', 'c2_rest_hex', 'hw_unconfirmed', 'hw_b5_14_hex']);
+const LOG_SKIP = new Set(['port', 'message', 'message_label', 'raw_hex', 'payload_hex', 'length', 'decoded', 'protocol', 'function_code', 'crc_ok', 'address', 'model', 'c2_unconfirmed', 'c2_rest_hex']);
 
 function decodedTable(obj) {
   const rows = Object.entries(obj || {}).filter(([k]) => !HIDDEN_KEYS.has(k) && !DUPLICATES.has(k) && !k.startsWith('_'));
@@ -268,6 +268,8 @@ function decodedTable(obj) {
   return `<table class="decoded">${rows
     .map(([k, v]) => {
       const d = describe(k, v);
+      // Display-page tags (P-0 ... P-D) belong to the SH/Kalahari screen, not other meters.
+      if (obj.model === 'honeywell') d.page = '';
       return `<tr title="${esc(d.help)}"><td><div class="fl">${esc(d.label)}${d.page ? ` <span class="pg">${esc(d.page)}</span>` : ''}</div><div class="fk">${esc(k)}</div></td>
         <td class="${d.alarm ? 'al' : ''}">${esc(d.value)}${d.help ? `<div class="fh">${esc(d.help)}</div>` : ''}</td></tr>`;
     })
@@ -450,7 +452,7 @@ async function openMeter(devEui, refresh = false) {
     <section><h4>Register, last 31 days</h4>${usageChart(d.readings)}</section>
     <section><h4>${last && hasData(last) ? 'Latest meter data' : 'Last message'}${last ? ` · ${esc(last.portLabel)} · ${dateTime(last.receivedAt)}` : ''}</h4>
       ${last ? decodedTable(last.object) : '<div class="muted">No uplinks received yet.</div>'}
-      ${notDecoded ? `<div class="note">${last.object.hw_unconfirmed ? `Honeywell daily report: only the report time is decoded. The hw_ fields are candidates that are not confirmed (no Honeywell payload specification yet), so they are not used as readings.` : last.object.c2_unconfirmed ? `Status frame: the total meter reading and the meter clock are decoded. Fields B to D are not confirmed, so they are not used as readings. Credit, flow and battery arrive in the meter's data report once reporting is switched on (key code 11111).` : last.object.function_code ? `Function ${esc(last.object.function_code)} is not part of the meter's data report, so only its raw bytes are shown.` : (['link', 'mac'].includes(last.object.message) ? `This ${esc(String(last.portLabel).toLowerCase())} carries no meter data.` : `No decoder for this message yet, so only its raw bytes are shown (<code>${esc(last.payloadHex)}</code>).`)}</div>` : ''}
+      ${notDecoded ? `<div class="note">${last.object.c2_unconfirmed ? `Status frame: the total meter reading and the meter clock are decoded. Fields B to D are not confirmed, so they are not used as readings. Credit, flow and battery arrive in the meter's data report once reporting is switched on (key code 11111).` : last.object.function_code ? `Function ${esc(last.object.function_code)} is not part of the meter's data report, so only its raw bytes are shown.` : (['link', 'mac'].includes(last.object.message) ? `This ${esc(String(last.portLabel).toLowerCase())} carries no meter data.` : `No decoder for this message yet, so only its raw bytes are shown (<code>${esc(last.payloadHex)}</code>).`)}</div>` : ''}
       ${last && last.object && last.object.crc_ok === false ? '<div class="note">The frame checksum did not match: treat these values with care.</div>' : ''}
     </section>
     ${d.alarms.length ? `<section><h4>Alarms</h4>${d.alarms

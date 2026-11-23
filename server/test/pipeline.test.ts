@@ -350,14 +350,28 @@ test('each meter model decodes with its own codec', async () => {
   assert.equal(kalC7.register_l, 210);
   assert.equal(kalC7.battery_v, 3.7);
 
-  // Honeywell: daily fPort 10 report; only the report time is decoded, the rest is unconfirmed.
+  // Honeywell: vendor codec (spec V0.1.12), real daily report from meter 8695311001828500.
   const hw = decodeLocally(hex('e065036b0100000000000000000000cd0b000069016c0128400000010000000000000000000000000000000040420f0000'), 10, 'honeywell');
   assert.equal(hw.model, 'honeywell');
   assert.equal(hw.message_label, 'Daily report');
-  assert.equal(hw.reportTime, '2026-11-22T22:00:00Z');
-  assert.equal(hw.hw_unconfirmed, true);
-  assert.equal(normalise(hw).registerL, null);
-  assert.equal(normalise(hw).batteryV, null);
+  assert.equal(hw.timestamp, '2026-11-23_00:00:00', 'local GMT+2 midnight via the timezone variable (8 x 15 min)');
+  assert.equal(hw.waterTemperature, 30.21);
+  assert.equal(hw.communicationBoardVoltage, 3.61);
+  assert.equal(hw.meterBoardVoltage, 3.64);
+  assert.equal(hw.emptyPipe, true);
+  assert.equal(hw.lowPressure, true);
+  assert.equal(hw.valve_open_pct, 100);
+  assert.equal(hw.decoded, true);
+  const hn = normalise(hw);
+  assert.equal(hn.registerL, 0);
+  assert.equal(hn.creditL, 100000, 'remainingBalance 1,000,000 x 0.1 L');
+  assert.equal(hn.batteryV, 3.61);
+  assert.equal(hn.valve, 'open');
+  assert.deepEqual(hn.alarms, [], 'empty pipe / low pressure are status, not alarms');
+  assert.ok(Array.isArray(hw.usage_history) && hw.history === undefined, 'vendor history kept apart from SH hourly records');
+  // Other ports decode too; a bad length becomes an error, not a crash.
+  assert.equal(decodeLocally(hex('01000200030004000'.padEnd(16, '0')), 121, 'honeywell').softwareVersion, 'V1.2');
+  assert.ok(decodeLocally(hex('0102'), 10, 'honeywell')._errors);
 
   // Without a known profile the frame itself picks the codec.
   assert.equal(decodeLocally(c2, 2).model, 'sh');

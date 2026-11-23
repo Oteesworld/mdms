@@ -69,6 +69,8 @@ export interface GatewayInput {
 }
 
 export interface MeterInput {
+  /** ChirpStack device variables for the codec; merged into any existing ones. */
+  variables?: Record<string, string>;
   devEui: string;
   joinEui: string;
   appKey: string;
@@ -331,12 +333,17 @@ export class ChirpStackApi {
     try {
       const get = new D.GetDeviceRequest();
       get.setDevEui(dev.getDevEui());
-      await this.rpc.unary('api.DeviceService/Get', get, D.GetDeviceResponse);
+      const existing = (await this.rpc.unary('api.DeviceService/Get', get, D.GetDeviceResponse)).getDevice();
+      // Keep variables set in ChirpStack (e.g. codec settings), then apply ours.
+      const vars: Record<string, string> = {};
+      existing?.getVariablesMap().forEach((v: string, k: string) => (vars[k] = v));
+      setMap(dev.getVariablesMap(), { ...vars, ...(m.variables ?? {}) });
       const req = new D.UpdateDeviceRequest();
       req.setDevice(dev);
       await this.rpc.unary('api.DeviceService/Update', req, emptyPb());
     } catch (e) {
       if (!isNotFound(e)) throw e;
+      setMap(dev.getVariablesMap(), m.variables ?? {});
       const req = new D.CreateDeviceRequest();
       req.setDevice(dev);
       await this.rpc.unary('api.DeviceService/Create', req, emptyPb());
@@ -380,13 +387,17 @@ export class ChirpStackApi {
     }
   }
 
-  /** Move a device to another device profile, keeping its name, keys, tags and session. */
-  async setDeviceProfile(devEui: string, deviceProfileId: string): Promise<void> {
+  /**
+   * Move a device to another device profile, keeping its name, keys, tags and session.
+   * `variables` (codec settings) are merged into the device's existing variables.
+   */
+  async setDeviceProfile(devEui: string, deviceProfileId: string, variables: Record<string, string> = {}): Promise<void> {
     const get = new D.GetDeviceRequest();
     get.setDevEui(devEui.toLowerCase());
     const dev = (await this.rpc.unary('api.DeviceService/Get', get, D.GetDeviceResponse)).getDevice();
     if (!dev) throw new Error(`device ${devEui} not found`);
     dev.setDeviceProfileId(deviceProfileId);
+    for (const [k, v] of Object.entries(variables)) dev.getVariablesMap().set(k, v);
     const req = new D.UpdateDeviceRequest();
     req.setDevice(dev);
     await this.rpc.unary('api.DeviceService/Update', req, emptyPb());

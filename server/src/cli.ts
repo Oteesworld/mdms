@@ -22,7 +22,7 @@ import { config } from './config.js';
 import internalPb from '@chirpstack/chirpstack-api/api/internal_pb.js';
 import { ChirpStackApi } from './chirpstack/api.js';
 import { streamCall } from './chirpstack/grpcweb.js';
-import { codecSource } from './decode.js';
+import { codecSource, tzOffsetMin } from './decode.js';
 import { MODELS, modelForProfile, parseModel, type ModelKey } from './models.js';
 import { FORWARDER_KEYS, MilesightApi, PKT_TYPE_NAMES, pick, semtechForwarderValues, type MdpDevice } from './milesight.js';
 
@@ -291,12 +291,14 @@ async function main(argv: string[]) {
       if (!profileId) throw new Error(`Profile "${MODELS[model].profileName}" is missing: run setup first.`);
       const dev = await cs.getDevice(devEui);
       if (!dev) throw new Error(`Meter ${devEui} is not registered in ChirpStack.`);
-      if (dev.deviceProfileId === profileId) {
-        console.log(`${devEui} "${dev.name}" is already on "${MODELS[model].profileName}".`);
-        return;
-      }
-      await cs.setDeviceProfile(devEui, profileId);
-      console.log(`Moved ${devEui} "${dev.name}" to "${MODELS[model].profileName}". Its keys and network session are unchanged.`);
+      const vars = MODELS[model].variables?.(tzOffsetMin()) ?? {};
+      await cs.setDeviceProfile(devEui, profileId, vars);
+      const varText = Object.keys(vars).length ? ` Codec variables: ${JSON.stringify(vars)}.` : '';
+      console.log(
+        dev.deviceProfileId === profileId
+          ? `${devEui} "${dev.name}" is on "${MODELS[model].profileName}".${varText}`
+          : `Moved ${devEui} "${dev.name}" to "${MODELS[model].profileName}". Its keys and network session are unchanged.${varText}`,
+      );
       return;
     }
 
@@ -413,6 +415,7 @@ async function main(argv: string[]) {
         tags.model = MODELS[model].label;
         try {
           const res = await cs.upsertMeter(ctx.applicationId, profileId, {
+            variables: MODELS[model].variables?.(tzOffsetMin()),
             devEui: r.devEui,
             joinEui: r.joinEui,
             appKey: r.appKey,
