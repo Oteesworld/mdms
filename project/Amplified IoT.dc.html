@@ -2095,6 +2095,11 @@ function liveRowCells(self, b, txt, eui) {
   r.live = true; return r;
 }
 
+// Meter (C7 protocol) addresses supplied by the operator, used when ChirpStack has no meter_addr tag
+const METER_ADDR = {'004a7701240c2033': '0026230012'};
+const meterAddrOf = d => { const dev = d.device, eui = dev.devEui.toLowerCase(); if (dev.tags && dev.tags.meter_addr) return dev.tags.meter_addr; if (METER_ADDR[eui]) return METER_ADDR[eui];
+  const f = (d.events || []).find(x => x.object && x.object.crc_ok !== false && /^[0-9]{10}$/.test(x.object.address || '')); return f ? f.object.address : null; };
+
 function renderLiveMeter(self, eui) {
   eui = eui || LIVE_EUIS[0];
   const e = React.createElement, st = self.state;
@@ -2168,7 +2173,7 @@ function renderLiveMeter(self, eui) {
   // device info
   const p = dev.deviceProfile || {};
   const info = card('Device information', MP_IC.chip, null, e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
-    kv('Meter serial', dev.tags.serial || '—'), kv('Meter address', dev.tags.meter_addr || '—'), kv('DevEUI', dev.devEui.toUpperCase()), kv('JoinEUI', dev.joinEui.toUpperCase()),
+    kv('Meter serial', dev.tags.serial || '—'), kv('Meter address', meterAddrOf(d) || '—'), kv('DevEUI', dev.devEui.toUpperCase()), kv('JoinEUI', dev.joinEui.toUpperCase()),
     kv('Device name', dev.name), kv('Model', isHwDev(d) ? 'Honeywell · 869531 series' : 'SH-L-EU868 ultrasonic'), e('div', {key: 'ds', style: {gridColumn: '1 / -1'}}, kv('Description', dev.description)),
     kv('Application', dev.applicationName), kv('Device profile', p.name || '—'), kv('LoRaWAN', 'Class ' + dev.classEnabled + ' · ' + (p.supportsOtaa ? 'OTAA' : 'ABP') + ' · ' + (p.macVersion || '')),
     kv('Region', (p.regionConfigId || '').toUpperCase()), kv('Added to network', fmtDT(dev.createdAt)), kv('Last seen', fmtDT(dev.lastSeenAt)), kv('State', dev.isDisabled ? 'Disabled' : 'Enabled', {color: dev.isDisabled ? MPC.bad : MPC.okText}),
@@ -2264,7 +2269,7 @@ function renderLiveMeter(self, eui) {
   const statusFrame = card('Latest status frame', MP_IC.token, lastStatus ? e('span', {style: {fontSize: 10.5, color: MPC.mute}}, fmtDT(lastStatus.time)) : null, lastStatus ? e('div', null,
     e('div', {style: {display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px'}},
       kv('Message', lastStatus.object.message_label + ' · ' + lastStatus.object.function_code), kv('Checksum', lastStatus.object.crc_ok ? 'Valid' : 'Invalid', {color: lastStatus.object.crc_ok ? MPC.okText : MPC.bad}),
-      kv('Meter clock', lastStatus.object.meterTime || '—'), kv('Meter address', lastStatus.object.address || '—'),
+      kv('Meter clock', lastStatus.object.meterTime || '—'), kv('Meter address', lastStatus.object.address || meterAddrOf(d) || '—'),
       c2 ? kv('Field A · total reading (P-0)', fmtM3(c2.a / 10) + ' m³', {color: MPC.okText}) : null, c2 ? kv('Field B (raw)', N(c2.b)) : null, c2 ? kv('Field C · meter voltage', c2.c != null ? c2.c.toFixed(2) + ' V' : '—') : null, c2 ? kv('Field D (BCD)', c2.d != null ? c2.d.toFixed(2) : '—') : null),
     e('div', {style: {marginTop: 10, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'C2 frames are not in the vendor decoder. Field A is confirmed as the total reading in 0.1 m³ (197 = 19.7 m³ on display P-0) and the frame ends with the meter clock (P-C, P-D). Field C is the meter voltage, not the P-B battery voltage. Fields B and D are not yet identified.'),
     e('div', {style: {marginTop: 8, padding: '7px 9px', background: MPC.bg, border: '1px solid ' + MPC.line2, borderRadius: 6, fontSize: 10.5, color: MPC.ink2, wordBreak: 'break-all'}}, lastStatus.dataHex.toUpperCase())) : empty('No status frame in the recent event log.'), {height: '100%'});
