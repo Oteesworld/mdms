@@ -52,6 +52,19 @@ function db() {
         UNIQUE (dev_eui, dedup_id)
       );
       CREATE INDEX IF NOT EXISTS meter_uplinks_dev_time ON meter_uplinks (dev_eui, received_at);
+      -- Every cumulative reading the meter provides, with the time it was taken: the reading in each
+      -- uplink (at network receive time) plus readings the meter sends for earlier times (SH hourly
+      -- history records, Honeywell sampled readings). Consumption is only ever computed between these.
+      CREATE TABLE IF NOT EXISTS meter_readings (
+        dev_eui TEXT NOT NULL,
+        reading_at TIMESTAMPTZ NOT NULL,
+        reading_m3 NUMERIC NOT NULL,
+        source TEXT NOT NULL,
+        PRIMARY KEY (dev_eui, reading_at, source)
+      );
+      INSERT INTO meter_readings (dev_eui, reading_at, reading_m3, source)
+        SELECT dev_eui, received_at, reading_m3, 'uplink' FROM meter_uplinks WHERE reading_m3 IS NOT NULL AND reading_m3 < 1e6
+        ON CONFLICT DO NOTHING;
     `); }).then(() => true).catch(e => { ready = null; throw e; });
   }
   return ready.then(() => pool);
@@ -69,6 +82,24 @@ function readingOf(o) {
 }
 const num = v => typeof v === 'number' && isFinite(v) ? v : null;
 
+// Meter-local "YYYY-MM-DD HH:MM:SS" (or with "_") to a UTC Date, for a fixed UTC offset in minutes.
+const localToUtc = (txt, offsetMin) => { const m = /^(\d{4})-(\d{2})-(\d{2})[ _T](\d{2}):(\d{2}):(\d{2})/.exec(String(txt || '')); if (!m) return null;
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) - offsetMin * 60000); };
+const SH_OFFSET_MIN = Number(process.env.SH_METER_UTC_OFFSET_MIN || 120);      // SH meter clocks run on local time (Africa/Gaborone, UTC+2)
+const HW_OFFSET_MIN = Number(process.env.HONEYWELL_UTC_OFFSET_MIN || 120);     // device variable timezone = 8 (x 15 min) = UTC+2
+// Readings carried by one decoded uplink: [time, m3, source]
+function readingsOf(ev, o) {
+  const out = [], r = readingOf(o);
+  if (r !== null && r < 1e6) out.push([new Date(ev.time), r, 'uplink']);
+  (Array.isArray(o.history) && o.function_code === '0xC7' ? o.history : []).forEach(h => {  // SH hourly records
+    const t = localToUtc(h.meterTime, SH_OFFSET_MIN); if (t && typeof h.totalFlow === 'number') out.push([t, h.totalFlow, 'meter-history']); });
+  (Array.isArray(o.samples) ? o.samples : []).forEach(sm => {                                   // Honeywell sampled readings (fPort 11)
+    const t = localToUtc(sm.timestamp, HW_OFFSET_MIN); if (t && typeof sm.reading === 'number') out.push([t, sm.reading, 'meter-samples']); });
+  // a meter-dated reading cannot be later than the uplink that carried it (catches a wrong meter clock)
+  const rx = new Date(ev.time).getTime() + 300000;
+  return out.filter(x => x[2] === 'uplink' || x[0].getTime() <= rx);
+}
+
 // ev: {devEui, id (deduplicationId), time, fPort, fCnt, object, dataHex, rx:[{gatewayId,rssi,snr}]}
 async function storeUplink(ev, source) {
   const p = await db(); if (!p || !ev || !ev.devEui || !ev.time) return false;
@@ -78,59 +109,50 @@ async function storeUplink(ev, source) {
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) ON CONFLICT (dev_eui, dedup_id) DO NOTHING`,
     [ev.devEui.toLowerCase(), id, ev.time, ev.fPort, ev.fCnt, o.function_code || null, readingOf(o), num(o.totalConsumption), num(o.totalPurchase), num(o.waterTemperature), num(o.voltageRtu),
       num(rx.rssi), num(rx.snr), rx.gatewayId || null, o.meterTime || null, ev.dataHex || null, JSON.stringify(o), source]);
+  for (const x of readingsOf(ev, o)) await p.query(`INSERT INTO meter_readings (dev_eui, reading_at, reading_m3, source) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`, [ev.devEui.toLowerCase(), x[0], x[1], x[2]]);
   return r.rowCount === 1;
 }
 
-// Hourly (last N hours) or daily (last N days) consumption from the cumulative reading.
-// Each bucket's reading is the highest reading received in it, carried forward when no frame
-// arrived; consumption is the rise from the previous bucket. Readings that jump more than
-// 1000 m3 from their neighbours are ignored as corrupt frames.
+// Consumption computed only between real meter readings, never spread or estimated.
+//  unit 'interval': every interval between two consecutive readings that ends in the last `count`
+//    hours, with its exact start and end. With hourly meter records these are exact hours.
+//  unit 'day': for each local day, the difference between the readings at its two midnights. Exact
+//    when the meter reported within ±90 min of both; otherwise the day shows only what was measured
+//    between its first and last reading ('partial'), and today runs to the latest reading ('so-far').
+// Readings far from both neighbours (corrupt frames) are ignored.
 async function consumption(devEui, unit, count) {
   const p = await db(); if (!p) return {enabled: false};
-  const step = unit === 'day' ? 'day' : 'hour';
-  const rows = (await p.query(`
-    SELECT date_trunc($2, received_at AT TIME ZONE $3) AS bucket, max(reading_m3)::float AS reading, min(reading_m3)::float AS low, count(*)::int AS frames
-    FROM meter_uplinks WHERE dev_eui = $1 AND reading_m3 IS NOT NULL AND reading_m3 < 1e6
-    GROUP BY 1 ORDER BY 1`, [devEui, step, TZ])).rows;
-  const first = (await p.query(`SELECT min(received_at) AS since, count(*)::int AS n, max(received_at) AS last FROM meter_uplinks WHERE dev_eui = $1`, [devEui])).rows[0];
-  // drop outliers (a reading far from both neighbours)
-  const clean = rows.filter((r, i) => { const a = rows[i - 1], b = rows[i + 1]; return !((a && Math.abs(r.reading - a.reading) > 1000) && (!b || Math.abs(r.reading - b.reading) > 1000)); });
-  // local "now" in the meter's time zone, as a naive timestamp like Postgres returns
-  const nowLocal = new Date(new Date().toLocaleString('en-US', {timeZone: TZ}) + ' UTC');
-  const start = new Date(nowLocal); if (step === 'hour') { start.setUTCMinutes(0, 0, 0); start.setUTCHours(start.getUTCHours() - (count - 1)); } else { start.setUTCHours(0, 0, 0, 0); start.setUTCDate(start.getUTCDate() - (count - 1)); }
-  const size = step === 'hour' ? 3600e3 : 864e5;
-  const idx = d => Math.round((d.getTime() - start.getTime()) / size); // bucket index relative to the window (may be negative)
-  const buckets = [];
-  for (let i = 0; i < count; i++) {
-    const t = new Date(start.getTime() + i * size);
-    buckets.push({start: t.toISOString().slice(0, 16).replace('T', ' '), reading_m3: null, used_l: null, estimated: false, frames: 0, state: 'no-data'});
+  const raw = (await p.query(`SELECT reading_at, max(reading_m3)::float AS reading, string_agg(DISTINCT source, ',') AS source
+    FROM meter_readings WHERE dev_eui = $1 AND reading_m3 < 1e6 GROUP BY reading_at ORDER BY reading_at`, [devEui])).rows
+    .map(r => ({t: r.reading_at.getTime(), v: r.reading, src: r.source}));
+  const clean = raw.filter((r, i) => { const a = raw[i - 1], b = raw[i + 1]; return !((a && Math.abs(r.v - a.v) > 1000) && (!b || Math.abs(r.v - b.v) > 1000)); });
+  // readings less than 2 minutes apart are one reading (e.g. an uplink and its own history record)
+  const rd = []; clean.forEach(r => { const l = rd[rd.length - 1]; if (l && r.t - l.t < 120000) { l.v = Math.max(l.v, r.v); l.src += ',' + r.src; } else rd.push(Object.assign({}, r)); });
+  const first = (await p.query(`SELECT min(reading_at) AS since, count(*)::int AS n, max(reading_at) AS last FROM meter_readings WHERE dev_eui = $1`, [devEui])).rows[0];
+  const now = Date.now(), fmt = t => new Date(t).toISOString();
+  const base = {enabled: true, timeZone: TZ, unit, since: first.since, lastReading: first.last, readings: first.n, hourlyRecords: rd.some(r => /meter-history|meter-samples/.test(r.src))};
+  if (unit !== 'day') {
+    const from = now - count * 3600e3, intervals = [];
+    for (let i = 1; i < rd.length; i++) if (rd[i].t > from) intervals.push({from: fmt(rd[i - 1].t), to: fmt(rd[i].t), minutes: Math.round((rd[i].t - rd[i - 1].t) / 60000),
+      used_l: Math.max(0, Math.round((rd[i].v - rd[i - 1].v) * 1000)), reading_m3: rd[i].v, source: rd[i].src});
+    return Object.assign(base, {intervals});
   }
-  // The meter reports its cumulative total only every few hours. Usage between two reports is
-  // spread evenly over the buckets since the previous report and marked as estimated; buckets
-  // after the latest report have no data yet.
-  let prev = null;
-  clean.forEach(r => {
-    const k = idx(r.bucket);
-    if (prev) {
-      const total = Math.max(0, (r.reading - prev.reading) * 1000), span = k - prev.k;
-      if (span >= 1) {
-        let left = Math.round(total);
-        for (let b = prev.k + 1; b <= k; b++) {
-          const share = b === k ? left : Math.round(total / span); left -= b === k ? 0 : share;
-          if (b >= 0 && b < count) Object.assign(buckets[b], {used_l: share, estimated: span > 1, state: span > 1 ? 'spread' : 'measured'});
-        }
-      } else if (k >= 0 && k < count) { // two reports in the same bucket
-        const bk = buckets[k]; bk.used_l = (bk.used_l || 0) + Math.round(total);
-      }
-    } else if (k >= 0 && k < count) { // first report ever: only the rise within its own bucket is known
-      Object.assign(buckets[k], {used_l: Math.max(0, Math.round((r.reading - r.low) * 1000)), state: 'measured'});
-    }
-    if (k >= 0 && k < count) Object.assign(buckets[k], {reading_m3: r.reading, frames: r.frames});
-    prev = {k, reading: r.reading};
-  });
-  const lastK = prev ? prev.k : -1;
-  for (let b = Math.max(0, lastK + 1); b < count; b++) buckets[b].state = 'pending';
-  return {enabled: true, timeZone: TZ, unit: step, since: first.since, lastStored: first.last, storedFrames: first.n, buckets};
+  // local midnights in the meter's time zone
+  const localParts = t => { const s = new Date(t).toLocaleString('en-CA', {timeZone: TZ, hour12: false}); return s; };
+  const offsetMin = t => { const l = new Date(new Date(t).toLocaleString('en-US', {timeZone: TZ}) + ' UTC').getTime(); return Math.round((l - t) / 60000); };
+  const todayLocal = new Date(now + offsetMin(now) * 60000); todayLocal.setUTCHours(0, 0, 0, 0);
+  const midnight = k => { const local = todayLocal.getTime() - k * 864e5; return local - offsetMin(local) * 60000; }; // UTC ms of local midnight k days ago
+  const near = (t, tol) => { let best = null; rd.forEach(r => { const d = Math.abs(r.t - t); if (d <= tol && (!best || d < Math.abs(best.t - t))) best = r; }); return best; };
+  const TOL = 90 * 60000, buckets = [];
+  for (let k = count - 1; k >= 0; k--) {
+    const a = midnight(k), b = midnight(k - 1), day = new Date(a + offsetMin(a) * 60000).toISOString().slice(0, 10);
+    const ra = near(a, TOL), rb = k === 0 ? null : near(b, TOL), inside = rd.filter(r => r.t >= a - TOL && r.t <= Math.min(b + TOL, now));
+    if (ra && rb) buckets.push({start: day, used_l: Math.max(0, Math.round((rb.v - ra.v) * 1000)), state: 'exact', from: fmt(ra.t), to: fmt(rb.t)});
+    else if (k === 0 && ra && inside.length) { const l = inside[inside.length - 1]; buckets.push({start: day, used_l: Math.max(0, Math.round((l.v - ra.v) * 1000)), state: 'so-far', from: fmt(ra.t), to: fmt(l.t)}); }
+    else if (inside.length >= 2) { const f = inside[0], l = inside[inside.length - 1]; buckets.push({start: day, used_l: Math.max(0, Math.round((l.v - f.v) * 1000)), state: 'partial', from: fmt(f.t), to: fmt(l.t)}); }
+    else buckets.push({start: day, used_l: null, state: 'no-data'});
+  }
+  return Object.assign(base, {buckets});
 }
 
 // Newest stored C7 data report with a valid checksum (the ChirpStack event log keeps only ~10 uplinks).

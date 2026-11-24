@@ -219,7 +219,7 @@ http.createServer(async (req, res) => {
     const m = /^\/api\/gateways\/([0-9a-fA-F]{16})$/.exec(u.pathname);
     if (m) { const id = m[1].toLowerCase(); return send(200, Object.assign({fetchedAt: new Date().toISOString()}, await cached('gw:' + id, 15000, () => getGateway(id)))); }
     const cm = /^\/api\/devices\/([0-9a-fA-F]{16})\/consumption$/.exec(u.pathname);
-    if (cm) { const eui = cm[1].toLowerCase(), unit = u.searchParams.get('unit') === 'day' ? 'day' : 'hour';
+    if (cm) { const eui = cm[1].toLowerCase(), unit = u.searchParams.get('unit') === 'day' ? 'day' : 'interval';
       const count = Math.min(unit === 'day' ? 90 : 168, Math.max(1, Number(u.searchParams.get('count')) || (unit === 'day' ? 30 : 24)));
       if (!store.enabled()) return send(200, {enabled: false, reason: 'DATABASE_URL is not configured on the API service'});
       return send(200, await store.consumption(eui, unit, count)); }

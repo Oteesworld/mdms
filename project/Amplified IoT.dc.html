@@ -2073,7 +2073,7 @@ function liveConsLoad(self, unit, force, eui) {
   const key = eui + ':' + unit, cur = (self.state.liveCons || {})[key];
   if (!force && cur && (cur.status === 'loading' || (cur.at && Date.now() - cur.at < 60000))) return;
   self.setState(x => ({liveCons: Object.assign({}, x.liveCons || {}, {[key]: Object.assign({}, cur || {}, {status: 'loading'})})}));
-  gwFetch(self, '/api/devices/' + eui + '/consumption?unit=' + unit + '&count=' + (unit === 'day' ? 30 : 24), 'cons:' + key, (err, j) =>
+  gwFetch(self, '/api/devices/' + eui + '/consumption?unit=' + unit + '&count=' + (unit === 'day' ? 30 : 48), 'cons:' + key, (err, j) =>
     self.setState(x => ({liveCons: Object.assign({}, x.liveCons || {}, {[key]: err ? {status: 'error', error: err, at: Date.now()} : {status: 'ok', data: j, at: Date.now()}})})));
 }
 
@@ -2107,7 +2107,7 @@ function renderLiveMeter(self, eui) {
     e('span', {style: {display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: L.status === 'error' ? MPC.bad : MPC.okText}}, e('span', {style: {width: 8, height: 8, borderRadius: '50%', background: L.status === 'error' ? MPC.bad : MPC.ok}}), L.status === 'error' ? 'Live data unavailable' : 'Live from ChirpStack'),
     e('span', {style: {fontSize: 11.5, color: MPC.mute}}, 'Device ' + eui.toUpperCase()), e('span', {style: {flex: 1}}),
     e('span', {style: {fontSize: 11.5, color: MPC.mute}}, L.status === 'loading' ? 'Refreshing…' : L.at ? 'Updated ' + new Date(L.at).toLocaleTimeString('en-GB') : ''),
-    e('div', {onClick: () => { liveLoad(self, true, eui); liveConsLoad(self, st.lvCons || 'hour', true, eui); }, style: {height: 30, padding: '0 11px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: MPC.ink2}}, ic(GW_IC.refresh, 14), 'Refresh'));
+    e('div', {onClick: () => { liveLoad(self, true, eui); liveConsLoad(self, st.lvCons === 'day' ? 'day' : 'interval', true, eui); }, style: {height: 30, padding: '0 11px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, border: '1px solid #D2D6DC', background: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, color: MPC.ink2}}, ic(GW_IC.refresh, 14), 'Refresh'));
   if (!d) return e('div', null, back, bar, L.status === 'error' ? errBox(L.error) : e('div', {style: {background: '#fff', border: '1px solid ' + MPC.line, borderRadius: 8}}, empty('Loading meter ' + eui.toUpperCase() + ' from ChirpStack…')));
 
   const dev = d.device, ups = liveUps(d), last = ups[0], rx0 = last && last.rx && last.rx[0], disp = meterDisplay(d);
@@ -2183,32 +2183,49 @@ function renderLiveMeter(self, eui) {
     e('div', {style: {display: 'flex', gap: 8, marginTop: 12}}, e('div', {style: {height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6, borderRadius: 6, background: MPC.blue, color: '#fff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer'}}, ic(MP_IC.user, 14), 'Assign client'))), {height: '100%'});
 
   // water consumption from stored readings
-  const cu = st.lvCons || 'hour', CD = (st.liveCons || {})[eui + ':' + cu];
+  const cu = st.lvCons === 'day' ? 'day' : 'interval', CD = (st.liveCons || {})[eui + ':' + cu];
   if (!CD) setTimeout(() => liveConsLoad(self, cu, false, eui), 0);
   const cdata = CD && CD.data;
+  const tzOpt = {timeZone: (cdata && cdata.timeZone) || 'Africa/Gaborone', hour12: false};
+  const hm = t => new Date(t).toLocaleTimeString('en-GB', Object.assign({hour: '2-digit', minute: '2-digit'}, tzOpt));
+  const dm = t => { const x = new Date(t).toLocaleDateString('en-CA', tzOpt); return x.slice(8, 10) + ' ' + MON[Number(x.slice(5, 7)) - 1]; };
+  const span = m => m < 90 ? m + ' min' : m < 2880 ? (Math.round(m / 6) / 10) + ' h' : (Math.round(m / 144) / 10) + ' days';
   let consBody;
   if (!CD || (CD.status === 'loading' && !cdata)) consBody = empty('Loading consumption history…');
   else if (CD.status === 'error' && !cdata) consBody = errBox(CD.error);
   else if (!cdata.enabled) consBody = e('div', {style: {padding: '18px 8px', textAlign: 'center', color: MPC.mute, fontSize: 11.5}}, 'Reading history is not switched on yet: the API has no database connection (' + (cdata.reason || 'DATABASE_URL missing') + ').');
+  else if (cu === 'interval' && !(cdata.intervals || []).length) consBody = empty('No two meter readings in the last 48 hours yet. Usage appears once the meter sends its next reading.');
   else {
-    const bk = cdata.buckets, vals = bk.map(x => x.used_l), known = bk.filter(x => x.used_l != null);
-    const total = known.reduce((a, x) => a + x.used_l, 0), peak = known.reduce((a, x) => x.used_l > (a ? a.used_l : -1) ? x : a, null);
-    const labs = bk.map(x => cu === 'hour' ? x.start.slice(11, 16) : x.start.slice(8, 10) + ' ' + MON[Number(x.start.slice(5, 7)) - 1]);
-    const lastRep = bk.filter(x => x.frames).pop(), spreadN = bk.filter(x => x.state === 'spread').length;
-    const meta = bk.map((x, k) => x.state === 'pending' ? {title: labs[k] + ' · no report yet (next status frame due within about 4 hours of the last one)'}
-      : x.state === 'no-data' ? {title: labs[k] + ' · before the first stored reading'}
-      : x.state === 'spread' ? {color: '#8DB2D8', title: labs[k] + ' · about ' + N(x.used_l) + ' L (estimated: usage between two reports spread evenly over the hours in between)'}
-      : {color: x.used_l > 0 && x.used_l === Math.max(...known.map(y => y.used_l)) ? MPC.teal : MPC.blue, title: labs[k] + ' · ' + N(x.used_l) + ' L (measured)'});
+    let vals, labs, meta, stats, legend;
+    if (cu === 'interval') {
+      const iv = cdata.intervals, maxL = Math.max(...iv.map(x => x.used_l));
+      vals = iv.map(x => x.used_l);
+      labs = iv.map((x, k) => (k === 0 || dm(x.to) !== dm(iv[k - 1].to) ? dm(x.to) + ' ' : '') + hm(x.to));
+      meta = iv.map(x => ({color: x.used_l > 0 && x.used_l === maxL ? MPC.teal : MPC.blue, title: dm(x.from) + ' ' + hm(x.from) + ' → ' + dm(x.to) + ' ' + hm(x.to) + ' (' + span(x.minutes) + ') · ' + N(x.used_l) + ' L · meter ' + fmtM3(x.reading_m3) + ' m³' + (/meter-/.test(x.source) ? ' · meter record' : '')}));
+      const tot = vals.reduce((a, x) => a + x, 0), pk = iv.reduce((a, x) => x.used_l > (a ? a.used_l : -1) ? x : a, null), last = iv[iv.length - 1];
+      stats = [['Last 48 hours', N(tot) + ' L'], ['Largest interval', pk && pk.used_l ? N(pk.used_l) + ' L · ' + hm(pk.from) + '–' + hm(pk.to) : '—'], ['Latest reading', fmtM3(last.reading_m3) + ' m³ · ' + dm(last.to) + ' ' + hm(last.to)], ['Readings stored', N(cdata.readings)]];
+      legend = [[MPC.blue, 'Usage between two meter readings'], [MPC.teal, 'Highest']];
+    } else {
+      const bk = cdata.buckets, known = bk.filter(x => x.used_l != null), maxL = Math.max(0, ...known.map(x => x.used_l));
+      const C = {exact: MPC.blue, 'so-far': '#5B8FC7', partial: '#9AA3AE'};
+      vals = bk.map(x => x.used_l);
+      labs = bk.map(x => x.start.slice(8, 10) + ' ' + MON[Number(x.start.slice(5, 7)) - 1]);
+      meta = bk.map((x, k) => x.state === 'no-data' ? {title: labs[k] + ' · no meter readings for this day'}
+        : {color: x.state === 'exact' && x.used_l > 0 && x.used_l === maxL ? MPC.teal : C[x.state], title: labs[k] + ' · ' + N(x.used_l) + ' L · ' + (x.state === 'exact' ? 'midnight to midnight' : x.state === 'so-far' ? 'today so far, midnight to ' + hm(x.to) : 'only ' + hm(x.from) + ' (' + dm(x.from) + ') to ' + hm(x.to) + ' (' + dm(x.to) + ') measured, no reading near one of the midnights') + ' (meter readings)'});
+      const ex = bk.filter(x => x.state === 'exact'), pk = ex.reduce((a, x) => x.used_l > (a ? a.used_l : -1) ? x : a, null), today = bk[bk.length - 1];
+      stats = [['Full days measured', N(ex.length)], ['Average full day', ex.length ? N(Math.round(ex.reduce((a, x) => a + x.used_l, 0) / ex.length)) + ' L' : '—'], ['Peak day', pk && pk.used_l ? N(pk.used_l) + ' L · ' + labs[bk.indexOf(pk)] : '—'], ['Today so far', today.used_l != null ? N(today.used_l) + ' L' : '—']];
+      legend = [[MPC.blue, 'Full day (midnight to midnight)'], [MPC.teal, 'Highest'], ['#5B8FC7', 'Today so far'], ['#9AA3AE', 'Part of the day only'], ['#fff', 'No readings']];
+    }
     consBody = e('div', null,
-      e('div', {style: {display: 'flex', gap: 22, marginBottom: 12, flexWrap: 'wrap'}},
-        [[cu === 'hour' ? 'Last 24 hours' : 'Last 30 days', N(total) + ' L'], ['Peak ' + (cu === 'hour' ? 'hour' : 'day'), peak && peak.used_l ? N(peak.used_l) + ' L · ' + (cu === 'hour' ? peak.start.slice(11, 16) : peak.start.slice(8, 10) + ' ' + MON[Number(peak.start.slice(5, 7)) - 1]) : '—'],
-          ['Latest reading', lastRep ? fmtM3(lastRep.reading_m3) + ' m³' : '—'], ['Stored frames', N(cdata.storedFrames)]].map(x => e('div', {key: x[0]}, e('div', {style: {fontSize: 10, color: MPC.faint}}, x[0]), e('div', {style: {fontSize: 13.5, fontWeight: 600, marginTop: 2}}, x[1])))),
-      bars(vals, labs, cu === 'hour' ? 3 : 5, 'L', false, null, meta),
+      e('div', {style: {display: 'flex', gap: 22, marginBottom: 12, flexWrap: 'wrap'}}, stats.map(x => e('div', {key: x[0]}, e('div', {style: {fontSize: 10, color: MPC.faint}}, x[0]), e('div', {style: {fontSize: 13.5, fontWeight: 600, marginTop: 2}}, x[1])))),
+      bars(vals, labs, cu === 'day' ? 5 : Math.max(1, Math.ceil(vals.length / 8)), 'L', false, null, meta),
       e('div', {style: {display: 'flex', gap: 14, marginTop: 10, fontSize: 10.5, color: MPC.mute, flexWrap: 'wrap'}},
-        [[MPC.blue, 'Measured'], [MPC.teal, 'Highest'], ['#8DB2D8', 'Estimated between reports'], ['#fff', 'No report yet']].map(l => e('span', {key: l[1], style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, e('span', {style: {width: 9, height: 9, borderRadius: 2, background: l[0], border: l[0] === '#fff' ? '1px dashed #C9CED6' : 'none', boxSizing: 'border-box'}}), l[1]))),
-      e('div', {style: {marginTop: 8, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'Worked out from the meter’s total reading (P-0), stored since ' + fmtDT(cdata.since) + '. The meter reports its total about every 4 hours and counts in 0.1 m³ (100 L) steps, so ' + (cu === 'hour' ? 'hourly figures between reports are estimates: each rise is spread evenly over the hours since the previous report. ' : 'daily totals are exact once a day’s last report is in. ') + (lastRep ? 'Latest report: ' + lastRep.start.slice(cu === 'hour' ? 11 : 0, cu === 'hour' ? 16 : 10) + (cu === 'hour' ? ' hour' : '') + '. ' : '') + 'Times are ' + cdata.timeZone.replace('_', ' ') + ' local time.'));
+        legend.map(l => e('span', {key: l[1], style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, e('span', {style: {width: 9, height: 9, borderRadius: 2, background: l[0], border: l[0] === '#fff' ? '1px dashed #C9CED6' : 'none', boxSizing: 'border-box'}}), l[1]))),
+      e('div', {style: {marginTop: 8, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'Only actual meter readings are used, nothing is averaged or estimated. ' + (cu === 'interval'
+        ? 'Each bar is the rise in the meter’s total between two consecutive readings, labelled with the time of the second; hover a bar for its exact start, end and length. ' + (cdata.hourlyRecords ? 'This meter sends hourly records, so bars are hourly where they are available.' : 'This meter currently reports about every ' + (isHwDev(d) ? '24' : '4') + ' hours, so bars cover those periods. For true hour-by-hour usage the meter must be set to send hourly records.')
+        : 'A day’s usage is the meter reading at the next midnight minus the reading at that day’s midnight (a reading within 90 minutes of midnight counts). Days without readings near both midnights show only the part that was measured.') + ' Readings stored since ' + fmtDT(cdata.since) + '. Times are ' + cdata.timeZone.replace('_', ' ') + ' local time.'));
   }
-  const consCard = card('Water consumption', MP_IC.drop, e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, [['hour', 'Hourly'], ['day', 'Daily']].map(o => e('div', {key: o[0], onClick: () => { self.setState({lvCons: o[0]}); liveConsLoad(self, o[0], false, eui); }, style: {padding: '4px 11px', fontSize: 11, fontWeight: cu === o[0] ? 600 : 500, cursor: 'pointer', background: cu === o[0] ? MPC.blue : '#fff', color: cu === o[0] ? '#fff' : MPC.mute}}, o[1]))), consBody, {height: '100%'});
+  const consCard = card('Water consumption', MP_IC.drop, e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, [['interval', 'Per reading'], ['day', 'Daily']].map(o => e('div', {key: o[0], onClick: () => { self.setState({lvCons: o[0]}); liveConsLoad(self, o[0], false, eui); }, style: {padding: '4px 11px', fontSize: 11, fontWeight: cu === o[0] ? 600 : 500, cursor: 'pointer', background: cu === o[0] ? MPC.blue : '#fff', color: cu === o[0] ? '#fff' : MPC.mute}}, o[1]))), consBody, {height: '100%'});
 
   // meter display parameters
   const shown = disp.filter(x => x.v != null).length;
