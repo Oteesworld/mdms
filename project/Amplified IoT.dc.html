@@ -2073,7 +2073,7 @@ function liveConsLoad(self, unit, force, eui) {
   const key = eui + ':' + unit, cur = (self.state.liveCons || {})[key];
   if (!force && cur && (cur.status === 'loading' || (cur.at && Date.now() - cur.at < 60000))) return;
   self.setState(x => ({liveCons: Object.assign({}, x.liveCons || {}, {[key]: Object.assign({}, cur || {}, {status: 'loading'})})}));
-  gwFetch(self, '/api/devices/' + eui + '/consumption?unit=' + unit + '&count=' + (unit === 'day' ? 30 : 48), 'cons:' + key, (err, j) =>
+  gwFetch(self, '/api/devices/' + eui + '/consumption?unit=' + unit + '&count=' + (unit === 'day' ? 30 : 72), 'cons:' + key, (err, j) =>
     self.setState(x => ({liveCons: Object.assign({}, x.liveCons || {}, {[key]: err ? {status: 'error', error: err, at: Date.now()} : {status: 'ok', data: j, at: Date.now()}})})));
 }
 
@@ -2093,6 +2093,30 @@ function liveRowCells(self, b, txt, eui) {
     txt((() => { if (isHwDev(d)) { const s0 = d.device.deviceStatus; return s0 && s0.batteryLevel >= 0 ? Math.round(s0.batteryLevel) + '%' : 'n/a'; } const c = liveUpsWithReport(d).find(isC7); return c && isLive(c.time) && typeof c.object.voltageRtu === 'number' ? c.object.voltageRtu.toFixed(2) + ' V' : 'n/a'; })(), {mono: true, align: 'right', color: '#767E89'}),
     txt(relTime(d.device.lastSeenAt), {mono: true, align: 'right', color: '#767E89'}), b(on ? 'Online' : 'Offline')];
   r.live = true; return r;
+}
+
+// Line chart of usage per reading interval on a true time axis (litres per point, line broken over missed reports)
+function consLine(iv, hm, dm) {
+  const e = React.createElement, W = 640, H = 190, L = 34, R = 10, T = 12, B = 34;
+  const t0 = new Date(iv[0].to).getTime(), t1 = new Date(iv[iv.length - 1].to).getTime(), span = Math.max(t1 - t0, 3600e3);
+  const maxV = Math.max(...iv.map(x => x.used_l)), top = maxV <= 0 ? 100 : Math.ceil(maxV / (maxV > 500 ? 500 : 100)) * (maxV > 500 ? 500 : 100);
+  const x = t => L + (W - L - R) * (iv.length === 1 ? .5 : (t - t0) / span), y = v => T + (H - T - B) * (1 - v / top);
+  const pts = iv.map(v => ({t: new Date(v.to).getTime(), v: v.used_l, d: v}));
+  const segs = []; pts.forEach((p, k) => { if (k === 0 || p.d.minutes > 6 * 60) segs.push([p]); else segs[segs.length - 1].push(p); });
+  const grid = [0, top / 2, top];
+  // x ticks at local 00/04/08/12/16/20 h
+  const ticks = []; const step = 4 * 3600e3; const off = 2 * 3600e3; /* Africa/Gaborone, UTC+2, no DST */ for (let t = Math.ceil((t0 + off) / step) * step - off; t <= t1; t += step) ticks.push(t);
+  const every = Math.max(1, Math.ceil(ticks.length / 9));
+  return e('svg', {viewBox: '0 0 ' + W + ' ' + H, style: {width: '100%', height: 'auto', display: 'block'}},
+    grid.map(g => e('g', {key: 'g' + g}, e('line', {x1: L, x2: W - R, y1: y(g), y2: y(g), stroke: MPC.line2, strokeDasharray: g ? '3 3' : null}),
+      e('text', {x: L - 5, y: y(g) + 3, textAnchor: 'end', style: {font: '500 9px ' + MONO, fill: MPC.faint}}, N(g) + (g === top ? ' L' : '')))),
+    ticks.map((t, k) => k % every ? null : e('g', {key: 't' + t}, e('line', {x1: x(t), x2: x(t), y1: H - B, y2: H - B + 4, stroke: MPC.line}),
+      e('text', {x: x(t), y: H - B + 15, textAnchor: 'middle', style: {font: '500 9px ' + MONO, fill: MPC.faint}}, hm(t)),
+      k === 0 || dm(t) !== dm(ticks[k - every]) ? e('text', {x: x(t), y: H - B + 27, textAnchor: 'middle', style: {font: '600 9px ' + MONO, fill: MPC.mute}}, dm(t)) : null)),
+    segs.map((sg, k) => sg.length > 1 ? e('polygon', {key: 'a' + k, points: x(sg[0].t) + ',' + y(0) + ' ' + sg.map(p => x(p.t).toFixed(1) + ',' + y(p.v).toFixed(1)).join(' ') + ' ' + x(sg[sg.length - 1].t) + ',' + y(0), fill: 'rgba(0,70,140,0.07)'}) : null),
+    segs.map((sg, k) => sg.length > 1 ? e('polyline', {key: 'l' + k, points: sg.map(p => x(p.t).toFixed(1) + ',' + y(p.v).toFixed(1)).join(' '), fill: 'none', stroke: MPC.blue, strokeWidth: 2, strokeLinejoin: 'round'}) : null),
+    pts.map((p, k) => e('circle', {key: 'c' + k, cx: x(p.t), cy: y(p.v), r: 3.4, fill: '#fff', stroke: p.v > 0 && p.v === maxV ? MPC.teal : MPC.blue, strokeWidth: 2},
+      e('title', null, dm(p.d.from) + ' ' + hm(p.d.from) + ' → ' + dm(p.d.to) + ' ' + hm(p.d.to) + ' · ' + N(p.v) + ' L · meter ' + fmtM3(p.d.reading_m3) + ' m³'))));
 }
 
 // Meter (C7 protocol) addresses supplied by the operator, used when ChirpStack has no meter_addr tag
@@ -2199,7 +2223,7 @@ function renderLiveMeter(self, eui) {
   if (!CD || (CD.status === 'loading' && !cdata)) consBody = empty('Loading consumption history…');
   else if (CD.status === 'error' && !cdata) consBody = errBox(CD.error);
   else if (!cdata.enabled) consBody = e('div', {style: {padding: '18px 8px', textAlign: 'center', color: MPC.mute, fontSize: 11.5}}, 'Reading history is not switched on yet: the API has no database connection (' + (cdata.reason || 'DATABASE_URL missing') + ').');
-  else if (cu === 'interval' && !(cdata.intervals || []).length) consBody = empty('No two meter readings in the last 48 hours yet. Usage appears once the meter sends its next reading.');
+  else if (cu === 'interval' && !(cdata.intervals || []).length) consBody = empty('No two meter readings in the last 72 hours yet. Usage appears once the meter sends its next reading.');
   else {
     let vals, labs, meta, stats, legend;
     if (cu === 'interval') {
@@ -2208,8 +2232,8 @@ function renderLiveMeter(self, eui) {
       labs = iv.map((x, k) => (k === 0 || dm(x.to) !== dm(iv[k - 1].to) ? dm(x.to) + ' ' : '') + hm(x.to));
       meta = iv.map(x => ({color: x.used_l > 0 && x.used_l === maxL ? MPC.teal : MPC.blue, title: dm(x.from) + ' ' + hm(x.from) + ' → ' + dm(x.to) + ' ' + hm(x.to) + ' (' + span(x.minutes) + ') · ' + N(x.used_l) + ' L · meter ' + fmtM3(x.reading_m3) + ' m³' + (/meter-/.test(x.source) ? ' · meter record' : '')}));
       const tot = vals.reduce((a, x) => a + x, 0), pk = iv.reduce((a, x) => x.used_l > (a ? a.used_l : -1) ? x : a, null), last = iv[iv.length - 1];
-      stats = [['Last 48 hours', N(tot) + ' L'], ['Largest interval', pk && pk.used_l ? N(pk.used_l) + ' L · ' + hm(pk.from) + '–' + hm(pk.to) : '—'], ['Latest reading', fmtM3(last.reading_m3) + ' m³ · ' + dm(last.to) + ' ' + hm(last.to)], ['Readings stored', N(cdata.readings)]];
-      legend = [[MPC.blue, 'Usage between two meter readings'], [MPC.teal, 'Highest']];
+      stats = [['Last 72 hours', N(tot) + ' L'], ['Highest 4 hours', pk && pk.used_l ? N(pk.used_l) + ' L · ' + hm(pk.from) + '–' + hm(pk.to) : '—'], ['Latest reading', fmtM3(last.reading_m3) + ' m³ · ' + dm(last.to) + ' ' + hm(last.to)], ['Readings stored', N(cdata.readings)]];
+      legend = [[MPC.blue, 'Litres used since the previous reading'], [MPC.teal, 'Highest']];
     } else {
       const bk = cdata.buckets, known = bk.filter(x => x.used_l != null), maxL = Math.max(0, ...known.map(x => x.used_l));
       const C = {exact: MPC.blue, 'so-far': '#5B8FC7', partial: '#9AA3AE'};
@@ -2223,14 +2247,14 @@ function renderLiveMeter(self, eui) {
     }
     consBody = e('div', null,
       e('div', {style: {display: 'flex', gap: 22, marginBottom: 12, flexWrap: 'wrap'}}, stats.map(x => e('div', {key: x[0]}, e('div', {style: {fontSize: 10, color: MPC.faint}}, x[0]), e('div', {style: {fontSize: 13.5, fontWeight: 600, marginTop: 2}}, x[1])))),
-      bars(vals, labs, cu === 'day' ? 5 : Math.max(1, Math.ceil(vals.length / 8)), 'L', false, null, meta),
+      cu === 'day' ? bars(vals, labs, 5, 'L', false, null, meta) : consLine(cdata.intervals, hm, dm),
       e('div', {style: {display: 'flex', gap: 14, marginTop: 10, fontSize: 10.5, color: MPC.mute, flexWrap: 'wrap'}},
         legend.map(l => e('span', {key: l[1], style: {display: 'inline-flex', alignItems: 'center', gap: 5}}, e('span', {style: {width: 9, height: 9, borderRadius: 2, background: l[0], border: l[0] === '#fff' ? '1px dashed #C9CED6' : 'none', boxSizing: 'border-box'}}), l[1]))),
       e('div', {style: {marginTop: 8, fontSize: 10.5, color: MPC.mute, lineHeight: 1.5}}, 'Only actual meter readings are used, nothing is averaged or estimated. ' + (cu === 'interval'
-        ? 'Each bar is the rise in the meter’s total between two consecutive readings, labelled with the time of the second; hover a bar for its exact start, end and length. ' + (cdata.hourlyRecords ? 'This meter sends hourly records, so bars are hourly where they are available.' : 'This meter currently reports about every ' + (isHwDev(d) ? '24' : '4') + ' hours, so bars cover those periods. For true hour-by-hour usage the meter must be set to send hourly records.')
+        ? 'Each point is the rise in the meter’s total since its previous reading, plotted at the time of the reading; the meter reports about every ' + (isHwDev(d) ? '24' : '4') + ' hours. Hover a point for its exact start, end and litres. A break in the line means the meter missed a report.'
         : 'A day’s usage is the meter reading at the next midnight minus the reading at that day’s midnight (a reading within 90 minutes of midnight counts). Days without readings near both midnights show only the part that was measured.') + ' Readings stored since ' + fmtDT(cdata.since) + '. Times are ' + cdata.timeZone.replace('_', ' ') + ' local time.'));
   }
-  const consCard = card('Water consumption', MP_IC.drop, e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, [['interval', 'Per reading'], ['day', 'Daily']].map(o => e('div', {key: o[0], onClick: () => { self.setState({lvCons: o[0]}); liveConsLoad(self, o[0], false, eui); }, style: {padding: '4px 11px', fontSize: 11, fontWeight: cu === o[0] ? 600 : 500, cursor: 'pointer', background: cu === o[0] ? MPC.blue : '#fff', color: cu === o[0] ? '#fff' : MPC.mute}}, o[1]))), consBody, {height: '100%'});
+  const consCard = card('Water consumption', MP_IC.drop, e('div', {style: {display: 'flex', border: '1px solid ' + MPC.line, borderRadius: 6, overflow: 'hidden'}}, [['interval', 'Every 4 hours'], ['day', 'Daily']].map(o => e('div', {key: o[0], onClick: () => { self.setState({lvCons: o[0]}); liveConsLoad(self, o[0], false, eui); }, style: {padding: '4px 11px', fontSize: 11, fontWeight: cu === o[0] ? 600 : 500, cursor: 'pointer', background: cu === o[0] ? MPC.blue : '#fff', color: cu === o[0] ? '#fff' : MPC.mute}}, o[1]))), consBody, {height: '100%'});
 
   // meter display parameters
   const shown = disp.filter(x => x.v != null).length;
